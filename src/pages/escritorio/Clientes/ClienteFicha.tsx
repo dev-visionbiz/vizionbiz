@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import { useAuth } from '@/auth/AuthProvider'
 import { useClient, useUpdateClient } from '@/data/hooks/useClients'
 import { useUsers } from '@/data/hooks/useUsers'
@@ -110,6 +111,7 @@ function LogEntrada({ entrada }: { entrada: LogAtividadeCliente }) {
 export default function ClienteFicha() {
   const { id: clientId } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const goBack = useSmartBack('/escritorio/clientes')
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
 
@@ -333,8 +335,9 @@ export default function ClienteFicha() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 min-w-0">
-        <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/escritorio/clientes')}>
+        <Button variant="ghost" size="sm" className="shrink-0 gap-1.5" onClick={goBack}>
           <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Clientes</span>
         </Button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">

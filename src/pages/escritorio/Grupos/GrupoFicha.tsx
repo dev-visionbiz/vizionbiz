@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import { v4 as uuidv4 } from 'uuid'
 import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthProvider'
@@ -38,6 +39,7 @@ const COR_PALETTE = [
 export default function GrupoFicha() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const goBack = useSmartBack('/escritorio/grupos')
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const { toast } = useToast()
@@ -142,17 +144,18 @@ export default function GrupoFicha() {
   if (!grupo) return (
     <div className="p-6">
       <p className="text-muted-foreground">Grupo não encontrado.</p>
-      <Button variant="link" onClick={() => navigate('/escritorio/grupos')}>Voltar</Button>
+      <Button variant="link" onClick={goBack}>Voltar</Button>
     </div>
   )
 
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/escritorio/grupos')}>
+        <Button variant="ghost" size="sm" className="gap-1.5 shrink-0" onClick={goBack}>
           <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Grupos</span>
         </Button>
-        <h1 className="text-2xl font-bold">{grupo.nome}</h1>
+        <h1 className="text-2xl font-bold truncate">{grupo.nome}</h1>
       </div>
 
       {/* Card informações do grupo */}

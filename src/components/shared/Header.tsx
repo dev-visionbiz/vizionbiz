@@ -17,9 +17,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 interface HeaderProps {
   onMenuToggle: () => void
+  pageTitle?: string
 }
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuToggle, pageTitle }: HeaderProps) {
   const { currentUser, allUsers, switchUser, logout } = useAuth()
   const navigate = useNavigate()
   const isCliente = currentUser?.papel === 'cliente'
@@ -43,6 +44,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
       <div className="flex-1 min-w-0 flex items-center gap-3">
         {isCliente && nomeEmpresaCliente && (
           <span className="text-sm font-medium truncate">{nomeEmpresaCliente}</span>
+        )}
+        {!isCliente && pageTitle && (
+          <span className="text-sm font-semibold truncate lg:hidden">{pageTitle}</span>
         )}
       </div>
 
