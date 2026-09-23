@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -41,8 +41,8 @@ export default function ObrigacoesPage() {
         {/* ── Cabeçalho com nav ── */}
         <div className="shrink-0 border-b">
 
-          {/* Mobile: título-dropdown compacto (app bar já mostra "Obrigações") */}
-          <div className="md:hidden flex items-center px-4 py-3">
+          {/* Mobile: seletor de visão + botão Filtros na mesma linha */}
+          <div className="md:hidden flex items-center justify-between px-3 py-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-1 text-lg font-bold focus:outline-none">
@@ -62,6 +62,16 @@ export default function ObrigacoesPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {tab === 'consulta' && (
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('vb:open-filtros'))}
+                className="flex items-center gap-1.5 text-sm font-medium text-foreground border rounded-full px-3 py-1.5 active:bg-muted transition-colors"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Filtros
+              </button>
+            )}
           </div>
 
           {/* Desktop: título + abas */}

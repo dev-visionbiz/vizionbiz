@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -26,6 +26,19 @@ import { useClients } from '@/data/hooks/useClients'
 import { useUsers } from '@/data/hooks/useUsers'
 import { cn, formatDate } from '@/lib/utils'
 import type { TarefaObrigacao, TarefaStatus } from '@/domain/types'
+
+const AVATAR_COLORS = [
+  '#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6',
+  '#ec4899','#14b8a6','#f97316','#6366f1','#0ea5e9',
+]
+function avatarColor(name: string): string {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
+}
+function clientInitials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase().slice(0, 2)
+}
 
 const statusConfig: Record<TarefaStatus, { label: string; className: string }> = {
   pendente:      { label: 'Pendente',     className: 'bg-blue-100 text-blue-800 border-transparent' },
@@ -120,8 +133,14 @@ export function PainelConsulta() {
   const [respDialog, setRespDialog]     = useState(false)
   const [respId, setRespId]             = useState('')
 
-  // mobile filter sheet
+  // mobile filter sheet — aberto via botão no header (ObrigacoesPage) ou direto
   const [filtroSheetOpen, setFiltroSheetOpen] = useState(false)
+
+  useEffect(() => {
+    const handler = () => setFiltroSheetOpen(true)
+    window.addEventListener('vb:open-filtros', handler)
+    return () => window.removeEventListener('vb:open-filtros', handler)
+  }, [])
 
   const competenciaMap = useMemo(() => new Map(competencias.map((c) => [c.id, c])), [competencias])
   const etapaMap       = useMemo(() => new Map(etapas.map((e) => [e.id, e])),       [etapas])
@@ -280,69 +299,43 @@ export function PainelConsulta() {
   const todosSelec = resultado.length > 0 && selecionados.size === resultado.length
 
   return (
-    <div className="px-4 sm:px-6 pb-8 space-y-4">
+    <div className="px-3 sm:px-5 pb-4 space-y-2">
 
-      {/* ── MOBILE: sticky bar — 1 linha: botão Filtros + pills ── */}
-      <div className="md:hidden sticky top-0 z-10 -mx-4 px-3 bg-background/95 backdrop-blur-sm border-b py-2">
-        <div className="flex items-center gap-2 overflow-hidden">
-
-          {/* botão Filtros fixo à esquerda */}
-          <button
-            onClick={() => setFiltroSheetOpen(true)}
-            className={cn(
-              'shrink-0 relative inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors',
-              filtrosAvancadosAtivos > 0
-                ? 'bg-foreground text-background border-foreground'
-                : 'bg-background text-foreground border-border'
-            )}
-          >
-            <Filter className="h-3.5 w-3.5" />
-            Filtros
-            {filtrosAvancadosAtivos > 0 && (
-              <span className="ml-0.5 font-bold">{filtrosAvancadosAtivos}</span>
-            )}
-          </button>
-
-          {/* separador visual */}
-          <span className="shrink-0 w-px h-5 bg-border" />
-
-          {/* pills de status — scroll horizontal */}
-          <div className="flex gap-2 overflow-x-auto flex-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {statusPills.map(({ value, label, count, alertCls }) => {
-              const isActive = filtroStatus === value
-              return (
-                <button
-                  key={String(value) || 'todas'}
-                  onClick={() => setFiltroStatus(isActive && value !== '' ? '' : value)}
-                  className={cn(
-                    'shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors whitespace-nowrap',
-                    isActive
-                      ? 'bg-foreground text-background border-foreground'
-                      : alertCls
-                        ? cn('bg-background border-2', alertCls)
-                        : 'bg-background text-foreground border-border active:bg-muted'
-                  )}
-                >
-                  {label} <span className={cn('font-bold', isActive ? 'text-background/80' : '')}>{count}</span>
-                </button>
-              )
-            })}
-
-            {/* Limpar como última pill quando há filtros ativos */}
-            {temFiltro && (
+      {/* ── MOBILE: sticky bar — só pills de status ── */}
+      <div className="md:hidden sticky top-0 z-10 -mx-3 px-3 bg-background/95 backdrop-blur-sm border-b py-2">
+        <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {statusPills.map(({ value, label, count, alertCls }) => {
+            const isActive = filtroStatus === value
+            return (
               <button
-                onClick={limparFiltros}
-                className="shrink-0 inline-flex items-center gap-1 rounded-full border border-dashed border-muted-foreground/40 px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap active:bg-muted"
+                key={String(value) || 'todas'}
+                onClick={() => setFiltroStatus(isActive && value !== '' ? '' : value)}
+                className={cn(
+                  'shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors whitespace-nowrap',
+                  isActive
+                    ? 'bg-foreground text-background border-foreground'
+                    : alertCls
+                      ? cn('bg-background border-2', alertCls)
+                      : 'bg-background text-foreground border-border active:bg-muted'
+                )}
               >
-                <X className="h-3 w-3" /> Limpar
+                {label} <span className={cn('font-bold', isActive ? 'text-background/80' : '')}>{count}</span>
               </button>
-            )}
-          </div>
+            )
+          })}
+          {temFiltro && (
+            <button
+              onClick={limparFiltros}
+              className="shrink-0 inline-flex items-center gap-1 rounded-full border border-dashed border-muted-foreground/40 px-2.5 py-1.5 text-xs text-muted-foreground whitespace-nowrap active:bg-muted"
+            >
+              <X className="h-3 w-3" /> Limpar
+            </button>
+          )}
         </div>
       </div>
 
       {/* ── DESKTOP: painel de filtros ── */}
-      <div className="hidden md:block rounded-lg border p-4 space-y-3">
+      <div className="hidden md:block rounded-lg border p-3 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-sm font-medium">
             <Filter className="h-3.5 w-3.5" /> Filtros
@@ -569,79 +562,95 @@ export function PainelConsulta() {
         </div>
       </div>
 
-      {/* Mobile — cards individuais */}
-      <div className="md:hidden space-y-2">
+      {/* Mobile — lista estilo Outlook: sem cards, avatar colorido, margens mínimas */}
+      <div className="md:hidden -mx-3">
         {resultado.length === 0 ? (
-          <div className="py-14 text-center text-sm text-muted-foreground">
+          <div className="py-14 text-center text-sm text-muted-foreground px-4">
             {temFiltro ? 'Nenhuma tarefa corresponde aos filtros aplicados.' : 'Nenhuma tarefa cadastrada ainda.'}
           </div>
-        ) : resultado.map((tarefa) => {
-          const cliente     = clienteMap.get(tarefa.cliente_id)
-          const comp        = competenciaMap.get(tarefa.competencia_id)
-          const etapa       = etapaMap.get(tarefa.etapa_id)
-          const obrigacao   = comp ? obrigacaoMap.get(comp.obrigacao_id) : undefined
-          const responsavel = tarefa.responsavel ? userMap.get(tarefa.responsavel) : null
-          const sel         = selecionados.has(tarefa.id)
-          const sc          = statusConfig[tarefa.status]
+        ) : (
+          <div className="divide-y">
+            {resultado.map((tarefa) => {
+              const cliente     = clienteMap.get(tarefa.cliente_id)
+              const comp        = competenciaMap.get(tarefa.competencia_id)
+              const etapa       = etapaMap.get(tarefa.etapa_id)
+              const obrigacao   = comp ? obrigacaoMap.get(comp.obrigacao_id) : undefined
+              const responsavel = tarefa.responsavel ? userMap.get(tarefa.responsavel) : null
+              const sel         = selecionados.has(tarefa.id)
+              const sc          = statusConfig[tarefa.status]
+              const nomeCliente = cliente?.razao_social ?? tarefa.cliente_id
+              const detalhe     = [
+                obrigacao?.nome,
+                comp ? periodoLabel(comp.periodo) : null,
+                etapa?.nome,
+                tarefa.status === 'impedido' && tarefa.impedimento_descricao
+                  ? tarefa.impedimento_descricao
+                  : tarefa.observacoes,
+              ].filter(Boolean).join(' · ')
 
-          // linha de detalhe: Obrigação · Período · Etapa · Obs / Impedimento
-          const detalhe = [
-            obrigacao?.nome,
-            comp ? periodoLabel(comp.periodo) : null,
-            etapa?.nome,
-            tarefa.status === 'impedido' && tarefa.impedimento_descricao
-              ? tarefa.impedimento_descricao
-              : tarefa.observacoes,
-          ].filter(Boolean).join(' · ')
+              return (
+                <div
+                  key={tarefa.id}
+                  onClick={() => abrirDetalhe(tarefa)}
+                  className={cn(
+                    'flex items-start gap-2 px-3 py-2.5 active:bg-muted/30 transition-colors',
+                    tarefa.status === 'impedido' ? 'bg-orange-50/40' : ''
+                  )}
+                >
+                  {/* checkbox */}
+                  <Checkbox
+                    checked={sel}
+                    onCheckedChange={() => toggleSelecionado(tarefa.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1.5 shrink-0"
+                  />
 
-          return (
-            <div
-              key={tarefa.id}
-              onClick={() => abrirDetalhe(tarefa)}
-              className={cn(
-                'rounded-xl border bg-card px-4 py-3.5 flex items-start gap-3 active:bg-muted/40 transition-colors',
-                tarefa.status === 'impedido' ? 'border-orange-200 bg-orange-50/40' : ''
-              )}
-            >
-              <Checkbox
-                checked={sel}
-                onCheckedChange={() => toggleSelecionado(tarefa.id)}
-                onClick={(e) => e.stopPropagation()}
-                className="mt-1 shrink-0"
-              />
-              <div className="flex-1 min-w-0 space-y-1.5">
-                {/* linha 1: nome do cliente + badge de status + link */}
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold leading-snug flex-1 min-w-0">
-                    {cliente?.razao_social ?? tarefa.cliente_id}
-                  </p>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {tarefa.status === 'impedido' && <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />}
-                    <Badge className={`text-xs font-bold uppercase tracking-wide ${sc.className}`}>{sc.label}</Badge>
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/40 ml-0.5" />
+                  {/* avatar com iniciais coloridas */}
+                  <div
+                    className="h-9 w-9 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white mt-0.5 select-none"
+                    style={{ backgroundColor: avatarColor(nomeCliente) }}
+                  >
+                    {clientInitials(nomeCliente)}
+                  </div>
+
+                  {/* conteúdo */}
+                  <div className="flex-1 min-w-0">
+                    {/* linha 1: nome (esquerda) + status + link (direita) */}
+                    <div className="flex items-center justify-between gap-1.5">
+                      <p className="text-[13px] font-semibold leading-tight flex-1 min-w-0 truncate">
+                        {nomeCliente}
+                      </p>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {tarefa.status === 'impedido' && <AlertTriangle className="h-3 w-3 text-orange-600" />}
+                        <Badge className={`text-[10px] font-bold uppercase px-1.5 py-0 leading-5 ${sc.className}`}>
+                          {sc.label}
+                        </Badge>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground/40" />
+                      </div>
+                    </div>
+
+                    {/* linha 2: obrigação · período · etapa */}
+                    {detalhe && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{detalhe}</p>
+                    )}
+
+                    {/* linha 3: data + responsável */}
+                    <div className="flex items-center gap-2.5 mt-0.5 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Calendar className="h-2.5 w-2.5" />
+                        {formatDate(tarefa.data_prevista)}
+                      </span>
+                      {tarefa.status === 'impedido' && tarefa.impedimento_responsavel
+                        ? <span className="text-orange-700 font-medium truncate">{userMap.get(tarefa.impedimento_responsavel)?.nome}</span>
+                        : responsavel && <span className="truncate">{responsavel.nome}</span>
+                      }
+                    </div>
                   </div>
                 </div>
-
-                {/* linha 2: obrigação · período · etapa · obs */}
-                {detalhe && (
-                  <p className="text-xs text-muted-foreground leading-snug line-clamp-2">{detalhe}</p>
-                )}
-
-                {/* linha 3: data com ícone + responsável */}
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3 shrink-0" />
-                    {formatDate(tarefa.data_prevista)}
-                  </span>
-                  {tarefa.status === 'impedido' && tarefa.impedimento_responsavel
-                    ? <span className="text-orange-700 font-medium">{userMap.get(tarefa.impedimento_responsavel)?.nome}</span>
-                    : responsavel && <span>{responsavel.nome}</span>
-                  }
-                </div>
-              </div>
-            </div>
-          )
-        })}
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── MOBILE: bottom sheet de filtros ── */}
@@ -664,7 +673,7 @@ export function PainelConsulta() {
               </Button>
             </div>
             {/* campos */}
-            <div className="overflow-y-auto flex-1 px-4 py-4 space-y-4">
+            <div className="overflow-y-auto flex-1 px-4 py-3 space-y-3">
               <div className="space-y-1">
                 <Label className="text-xs">Obrigação</Label>
                 <Select value={filtroObrigacao || '_todas'} onValueChange={(v) => { const val = v === '_todas' ? '' : v; setFiltroObrigacao(val); setFiltroCompetencia(''); setFiltroEtapa('') }}>
