@@ -24,24 +24,26 @@ export default function ObrigacoesPage() {
       <div className="px-4 sm:px-6 pt-5 pb-0 border-b">
         <h1 className="text-xl font-bold mb-4">Obrigações</h1>
         <Tabs value={tab} onValueChange={handleTabChange}>
-          <TabsList className="h-auto rounded-none bg-transparent p-0 space-x-0">
-            {[
-              { value: 'painel-etapa', label: 'Painel por Etapa' },
-              { value: 'consulta',     label: 'Consulta' },
-              { value: 'visao-geral',  label: 'Visão Geral' },
-              { value: 'competencias', label: 'Competências' },
-              { value: 'vinculos',     label: 'Vínculos' },
-              { value: 'cadastro',     label: 'Obrigações' },
-            ].map((t) => (
-              <TabsTrigger
-                key={t.value}
-                value={t.value}
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm"
-              >
-                {t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 sm:-mx-6">
+            <TabsList className="h-auto rounded-none bg-transparent p-0 space-x-0 w-max px-4 sm:px-6">
+              {[
+                { value: 'painel-etapa', label: 'Painel por Etapa' },
+                { value: 'consulta',     label: 'Consulta' },
+                { value: 'visao-geral',  label: 'Visão Geral' },
+                { value: 'competencias', label: 'Competências' },
+                { value: 'vinculos',     label: 'Vínculos' },
+                { value: 'cadastro',     label: 'Obrigações' },
+              ].map((t) => (
+                <TabsTrigger
+                  key={t.value}
+                  value={t.value}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-sm whitespace-nowrap shrink-0"
+                >
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <TabsContent value="cadastro" className="mt-0 pt-5">
             <CadastroObrigacoes />

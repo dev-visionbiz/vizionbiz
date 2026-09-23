@@ -403,9 +403,9 @@ function TarefaCard({ t, onAbrir, onIniciar, onConcluir }: {
         </div>
       </div>
 
-      {/* Ações rápidas — stopPropagation para não abrir o dialog */}
+      {/* Ações rápidas — visíveis só em sm+; no mobile o toque abre o dialog */}
       {!isFinalizada && (
-        <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+        <div className="hidden sm:flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
           {t.status !== 'em_andamento' && t.status !== 'impedido' && (
             <Button
               size="sm"
@@ -689,42 +689,44 @@ export default function TarefasPage() {
     concluirEtapaDemanda.isPending
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Tarefas</h1>
         <p className="text-muted-foreground text-sm">Obrigações e demandas em um só lugar</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {[
           { label: 'Abertas', value: abertas.length, icon: Inbox, color: 'text-blue-600' },
-          { label: 'Críticas / Atrasadas', value: atrasadas.length, icon: AlertTriangle, color: 'text-red-600' },
+          { label: 'Atrasadas', value: atrasadas.length, icon: AlertTriangle, color: 'text-red-600' },
           { label: 'Total', value: todasUnificadas.length, icon: CheckSquare, color: 'text-muted-foreground' },
         ].map(item => (
-          <div key={item.label} className="border rounded-lg p-4 bg-card">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <item.icon className={`h-3.5 w-3.5 ${item.color}`} />
-              {item.label}
+          <div key={item.label} className="border rounded-lg p-3 sm:p-4 bg-card">
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground mb-1 min-w-0">
+              <item.icon className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${item.color}`} />
+              <span className="truncate">{item.label}</span>
             </div>
-            <p className="text-2xl font-bold">{item.value}</p>
+            <p className="text-xl sm:text-2xl font-bold">{item.value}</p>
           </div>
         ))}
       </div>
 
       <Tabs defaultValue="meu-dia">
-        <TabsList>
-          <TabsTrigger value="meu-dia">Meu Dia</TabsTrigger>
-          {isAdmin && <TabsTrigger value="equipe"><Users className="h-3.5 w-3.5 mr-1" />Equipe</TabsTrigger>}
-          <TabsTrigger value="atrasadas">
-            <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-            Atrasadas
-            {atrasadas.length > 0 && (
-              <Badge className="ml-1 h-4 text-xs bg-red-600 text-white border-transparent px-1">
-                {atrasadas.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="w-max">
+            <TabsTrigger value="meu-dia">Meu Dia</TabsTrigger>
+            {isAdmin && <TabsTrigger value="equipe"><Users className="h-3.5 w-3.5 mr-1" />Equipe</TabsTrigger>}
+            <TabsTrigger value="atrasadas">
+              <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+              Atrasadas
+              {atrasadas.length > 0 && (
+                <Badge className="ml-1 h-4 text-xs bg-red-600 text-white border-transparent px-1">
+                  {atrasadas.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="meu-dia" className="mt-4 space-y-2">
           {meiasTarefas.length === 0 ? (
