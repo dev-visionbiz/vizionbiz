@@ -60,6 +60,9 @@ import {
   ArrowLeft,
   Users,
   ChevronRight,
+  Calendar,
+  HardDrive,
+  Folder as FolderIcon,
 } from 'lucide-react'
 import type { Document, DocumentType, Folder, FolderType } from '@/domain/types'
 import { formatDate } from '@/lib/utils'
@@ -1151,11 +1154,11 @@ export default function DocumentosPage() {
                           />
                         ) : (
                           filteredDocs.map((doc) => (
-                            <div key={doc.id} className="rounded-lg border bg-card p-3 space-y-2">
+                            <div key={doc.id} className="rounded-lg border bg-card p-3">
                               <div className="flex items-start gap-3">
                                 <DocumentThumbnail storageKey={doc.storage_key} />
                                 <div className="flex-1 min-w-0 space-y-1">
-                                  <p className="font-semibold text-sm leading-tight wrap-break-word">{doc.nome}</p>
+                                  <p className="font-semibold text-sm leading-tight break-words">{doc.nome}</p>
                                   <div className="flex flex-wrap gap-1">
                                     <Badge variant="secondary" className="text-xs">{docTypeName(doc.type_id)}</Badge>
                                     <ValidadeBadge doc={doc} docTypes={docTypes} />
@@ -1165,17 +1168,13 @@ export default function DocumentosPage() {
                                   <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
                                 </div>
                               </div>
-                              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
-                                <span className="text-muted-foreground">Competência</span>
-                                <span className="text-right font-medium">{doc.competencia}</span>
-                                <span className="text-muted-foreground">Versão</span>
-                                <span className="text-right">v{doc.versao}</span>
-                                <span className="text-muted-foreground">Tamanho</span>
-                                <span className="text-right">{formatFileSize(doc.tamanho)}</span>
-                                <span className="text-muted-foreground">Enviado em</span>
-                                <span className="text-right">{formatDate(doc.criado_em.split('T')[0])}</span>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                                {doc.competencia && <span className="flex items-center gap-1"><Calendar className="h-3 w-3 shrink-0" />{doc.competencia}</span>}
+                                <span className="flex items-center gap-1"><HardDrive className="h-3 w-3 shrink-0" />{formatFileSize(doc.tamanho)}</span>
+                                <span className="flex items-center gap-1"><Clock className="h-3 w-3 shrink-0" />{formatDate(doc.criado_em.split('T')[0])}</span>
+                                <span className="opacity-60">v{doc.versao}</span>
                               </div>
-                              <div className="sm:hidden">
+                              <div className="sm:hidden mt-2">
                                 <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
                               </div>
                             </div>
@@ -1245,35 +1244,28 @@ export default function DocumentosPage() {
                 ) : (
                   <div className="flex flex-col gap-2">
                     {tipoModeDocs.map((doc) => (
-                      <div key={doc.id} className="rounded-lg border bg-card p-3 space-y-2">
+                      <div key={doc.id} className="rounded-lg border bg-card p-3">
                         <div className="flex items-start gap-3">
                           <DocumentThumbnail storageKey={doc.storage_key} />
                           <div className="flex-1 min-w-0 space-y-1">
-                            <p className="font-semibold text-sm leading-tight wrap-break-word">{doc.nome}</p>
+                            <p className="font-semibold text-sm leading-tight break-words">{doc.nome}</p>
+                            <p className="text-sm font-medium text-foreground/80 truncate">{clientName(doc.client_id)}</p>
                             <div className="flex flex-wrap gap-1">
                               <Badge variant="secondary" className="text-xs">{docTypeName(doc.type_id)}</Badge>
                               <ValidadeBadge doc={doc} docTypes={docTypes} />
                             </div>
                           </div>
-                          {/* Desktop: ícones no canto superior direito */}
                           <div className="hidden sm:block shrink-0">
                             <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
-                          <span className="text-muted-foreground">Cliente</span>
-                          <span className="text-right font-medium truncate">{clientName(doc.client_id)}</span>
-                          <span className="text-muted-foreground">Pasta</span>
-                          <span className="text-right truncate">{folderName(doc.folder_id)}</span>
-                          <span className="text-muted-foreground">Competência</span>
-                          <span className="text-right">{doc.competencia}</span>
-                          <span className="text-muted-foreground">Tamanho</span>
-                          <span className="text-right">{formatFileSize(doc.tamanho)}</span>
-                          <span className="text-muted-foreground">Enviado em</span>
-                          <span className="text-right">{formatDate(doc.criado_em.split('T')[0])}</span>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                          {folderName(doc.folder_id) && <span className="flex items-center gap-1"><FolderIcon className="h-3 w-3 shrink-0" />{folderName(doc.folder_id)}</span>}
+                          {doc.competencia && <span className="flex items-center gap-1"><Calendar className="h-3 w-3 shrink-0" />{doc.competencia}</span>}
+                          <span className="flex items-center gap-1"><HardDrive className="h-3 w-3 shrink-0" />{formatFileSize(doc.tamanho)}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3 w-3 shrink-0" />{formatDate(doc.criado_em.split('T')[0])}</span>
                         </div>
-                        {/* Mobile: barra de ações no rodapé */}
-                        <div className="sm:hidden">
+                        <div className="sm:hidden mt-2">
                           <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
                         </div>
                       </div>

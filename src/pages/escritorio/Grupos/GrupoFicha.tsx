@@ -39,7 +39,7 @@ const COR_PALETTE = [
 export default function GrupoFicha() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const goBack = useSmartBack('/escritorio/grupos')
+  const goBack = useSmartBack('/escritorio/configuracoes')
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const { toast } = useToast()
@@ -153,7 +153,7 @@ export default function GrupoFicha() {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" className="gap-1.5 shrink-0" onClick={goBack}>
           <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Grupos</span>
+          <span className="hidden sm:inline">Configurações</span>
         </Button>
         <h1 className="text-2xl font-bold truncate">{grupo.nome}</h1>
       </div>

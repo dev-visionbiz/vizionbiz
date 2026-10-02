@@ -5,12 +5,12 @@ import type {
   Contract, ContratoItem, Invoice, BillingPolicy,
   Pessoa, EmpresaPessoa, Grupo, GrupoEmpresa, Servico, Plano,
   StorageConnection, FichaBloco, FichaCampo,
-  Obrigacao, EtapaObrigacao, ClienteObrigacao, Competencia, TarefaObrigacao,
-  DemandaTemplate, EtapaDemandaTemplate, DemandaEspecifica, EtapaDemandaEspecifica,
+  Fluxo, FluxoTarefa, Rotina, RotinaCliente, Ciclo, Ocorrencia, Tarefa,
+  ChecklistItemTemplate,
 } from '@/domain/types'
 
 const TENANT_ID = 'tenant-001'
-const SEED_KEY = 'vb_seeded_v16'
+const SEED_KEY = 'vb_seeded_v18'
 
 // suppress unused import warning
 const _uuidv4 = uuidv4
@@ -583,122 +583,125 @@ export function runSeed(): void {
   ]
   localStorage.setItem('vb_ficha_campos', JSON.stringify(fichaCampos))
 
-  // --- Módulo de Obrigações ---
+  // --- Fluxos (templates de processo) ---
 
-  const obrigacoes: Obrigacao[] = [
+  const checklistCalcularPGDAS: ChecklistItemTemplate[] = [
+    { id: 'cl-pgdas-1', ordem: 1, nome: 'Acessar a plataforma (e-CAC)' },
+    { id: 'cl-pgdas-2', ordem: 2, nome: 'Selecionar tipo de acesso (Direto / Procuração)' },
+    { id: 'cl-pgdas-3', ordem: 3, nome: 'Realizar lançamentos / Conferir faturamento' },
+    { id: 'cl-pgdas-4', ordem: 4, nome: 'Transmitir PGDAS-D' },
+  ]
+
+  const checklistGerarDAS: ChecklistItemTemplate[] = [
+    { id: 'cl-das-1', ordem: 1, nome: 'Acessar o portal e-CAC' },
+    { id: 'cl-das-2', ordem: 2, nome: 'Navegar até a área do PGDAS' },
+    { id: 'cl-das-3', ordem: 3, nome: 'Gerar a DAS' },
+    { id: 'cl-das-4', ordem: 4, nome: 'Salvar e enviar ao cliente' },
+  ]
+
+  const fluxos: Fluxo[] = [
+    { id: 'flx-001', tenant_id: TENANT_ID, nome: 'PGDAS-D', categoria: 'fiscal', prazo_dias_padrao: 0, ativo: true },
+    { id: 'flx-002', tenant_id: TENANT_ID, nome: 'DCTFWeb', categoria: 'fiscal', prazo_dias_padrao: 0, ativo: true },
+    { id: 'flx-003', tenant_id: TENANT_ID, nome: 'DEFIS', categoria: 'fiscal', prazo_dias_padrao: 0, ativo: true },
+    { id: 'flx-004', tenant_id: TENANT_ID, nome: 'Alteração de Contrato Social', descricao: 'Alteração de dados societários na Junta Comercial', categoria: 'societario', prazo_dias_padrao: 15, valor_sugerido: 450, ativo: true },
+    { id: 'flx-005', tenant_id: TENANT_ID, nome: 'Abertura de Empresa', descricao: 'Constituição de nova pessoa jurídica', categoria: 'societario', prazo_dias_padrao: 25, valor_sugerido: 900, ativo: true },
+    { id: 'flx-006', tenant_id: TENANT_ID, nome: 'Declaração IRPF', descricao: 'Elaboração e transmissão da Declaração de Ajuste Anual', categoria: 'fiscal', prazo_dias_padrao: 10, valor_sugerido: 250, ativo: true },
+    { id: 'flx-007', tenant_id: TENANT_ID, nome: 'Admissão de Funcionário', descricao: 'Registro de novo colaborador na empresa', categoria: 'dp', prazo_dias_padrao: 5, valor_sugerido: 80, ativo: true },
+  ]
+  localStorage.setItem('vb_fluxos', JSON.stringify(fluxos))
+
+  const fluxoTarefas: FluxoTarefa[] = [
+    // PGDAS-D (flx-001)
+    { id: 'ft-001', tenant_id: TENANT_ID, fluxo_id: 'flx-001', ordem: 1, nome: 'Recolher informações do cliente', prazo_relativo_dias: -10 },
+    { id: 'ft-002', tenant_id: TENANT_ID, fluxo_id: 'flx-001', ordem: 2, nome: 'Calcular e transmitir PGDAS', prazo_relativo_dias: -4, checklist: checklistCalcularPGDAS },
+    { id: 'ft-003', tenant_id: TENANT_ID, fluxo_id: 'flx-001', ordem: 3, nome: 'Gerar guia DAS', prazo_relativo_dias: -2, checklist: checklistGerarDAS },
+    { id: 'ft-004', tenant_id: TENANT_ID, fluxo_id: 'flx-001', ordem: 4, nome: 'Confirmar pagamento', prazo_relativo_dias: 0 },
+    // DCTFWeb (flx-002)
+    { id: 'ft-005', tenant_id: TENANT_ID, fluxo_id: 'flx-002', ordem: 1, nome: 'Levantar dados da folha', prazo_relativo_dias: -7 },
+    { id: 'ft-006', tenant_id: TENANT_ID, fluxo_id: 'flx-002', ordem: 2, nome: 'Transmitir DCTFWeb', prazo_relativo_dias: -2 },
+    // Alteração Contrato Social (flx-004)
+    { id: 'ft-010', tenant_id: TENANT_ID, fluxo_id: 'flx-004', ordem: 1, nome: 'Coletar documentos dos sócios', prazo_relativo_dias: -12 },
+    { id: 'ft-011', tenant_id: TENANT_ID, fluxo_id: 'flx-004', ordem: 2, nome: 'Elaborar minuta do contrato social', prazo_relativo_dias: -8 },
+    { id: 'ft-012', tenant_id: TENANT_ID, fluxo_id: 'flx-004', ordem: 3, nome: 'Registro na Junta Comercial', prazo_relativo_dias: -3 },
+    { id: 'ft-013', tenant_id: TENANT_ID, fluxo_id: 'flx-004', ordem: 4, nome: 'Entregar ao cliente', prazo_relativo_dias: 0 },
+    // Abertura de Empresa (flx-005)
+    { id: 'ft-014', tenant_id: TENANT_ID, fluxo_id: 'flx-005', ordem: 1, nome: 'Pesquisa de viabilidade de nome', prazo_relativo_dias: -22 },
+    { id: 'ft-015', tenant_id: TENANT_ID, fluxo_id: 'flx-005', ordem: 2, nome: 'Elaborar contrato social', prazo_relativo_dias: -18 },
+    { id: 'ft-016', tenant_id: TENANT_ID, fluxo_id: 'flx-005', ordem: 3, nome: 'Registro na Junta Comercial', prazo_relativo_dias: -12 },
+    { id: 'ft-017', tenant_id: TENANT_ID, fluxo_id: 'flx-005', ordem: 4, nome: 'Inscrição CNPJ na Receita Federal', prazo_relativo_dias: -5 },
+    { id: 'ft-018', tenant_id: TENANT_ID, fluxo_id: 'flx-005', ordem: 5, nome: 'Alvará e licenças municipais', prazo_relativo_dias: 0 },
+    // Declaração IRPF (flx-006)
+    { id: 'ft-019', tenant_id: TENANT_ID, fluxo_id: 'flx-006', ordem: 1, nome: 'Coletar documentos (informes, notas)', prazo_relativo_dias: -8 },
+    { id: 'ft-020', tenant_id: TENANT_ID, fluxo_id: 'flx-006', ordem: 2, nome: 'Preencher declaração', prazo_relativo_dias: -4 },
+    { id: 'ft-021', tenant_id: TENANT_ID, fluxo_id: 'flx-006', ordem: 3, nome: 'Revisar com cliente', prazo_relativo_dias: -2 },
+    { id: 'ft-022', tenant_id: TENANT_ID, fluxo_id: 'flx-006', ordem: 4, nome: 'Transmitir à Receita Federal', prazo_relativo_dias: 0 },
+    // Admissão de Funcionário (flx-007)
+    { id: 'ft-023', tenant_id: TENANT_ID, fluxo_id: 'flx-007', ordem: 1, nome: 'Coletar documentos e exame admissional', prazo_relativo_dias: -4 },
+    { id: 'ft-024', tenant_id: TENANT_ID, fluxo_id: 'flx-007', ordem: 2, nome: 'Registrar na CTPS e e-Social', prazo_relativo_dias: -1 },
+    { id: 'ft-025', tenant_id: TENANT_ID, fluxo_id: 'flx-007', ordem: 3, nome: 'Configurar na folha de pagamento', prazo_relativo_dias: 0 },
+  ]
+  localStorage.setItem('vb_fluxo_tarefas', JSON.stringify(fluxoTarefas))
+
+  // --- Rotinas ---
+
+  const rotinas: Rotina[] = [
+    { id: 'rot-001', tenant_id: TENANT_ID, nome: 'PGDAS-D', fluxo_id: 'flx-001', periodicidade: 'mensal', regra_vencimento: JSON.stringify({ tipo: 'dia_mes_seguinte', dia: 20 }), regime: 'Simples Nacional', ativo: true, criado_em: '2026-01-01T00:00:00.000Z' },
+    { id: 'rot-002', tenant_id: TENANT_ID, nome: 'DCTFWeb', fluxo_id: 'flx-002', periodicidade: 'mensal', regra_vencimento: JSON.stringify({ tipo: 'dia_mes_seguinte', dia: 15 }), ativo: true, criado_em: '2026-01-01T00:00:00.000Z' },
+    { id: 'rot-003', tenant_id: TENANT_ID, nome: 'DEFIS', fluxo_id: 'flx-003', periodicidade: 'anual', regra_vencimento: JSON.stringify({ tipo: 'dia_mes_seguinte', dia: 31 }), regime: 'Simples Nacional', ativo: true, criado_em: '2026-01-01T00:00:00.000Z' },
+  ]
+  localStorage.setItem('vb_rotinas', JSON.stringify(rotinas))
+
+  const rotinaClientes: RotinaCliente[] = [
+    { id: 'rc-001', tenant_id: TENANT_ID, rotina_id: 'rot-001', cliente_id: 'client-001', ativo: true, data_inicio: '2026-01-01' },
+    { id: 'rc-002', tenant_id: TENANT_ID, rotina_id: 'rot-001', cliente_id: 'client-003', ativo: true, data_inicio: '2026-01-01' },
+  ]
+  localStorage.setItem('vb_rotina_clientes', JSON.stringify(rotinaClientes))
+
+  const ciclos: Ciclo[] = [
+    { id: 'cic-001', tenant_id: TENANT_ID, rotina_id: 'rot-001', periodo: '2026-09', data_vencimento: '2026-10-20', status: 'aberta' },
+  ]
+  localStorage.setItem('vb_ciclos', JSON.stringify(ciclos))
+
+  // --- Ocorrências e Tarefas ---
+
+  const ocorrencias: Ocorrencia[] = [
     {
-      id: 'obs-001', tenant_id: TENANT_ID, nome: 'PGDAS-D', periodicidade: 'mensal',
-      regra_vencimento: JSON.stringify({ tipo: 'dia_mes_seguinte', dia: 20 }),
-      regime: 'Simples Nacional', ativo: true,
+      id: 'occ-001', tenant_id: TENANT_ID, titulo: 'PGDAS-D — 2026-09',
+      cliente_id: 'client-001', origem: 'rotina', fluxo_id: 'flx-001', rotina_id: 'rot-001', ciclo_id: 'cic-001',
+      data_prevista: '2026-10-20', status: 'em_andamento', criado_por: 'system', criado_em: '2026-10-01T00:00:00.000Z',
     },
     {
-      id: 'obs-002', tenant_id: TENANT_ID, nome: 'DCTFWeb', periodicidade: 'mensal',
-      regra_vencimento: JSON.stringify({ tipo: 'dia_mes_seguinte', dia: 15 }),
-      ativo: true,
+      id: 'occ-002', tenant_id: TENANT_ID, titulo: 'PGDAS-D — 2026-09',
+      cliente_id: 'client-003', origem: 'rotina', fluxo_id: 'flx-001', rotina_id: 'rot-001', ciclo_id: 'cic-001',
+      data_prevista: '2026-10-20', status: 'em_andamento', criado_por: 'system', criado_em: '2026-10-01T00:00:00.000Z',
     },
     {
-      id: 'obs-003', tenant_id: TENANT_ID, nome: 'DEFIS', periodicidade: 'anual',
-      regra_vencimento: JSON.stringify({ tipo: 'dia_mes_seguinte', dia: 31 }),
-      regime: 'Simples Nacional', ativo: true,
+      id: 'occ-003', tenant_id: TENANT_ID, titulo: 'Alteração de Contrato Social — Entrada de novo sócio',
+      cliente_id: 'client-001', origem: 'fluxo', fluxo_id: 'flx-004', categoria: 'societario', valor: 450,
+      data_solicitacao: '2026-09-15', data_prevista: '2026-09-30', status: 'em_andamento',
+      criado_por: 'user-admin', criado_em: '2026-09-15T09:00:00.000Z',
     },
   ]
-  localStorage.setItem('vb_obrigacoes', JSON.stringify(obrigacoes))
+  localStorage.setItem('vb_ocorrencias', JSON.stringify(ocorrencias))
 
-  const etapas: EtapaObrigacao[] = [
-    // PGDAS-D
-    { id: 'etapa-001', tenant_id: TENANT_ID, obrigacao_id: 'obs-001', ordem: 1, nome: 'Recolher informações do cliente', prazo_relativo_dias: -10 },
-    { id: 'etapa-002', tenant_id: TENANT_ID, obrigacao_id: 'obs-001', ordem: 2, nome: 'Calcular e transmitir PGDAS', prazo_relativo_dias: -4 },
-    { id: 'etapa-003', tenant_id: TENANT_ID, obrigacao_id: 'obs-001', ordem: 3, nome: 'Gerar guia DAS', prazo_relativo_dias: -2 },
-    { id: 'etapa-004', tenant_id: TENANT_ID, obrigacao_id: 'obs-001', ordem: 4, nome: 'Confirmar pagamento', prazo_relativo_dias: 0 },
-    // DCTFWeb
-    { id: 'etapa-005', tenant_id: TENANT_ID, obrigacao_id: 'obs-002', ordem: 1, nome: 'Levantar dados da folha', prazo_relativo_dias: -7 },
-    { id: 'etapa-006', tenant_id: TENANT_ID, obrigacao_id: 'obs-002', ordem: 2, nome: 'Transmitir DCTFWeb', prazo_relativo_dias: -2 },
+  const tarefas: Tarefa[] = [
+    // occ-001: Padaria PGDAS-D Set/2026 (etapas 1+2 concluídas)
+    { id: 'tar-001', tenant_id: TENANT_ID, ocorrencia_id: 'occ-001', fluxo_tarefa_id: 'ft-001', ordem: 1, nome: 'Recolher informações do cliente', data_prevista: '2026-10-10', status: 'concluida', data_conclusao: '2026-10-09' },
+    { id: 'tar-002', tenant_id: TENANT_ID, ocorrencia_id: 'occ-001', fluxo_tarefa_id: 'ft-002', ordem: 2, nome: 'Calcular e transmitir PGDAS', data_prevista: '2026-10-16', status: 'concluida', data_conclusao: '2026-10-15' },
+    { id: 'tar-003', tenant_id: TENANT_ID, ocorrencia_id: 'occ-001', fluxo_tarefa_id: 'ft-003', ordem: 3, nome: 'Gerar guia DAS', data_prevista: '2026-10-18', status: 'pendente' },
+    { id: 'tar-004', tenant_id: TENANT_ID, ocorrencia_id: 'occ-001', fluxo_tarefa_id: 'ft-004', ordem: 4, nome: 'Confirmar pagamento', data_prevista: '2026-10-20', status: 'pendente' },
+    // occ-002: ABC PGDAS-D Set/2026 (etapa 1 concluída)
+    { id: 'tar-005', tenant_id: TENANT_ID, ocorrencia_id: 'occ-002', fluxo_tarefa_id: 'ft-001', ordem: 1, nome: 'Recolher informações do cliente', data_prevista: '2026-10-10', status: 'concluida', data_conclusao: '2026-10-10' },
+    { id: 'tar-006', tenant_id: TENANT_ID, ocorrencia_id: 'occ-002', fluxo_tarefa_id: 'ft-002', ordem: 2, nome: 'Calcular e transmitir PGDAS', data_prevista: '2026-10-16', status: 'pendente' },
+    { id: 'tar-007', tenant_id: TENANT_ID, ocorrencia_id: 'occ-002', fluxo_tarefa_id: 'ft-003', ordem: 3, nome: 'Gerar guia DAS', data_prevista: '2026-10-18', status: 'pendente' },
+    { id: 'tar-008', tenant_id: TENANT_ID, ocorrencia_id: 'occ-002', fluxo_tarefa_id: 'ft-004', ordem: 4, nome: 'Confirmar pagamento', data_prevista: '2026-10-20', status: 'pendente' },
+    // occ-003: Alteração Contrato Social (etapa 1 concluída, etapa 2 em andamento)
+    { id: 'tar-009', tenant_id: TENANT_ID, ocorrencia_id: 'occ-003', fluxo_tarefa_id: 'ft-010', ordem: 1, nome: 'Coletar documentos dos sócios', data_prevista: '2026-09-18', status: 'concluida', data_conclusao: '2026-09-17' },
+    { id: 'tar-010', tenant_id: TENANT_ID, ocorrencia_id: 'occ-003', fluxo_tarefa_id: 'ft-011', ordem: 2, nome: 'Elaborar minuta do contrato social', data_prevista: '2026-09-22', status: 'em_andamento' },
+    { id: 'tar-011', tenant_id: TENANT_ID, ocorrencia_id: 'occ-003', fluxo_tarefa_id: 'ft-012', ordem: 3, nome: 'Registro na Junta Comercial', data_prevista: '2026-09-27', status: 'pendente' },
+    { id: 'tar-012', tenant_id: TENANT_ID, ocorrencia_id: 'occ-003', fluxo_tarefa_id: 'ft-013', ordem: 4, nome: 'Entregar ao cliente', data_prevista: '2026-09-30', status: 'pendente' },
   ]
-  localStorage.setItem('vb_etapas_obrigacao', JSON.stringify(etapas))
-
-  const clienteObrigacoes: ClienteObrigacao[] = [
-    { id: 'co-001', tenant_id: TENANT_ID, cliente_id: 'client-001', obrigacao_id: 'obs-001', ativo: true, data_inicio: '2026-01-01' },
-    { id: 'co-002', tenant_id: TENANT_ID, cliente_id: 'client-003', obrigacao_id: 'obs-001', ativo: true, data_inicio: '2026-01-01' },
-  ]
-  localStorage.setItem('vb_cliente_obrigacao', JSON.stringify(clienteObrigacoes))
-
-  const competencias: Competencia[] = [
-    { id: 'comp-001', tenant_id: TENANT_ID, obrigacao_id: 'obs-001', periodo: '2026-09', data_vencimento: '2026-10-20', status: 'aberta' },
-  ]
-  localStorage.setItem('vb_competencias', JSON.stringify(competencias))
-
-  // 8 tarefas: client-001 e client-003 × 4 etapas do PGDAS-D
-  // Etapa 1 e 2 de client-001 já concluídas para ilustrar o painel
-  const tarefas: TarefaObrigacao[] = [
-    { id: 'tar-001', tenant_id: TENANT_ID, cliente_id: 'client-001', competencia_id: 'comp-001', etapa_id: 'etapa-001', data_prevista: '2026-10-10', status: 'concluida', data_conclusao: '2026-10-09' },
-    { id: 'tar-002', tenant_id: TENANT_ID, cliente_id: 'client-001', competencia_id: 'comp-001', etapa_id: 'etapa-002', data_prevista: '2026-10-16', status: 'concluida', data_conclusao: '2026-10-15' },
-    { id: 'tar-003', tenant_id: TENANT_ID, cliente_id: 'client-001', competencia_id: 'comp-001', etapa_id: 'etapa-003', data_prevista: '2026-10-18', status: 'pendente' },
-    { id: 'tar-004', tenant_id: TENANT_ID, cliente_id: 'client-001', competencia_id: 'comp-001', etapa_id: 'etapa-004', data_prevista: '2026-10-20', status: 'pendente' },
-    { id: 'tar-005', tenant_id: TENANT_ID, cliente_id: 'client-003', competencia_id: 'comp-001', etapa_id: 'etapa-001', data_prevista: '2026-10-10', status: 'concluida', data_conclusao: '2026-10-10' },
-    { id: 'tar-006', tenant_id: TENANT_ID, cliente_id: 'client-003', competencia_id: 'comp-001', etapa_id: 'etapa-002', data_prevista: '2026-10-16', status: 'pendente' },
-    { id: 'tar-007', tenant_id: TENANT_ID, cliente_id: 'client-003', competencia_id: 'comp-001', etapa_id: 'etapa-003', data_prevista: '2026-10-18', status: 'pendente' },
-    { id: 'tar-008', tenant_id: TENANT_ID, cliente_id: 'client-003', competencia_id: 'comp-001', etapa_id: 'etapa-004', data_prevista: '2026-10-20', status: 'pendente' },
-  ]
-  localStorage.setItem('vb_tarefas_obrigacao', JSON.stringify(tarefas))
-
-  // --- Templates de Demandas Específicas ---
-  const demandaTemplates: DemandaTemplate[] = [
-    { id: 'dt-001', tenant_id: TENANT_ID, nome: 'Alteração de Contrato Social', descricao: 'Alteração de dados societários na Junta Comercial', categoria: 'societario', prazo_dias_padrao: 15, valor_sugerido: 450, ativo: true },
-    { id: 'dt-002', tenant_id: TENANT_ID, nome: 'Abertura de Empresa', descricao: 'Constituição de nova pessoa jurídica', categoria: 'societario', prazo_dias_padrao: 25, valor_sugerido: 900, ativo: true },
-    { id: 'dt-003', tenant_id: TENANT_ID, nome: 'Declaração IRPF', descricao: 'Elaboração e transmissão da Declaração de Ajuste Anual', categoria: 'fiscal', prazo_dias_padrao: 10, valor_sugerido: 250, ativo: true },
-    { id: 'dt-004', tenant_id: TENANT_ID, nome: 'Admissão de Funcionário', descricao: 'Registro de novo colaborador na empresa', categoria: 'dp', prazo_dias_padrao: 5, valor_sugerido: 80, ativo: true },
-  ]
-  localStorage.setItem('vb_demanda_templates', JSON.stringify(demandaTemplates))
-
-  const etapasDemandaTemplate: EtapaDemandaTemplate[] = [
-    // Alteração de Contrato Social (dt-001)
-    { id: 'edt-001', tenant_id: TENANT_ID, template_id: 'dt-001', ordem: 1, nome: 'Coletar documentos dos sócios', prazo_relativo_dias: -12 },
-    { id: 'edt-002', tenant_id: TENANT_ID, template_id: 'dt-001', ordem: 2, nome: 'Elaborar minuta do contrato social', prazo_relativo_dias: -8 },
-    { id: 'edt-003', tenant_id: TENANT_ID, template_id: 'dt-001', ordem: 3, nome: 'Registro na Junta Comercial', prazo_relativo_dias: -3 },
-    { id: 'edt-004', tenant_id: TENANT_ID, template_id: 'dt-001', ordem: 4, nome: 'Entregar ao cliente', prazo_relativo_dias: 0 },
-    // Abertura de Empresa (dt-002)
-    { id: 'edt-005', tenant_id: TENANT_ID, template_id: 'dt-002', ordem: 1, nome: 'Pesquisa de viabilidade de nome', prazo_relativo_dias: -22 },
-    { id: 'edt-006', tenant_id: TENANT_ID, template_id: 'dt-002', ordem: 2, nome: 'Elaborar contrato social', prazo_relativo_dias: -18 },
-    { id: 'edt-007', tenant_id: TENANT_ID, template_id: 'dt-002', ordem: 3, nome: 'Registro na Junta Comercial', prazo_relativo_dias: -12 },
-    { id: 'edt-008', tenant_id: TENANT_ID, template_id: 'dt-002', ordem: 4, nome: 'Inscrição CNPJ na Receita Federal', prazo_relativo_dias: -5 },
-    { id: 'edt-009', tenant_id: TENANT_ID, template_id: 'dt-002', ordem: 5, nome: 'Alvará e licenças municipais', prazo_relativo_dias: 0 },
-    // Declaração IRPF (dt-003)
-    { id: 'edt-010', tenant_id: TENANT_ID, template_id: 'dt-003', ordem: 1, nome: 'Coletar documentos (informes, notas)', prazo_relativo_dias: -8 },
-    { id: 'edt-011', tenant_id: TENANT_ID, template_id: 'dt-003', ordem: 2, nome: 'Preencher declaração', prazo_relativo_dias: -4 },
-    { id: 'edt-012', tenant_id: TENANT_ID, template_id: 'dt-003', ordem: 3, nome: 'Revisar com cliente', prazo_relativo_dias: -2 },
-    { id: 'edt-013', tenant_id: TENANT_ID, template_id: 'dt-003', ordem: 4, nome: 'Transmitir à Receita Federal', prazo_relativo_dias: 0 },
-    // Admissão de Funcionário (dt-004)
-    { id: 'edt-014', tenant_id: TENANT_ID, template_id: 'dt-004', ordem: 1, nome: 'Coletar documentos e exame admissional', prazo_relativo_dias: -4 },
-    { id: 'edt-015', tenant_id: TENANT_ID, template_id: 'dt-004', ordem: 2, nome: 'Registrar na CTPS e e-Social', prazo_relativo_dias: -1 },
-    { id: 'edt-016', tenant_id: TENANT_ID, template_id: 'dt-004', ordem: 3, nome: 'Configurar na folha de pagamento', prazo_relativo_dias: 0 },
-  ]
-  localStorage.setItem('vb_etapas_demanda_template', JSON.stringify(etapasDemandaTemplate))
-
-  // --- Demanda de Exemplo: Padaria São Bento — Alteração de Contrato Social ---
-  const demandaExemplo: DemandaEspecifica = {
-    id: 'dem-001',
-    tenant_id: TENANT_ID,
-    cliente_id: 'client-001',
-    template_id: 'dt-001',
-    titulo: 'Alteração de Contrato Social — Entrada de novo sócio',
-    descricao: 'Cliente solicita inclusão de novo sócio com 30% de participação.',
-    categoria: 'societario',
-    valor: 450,
-    data_solicitacao: '2026-09-15',
-    data_prevista: '2026-09-30',
-    status: 'em_andamento',
-    criado_por: 'user-002',
-    criado_em: '2026-09-15T09:00:00.000Z',
-  }
-  localStorage.setItem('vb_demandas_especificas', JSON.stringify([demandaExemplo]))
-
-  const etapasDemandaExemplo: EtapaDemandaEspecifica[] = [
-    { id: 'ede-001', tenant_id: TENANT_ID, demanda_id: 'dem-001', ordem: 1, nome: 'Coletar documentos dos sócios', data_prevista: '2026-09-18', data_conclusao: '2026-09-17', status: 'concluida' },
-    { id: 'ede-002', tenant_id: TENANT_ID, demanda_id: 'dem-001', ordem: 2, nome: 'Elaborar minuta do contrato social', data_prevista: '2026-09-22', status: 'em_andamento' },
-    { id: 'ede-003', tenant_id: TENANT_ID, demanda_id: 'dem-001', ordem: 3, nome: 'Registro na Junta Comercial', data_prevista: '2026-09-27', status: 'pendente' },
-    { id: 'ede-004', tenant_id: TENANT_ID, demanda_id: 'dem-001', ordem: 4, nome: 'Entregar ao cliente', data_prevista: '2026-09-30', status: 'pendente' },
-  ]
-  localStorage.setItem('vb_etapas_demanda_especifica', JSON.stringify(etapasDemandaExemplo))
+  localStorage.setItem('vb_tarefas', JSON.stringify(tarefas))
 
   // Marca seed como executado
   localStorage.setItem(SEED_KEY, new Date().toISOString())

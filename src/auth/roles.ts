@@ -1,4 +1,4 @@
-import type { User, UserRole, ModuloEscritorio } from '@/domain/types'
+import type { User, UserRole, ModuloEscritorio, SubModuloTarefas, Tenant } from '@/domain/types'
 
 export const can = {
   uploadDocuments: (role: UserRole) => role !== 'cliente',
@@ -14,7 +14,7 @@ export const can = {
 }
 
 export const MODULOS_ESCRITORIO: ModuloEscritorio[] = [
-  'clientes', 'grupos', 'documentos', 'financeiro', 'obrigacoes', 'tarefas', 'demandas',
+  'clientes', 'grupos', 'documentos', 'financeiro', 'tarefas',
 ]
 
 export const moduloLabels: Record<ModuloEscritorio, string> = {
@@ -22,9 +22,12 @@ export const moduloLabels: Record<ModuloEscritorio, string> = {
   grupos: 'Grupos',
   documentos: 'Documentos',
   financeiro: 'Financeiro',
-  obrigacoes: 'Obrigações',
   tarefas: 'Tarefas',
-  demandas: 'Demandas',
+}
+
+export function podeAcessarSubModuloTarefas(tenant: Tenant | null | undefined, sub: SubModuloTarefas): boolean {
+  if (!tenant?.submodulos_tarefas || tenant.submodulos_tarefas.length === 0) return true
+  return tenant.submodulos_tarefas.includes(sub)
 }
 
 export function podeAcessarModulo(user: User, modulo: ModuloEscritorio): boolean {

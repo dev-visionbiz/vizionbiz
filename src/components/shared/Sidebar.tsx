@@ -1,34 +1,62 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, DollarSign, Settings,
   Home, FolderOpen, Receipt, ChevronLeft, ChevronRight, Pin, PinOff,
-  Network, UserCog, ClipboardList, CheckSquare, Briefcase,
+  UserCog, ClipboardList, CheckSquare, Layers, Workflow, ChevronDown, GitBranch,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
 import { useTenant } from '@/data/hooks/useTenant'
 import { usePortalAcesso } from '@/data/hooks/usePortalAcesso'
-import { podeAcessarModulo } from '@/auth/roles'
-import type { ModuloEscritorio } from '@/domain/types'
+import { podeAcessarModulo, podeAcessarSubModuloTarefas } from '@/auth/roles'
+import type { ModuloEscritorio, SubModuloTarefas } from '@/domain/types'
 
-const escritorioNavBase: { label: string; href: string; icon: React.ElementType; modulo?: ModuloEscritorio }[] = [
+type NavLink = {
+  label: string
+  href: string
+  icon: React.ElementType
+  modulo?: ModuloEscritorio
+  submodulo?: SubModuloTarefas
+}
+
+type NavGroup = {
+  isGroup: true
+  label: string
+  icon: React.ElementType
+  modulo?: ModuloEscritorio
+  children: NavLink[]
+}
+
+type NavEntry = NavLink | NavGroup
+
+const PROCESSOS_HREFS = ['/escritorio/tarefas', '/escritorio/ocorrencias', '/escritorio/rotinas', '/escritorio/fluxos']
+
+const escritorioNavBase: NavEntry[] = [
   { label: 'Dashboard', href: '/escritorio/dashboard', icon: LayoutDashboard },
-  { label: 'Tarefas', href: '/escritorio/tarefas', icon: CheckSquare, modulo: 'tarefas' },
-  { label: 'Clientes', href: '/escritorio/clientes', icon: Users, modulo: 'clientes' },
-  { label: 'Grupos', href: '/escritorio/grupos', icon: Network, modulo: 'grupos' },
-  { label: 'Documentos', href: '/escritorio/documentos', icon: FolderOpen, modulo: 'documentos' },
-  { label: 'Financeiro', href: '/escritorio/financeiro', icon: DollarSign, modulo: 'financeiro' },
-  { label: 'Obrigações', href: '/escritorio/obrigacoes', icon: ClipboardList, modulo: 'obrigacoes' },
-  { label: 'Demandas', href: '/escritorio/demandas', icon: Briefcase, modulo: 'demandas' },
+  {
+    isGroup: true,
+    label: 'Processos',
+    icon: Workflow,
+    modulo: 'tarefas',
+    children: [
+      { label: 'Tarefas',     href: '/escritorio/tarefas',     icon: CheckSquare,  modulo: 'tarefas' },
+      { label: 'Ocorrências', href: '/escritorio/ocorrencias', icon: Layers,       modulo: 'tarefas', submodulo: 'ocorrencias' },
+      { label: 'Rotinas',     href: '/escritorio/rotinas',     icon: ClipboardList, modulo: 'tarefas', submodulo: 'rotinas' },
+      { label: 'Fluxos',      href: '/escritorio/fluxos',      icon: GitBranch,    modulo: 'tarefas' },
+    ],
+  },
+  { label: 'Clientes',      href: '/escritorio/clientes',      icon: Users,      modulo: 'clientes' },
+  { label: 'Documentos',    href: '/escritorio/documentos',    icon: FolderOpen, modulo: 'documentos' },
+  { label: 'Financeiro',    href: '/escritorio/financeiro',    icon: DollarSign, modulo: 'financeiro' },
   { label: 'Configurações', href: '/escritorio/configuracoes', icon: Settings },
 ]
 
 const clienteNavBase: { label: string; href: string; icon: React.ElementType; somenteResponsavel?: boolean }[] = [
-  { label: 'Início', href: '/portal/inicio', icon: Home },
-  { label: 'Documentos', href: '/portal/documentos', icon: FolderOpen },
-  { label: 'Financeiro', href: '/portal/financeiro', icon: Receipt },
-  { label: 'Equipe', href: '/portal/equipe', icon: UserCog, somenteResponsavel: true },
+  { label: 'Início',     href: '/portal/inicio',      icon: Home },
+  { label: 'Documentos', href: '/portal/documentos',  icon: FolderOpen },
+  { label: 'Financeiro', href: '/portal/financeiro',  icon: Receipt },
+  { label: 'Equipe',     href: '/portal/equipe',      icon: UserCog, somenteResponsavel: true },
 ]
 
 interface SidebarProps {
@@ -47,26 +75,132 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
   const isCliente = currentUser?.papel === 'cliente'
   const { secoesPermitidas, papelPortal } = usePortalAcesso()
 
-  const nav = isCliente
-    ? clienteNavBase.filter((item) => {
-        if (item.somenteResponsavel && papelPortal !== 'responsavel') return false
-        if (!item.somenteResponsavel && item.href !== '/portal/inicio') {
-          const secao = item.href.split('/').pop() as 'documentos' | 'financeiro'
-          return secoesPermitidas.includes(secao)
+  const grupoProcessosAtivo = PROCESSOS_HREFS.some(h => location.pathname.startsWith(h))
+  const [processosAberto, setProcessosAberto] = useState(grupoProcessosAtivo)
+
+  useEffect(() => {
+    if (grupoProcessosAtivo) setProcessosAberto(true)
+  }, [grupoProcessosAtivo])
+
+  const nav: (NavLink | NavGroup)[] = isCliente
+    ? clienteNavBase
+        .filter((item) => {
+          if (item.somenteResponsavel && papelPortal !== 'responsavel') return false
+          if (!item.somenteResponsavel && item.href !== '/portal/inicio') {
+            const secao = item.href.split('/').pop() as 'documentos' | 'financeiro'
+            return secoesPermitidas.includes(secao)
+          }
+          return true
+        })
+        .map(({ label, href, icon }) => ({ label, href, icon }))
+    : escritorioNavBase.reduce<(NavLink | NavGroup)[]>((acc, entry) => {
+        if (!currentUser) return acc
+        if ('isGroup' in entry) {
+          if (entry.modulo && !podeAcessarModulo(currentUser, entry.modulo)) return acc
+          const visibleChildren = entry.children.filter(child => {
+            if (!child.modulo) return true
+            if (!podeAcessarModulo(currentUser, child.modulo)) return false
+            if (child.submodulo && !podeAcessarSubModuloTarefas(tenant, child.submodulo)) return false
+            return true
+          })
+          if (visibleChildren.length === 0) return acc
+          if (visibleChildren.length === 1) { acc.push(visibleChildren[0]); return acc }
+          acc.push({ ...entry, children: visibleChildren })
+        } else {
+          const item = entry as NavLink
+          if (!item.modulo) { acc.push(item); return acc }
+          if (!podeAcessarModulo(currentUser, item.modulo)) return acc
+          if (item.submodulo && !podeAcessarSubModuloTarefas(tenant, item.submodulo)) return acc
+          acc.push(item)
         }
-        return true
-      })
-    : escritorioNavBase.filter((item) => {
-        if (!item.modulo) return true // dashboard e configurações sempre visíveis
-        if (!currentUser) return false
-        return podeAcessarModulo(currentUser, item.modulo)
-      })
+        return acc
+      }, [])
 
   const [hoverExpanded, setHoverExpanded] = useState(false)
 
   const isExpanded = !collapsed || pinned
   const isHoverMode = collapsed && !pinned && hoverExpanded
   const showFull = isExpanded || isHoverMode
+  const showProcessosOpen = processosAberto || isHoverMode
+
+  function renderNavEntries(entries: (NavLink | NavGroup)[], mobile = false) {
+    return entries.map((entry) => {
+      if ('isGroup' in entry) {
+        const grupoAtivo = entry.children.some(c => location.pathname.startsWith(c.href))
+        const aberto = mobile ? processosAberto : showProcessosOpen
+        return (
+          <div key={entry.label}>
+            <button
+              onClick={() => setProcessosAberto(prev => !prev)}
+              title={!showFull && !mobile ? entry.label : undefined}
+              className={cn(
+                'w-full flex items-center rounded-md text-sm font-medium transition-colors',
+                showFull || mobile ? 'justify-between px-3' : 'justify-center p-2',
+                mobile ? 'py-3 min-h-[44px]' : 'py-2',
+                grupoAtivo
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              <span className={cn('flex items-center', showFull || mobile ? 'gap-3' : '')}>
+                <entry.icon className="h-5 w-5 shrink-0" />
+                {(showFull || mobile) && entry.label}
+              </span>
+              {(showFull || mobile) && (
+                <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform duration-200', aberto && 'rotate-180')} />
+              )}
+            </button>
+            {(showFull || mobile) && aberto && (
+              <div className="mt-0.5 space-y-0.5">
+                {entry.children.map(child => {
+                  const active = location.pathname.startsWith(child.href)
+                  return (
+                    <Link
+                      key={child.href}
+                      to={child.href}
+                      onClick={mobile ? onCloseMobile : undefined}
+                      className={cn(
+                        'flex items-center gap-3 pl-9 pr-3 rounded-md text-sm font-medium transition-colors',
+                        mobile ? 'py-2.5 min-h-[44px]' : 'py-1.5',
+                        active
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                      )}
+                    >
+                      <child.icon className="h-4 w-4 shrink-0" />
+                      {child.label}
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      }
+
+      const item = entry as NavLink
+      const active = location.pathname.startsWith(item.href)
+      return (
+        <Link
+          key={item.href}
+          to={item.href}
+          onClick={mobile ? onCloseMobile : undefined}
+          title={!showFull && !mobile ? item.label : undefined}
+          className={cn(
+            'flex items-center rounded-md text-sm font-medium transition-colors',
+            showFull || mobile ? 'gap-3 px-3' : 'justify-center p-2',
+            mobile ? 'py-3 min-h-[44px]' : 'py-2',
+            active
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          )}
+        >
+          <item.icon className="h-5 w-5 shrink-0" />
+          {(showFull || mobile) && item.label}
+        </Link>
+      )
+    })
+  }
 
   return (
     <>
@@ -121,26 +255,7 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
           </div>
 
           <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-            {nav.map((item) => {
-              const active = location.pathname.startsWith(item.href)
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  title={!showFull ? item.label : undefined}
-                  className={cn(
-                    'flex items-center rounded-md text-sm font-medium transition-colors',
-                    showFull ? 'gap-3 px-3 py-2' : 'justify-center p-2',
-                    active
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  )}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  {showFull && item.label}
-                </Link>
-              )
-            })}
+            {renderNavEntries(nav)}
           </nav>
         </aside>
       </div>
@@ -165,25 +280,7 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
           </button>
         </div>
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {nav.map((item) => {
-            const active = location.pathname.startsWith(item.href)
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={onCloseMobile}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors min-h-[44px]',
-                  active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                )}
-              >
-                <item.icon className="h-5 w-5 shrink-0" />
-                {item.label}
-              </Link>
-            )
-          })}
+          {renderNavEntries(nav, true)}
         </nav>
       </aside>
     </>

@@ -1,10 +1,12 @@
 import type {
-  Carteira, Client, ClientStatus, ClientVinculo, Competencia, Contract, ContratoItem, Document,
-  DocumentEventRecord, DocumentType, EmpresaPessoa, EtapaObrigacao, FichaBloco, FichaCampo,
-  Folder, Grupo, GrupoEmpresa, HistoricoStatusCliente, Invoice, InvoiceStatus, ClienteObrigacao,
-  LogAtividadeCliente, Obrigacao, Payment, BillingPolicy, Pessoa, Plano, Renegotiation, Servico,
-  ShareLink, TarefaObrigacao, Tenant, User,
-  DemandaTemplate, EtapaDemandaTemplate, DemandaEspecifica, EtapaDemandaEspecifica, DemandaStatus
+  Carteira, Client, ClientStatus, ClientVinculo, Contract, ContratoItem, Document,
+  DocumentEventRecord, DocumentType, EmpresaPessoa, FichaBloco, FichaCampo,
+  Folder, Grupo, GrupoEmpresa, HistoricoStatusCliente, Invoice, InvoiceStatus,
+  LogAtividadeCliente, Payment, BillingPolicy, Pessoa, Plano, Renegotiation, Servico,
+  ShareLink, Tenant, User,
+  HistoricoTarefa,
+  Fluxo, FluxoTarefa, Rotina, RotinaCliente, Ciclo, Ocorrencia, Tarefa, OcorrenciaStatus,
+  OcorrenciaDocumento
 } from '@/domain/types'
 
 export interface Repository<T> {
@@ -133,49 +135,56 @@ export interface FichaCampoRepository extends Repository<FichaCampo> {
   deleteByBloco(blocoId: string): Promise<void>
 }
 
-export interface ObrigacaoRepository extends Repository<Obrigacao> {
-  findAtivas(tenantId: string): Promise<Obrigacao[]>
-}
-
-export interface EtapaObrigacaoRepository extends Repository<EtapaObrigacao> {
-  findByObrigacao(tenantId: string, obrigacaoId: string): Promise<EtapaObrigacao[]>
-}
-
-export interface ClienteObrigacaoRepository extends Repository<ClienteObrigacao> {
-  findByCliente(tenantId: string, clienteId: string): Promise<ClienteObrigacao[]>
-  findByObrigacao(tenantId: string, obrigacaoId: string): Promise<ClienteObrigacao[]>
-  findAtivos(tenantId: string, obrigacaoId: string): Promise<ClienteObrigacao[]>
-}
-
-export interface CompetenciaRepository extends Repository<Competencia> {
-  findByObrigacao(tenantId: string, obrigacaoId: string): Promise<Competencia[]>
-  findByPeriodo(tenantId: string, obrigacaoId: string, periodo: string): Promise<Competencia | null>
-}
-
-export interface TarefaObrigacaoRepository extends Repository<TarefaObrigacao> {
-  findByCompetencia(tenantId: string, competenciaId: string): Promise<TarefaObrigacao[]>
-  findByCompetenciaEtapa(tenantId: string, competenciaId: string, etapaId: string): Promise<TarefaObrigacao[]>
-  findByCliente(tenantId: string, clienteId: string): Promise<TarefaObrigacao[]>
-}
-
 export interface LogAtividadeClienteRepository {
   findByClient(tenantId: string, clientId: string): Promise<LogAtividadeCliente[]>
   create(item: LogAtividadeCliente): Promise<LogAtividadeCliente>
 }
 
-export interface DemandaTemplateRepository extends Repository<DemandaTemplate> {
-  findAtivas(tenantId: string): Promise<DemandaTemplate[]>
+export interface HistoricoTarefaRepository {
+  findByTarefa(tenantId: string, tarefaId: string): Promise<HistoricoTarefa[]>
+  create(item: HistoricoTarefa): Promise<HistoricoTarefa>
 }
 
-export interface EtapaDemandaTemplateRepository extends Repository<EtapaDemandaTemplate> {
-  findByTemplate(tenantId: string, templateId: string): Promise<EtapaDemandaTemplate[]>
+// --- Repositórios do módulo unificado de Tarefas ---
+
+export interface FluxoRepository extends Repository<Fluxo> {
+  findAtivos(tenantId: string): Promise<Fluxo[]>
 }
 
-export interface DemandaEspecificaRepository extends Repository<DemandaEspecifica> {
-  findByCliente(tenantId: string, clienteId: string): Promise<DemandaEspecifica[]>
-  findByStatus(tenantId: string, status: DemandaStatus): Promise<DemandaEspecifica[]>
+export interface FluxoTarefaRepository extends Repository<FluxoTarefa> {
+  findByFluxo(tenantId: string, fluxoId: string): Promise<FluxoTarefa[]>
 }
 
-export interface EtapaDemandaEspecificaRepository extends Repository<EtapaDemandaEspecifica> {
-  findByDemanda(tenantId: string, demandaId: string): Promise<EtapaDemandaEspecifica[]>
+export interface RotinaRepository extends Repository<Rotina> {
+  findAtivas(tenantId: string): Promise<Rotina[]>
+}
+
+export interface RotinaClienteRepository extends Repository<RotinaCliente> {
+  findByRotina(tenantId: string, rotinaId: string): Promise<RotinaCliente[]>
+  findByCliente(tenantId: string, clienteId: string): Promise<RotinaCliente[]>
+  findAtivos(tenantId: string, rotinaId: string): Promise<RotinaCliente[]>
+}
+
+export interface CicloRepository extends Repository<Ciclo> {
+  findByRotina(tenantId: string, rotinaId: string): Promise<Ciclo[]>
+  findByPeriodo(tenantId: string, rotinaId: string, periodo: string): Promise<Ciclo | null>
+}
+
+export interface OcorrenciaRepository extends Repository<Ocorrencia> {
+  findByCliente(tenantId: string, clienteId: string): Promise<Ocorrencia[]>
+  findByStatus(tenantId: string, status: OcorrenciaStatus): Promise<Ocorrencia[]>
+  findByLote(tenantId: string, loteId: string): Promise<Ocorrencia[]>
+  findByCiclo(tenantId: string, cicloId: string): Promise<Ocorrencia[]>
+}
+
+export interface TarefaRepository extends Repository<Tarefa> {
+  findByOcorrencia(tenantId: string, ocorrenciaId: string): Promise<Tarefa[]>
+  findByCliente(tenantId: string, clienteId: string): Promise<Tarefa[]>
+}
+
+export interface OcorrenciaDocumentoRepository extends Repository<OcorrenciaDocumento> {
+  findByOcorrencia(tenantId: string, ocorrenciaId: string): Promise<OcorrenciaDocumento[]>
+  findByTarefa(tenantId: string, tarefaId: string): Promise<OcorrenciaDocumento[]>
+  findByCliente(tenantId: string, clienteId: string): Promise<OcorrenciaDocumento[]>
+  findByDocument(documentId: string): Promise<OcorrenciaDocumento[]>
 }

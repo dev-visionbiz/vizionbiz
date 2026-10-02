@@ -1,7 +1,8 @@
 export type UserRole = 'escritorio_admin' | 'escritorio_colaborador' | 'cliente'
 export type ContrataNatureza = 'principal' | 'avulso' | 'gestao_provisoria' | 'emissao'
 export type PortalSecao = 'inicio' | 'documentos' | 'financeiro'
-export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'obrigacoes' | 'tarefas' | 'demandas'
+export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'tarefas'
+export type SubModuloTarefas = 'ocorrencias' | 'rotinas'
 export type PapelPortalCliente = 'responsavel' | 'membro'
 export type InvoiceStatus = 'aberta' | 'vencida' | 'paga' | 'cancelada' | 'renegociada'
 export type InvoiceOrigin = 'contrato' | 'avulsa' | 'renegociacao'
@@ -54,6 +55,7 @@ export interface Tenant {
   contador_email?: string
   contador_telefone?: string
   modulos?: ModuloSlug[]
+  submodulos_tarefas?: SubModuloTarefas[]
   vocabulario?: Partial<Vocabulario>
 }
 
@@ -443,74 +445,79 @@ export interface LogAtividadeCliente {
   em: string
 }
 
+// --- Checklist ---
+
+export interface ChecklistItemTemplate {
+  id: string
+  ordem: number
+  nome: string
+}
+
+export interface ChecklistItemProgresso {
+  id: string
+  item_id?: string
+  nome: string
+  ordem: number
+  concluido: boolean
+  concluido_em?: string
+  inicio_em?: string
+  tempo_estimado_min?: number
+  usar_timer?: boolean
+  timer_pausado_em?: string
+  tempo_pausado_acumulado_ms?: number
+  origem: 'template' | 'custom'
+}
+
 // --- Módulo de Obrigações ---
 
 export type Periodicidade = 'mensal' | 'trimestral' | 'anual'
 export type TarefaStatus = 'pendente' | 'em_andamento' | 'concluida' | 'atrasada' | 'nao_se_aplica' | 'impedido'
 export type CompetenciaStatus = 'aberta' | 'encerrada'
 
-export interface Obrigacao {
+// --- Histórico de Tarefas ---
+
+export type HistoricoTipoEvento =
+  | 'criacao'
+  | 'status_alterado'
+  | 'responsavel_alterado'
+  | 'impedimento_registrado'
+  | 'impedimento_resolvido'
+  | 'comentario'
+  | 'checklist_completo'
+  | 'inicio_item_checklist'
+  | 'conclusao_item_checklist'
+  | 'pausa_item_checklist'
+  | 'retomada_item_checklist'
+  | 'cancelamento_item_checklist'
+
+export interface HistoricoTarefa {
   id: string
   tenant_id: string
-  nome: string
-  periodicidade: Periodicidade
-  regra_vencimento: string
-  regime?: string
-  ativo: boolean
+  tarefa_tipo: 'tarefa'
+  tarefa_id: string
+  tipo: HistoricoTipoEvento
+  autor_id?: string
+  autor_nome?: string
+  conteudo?: string
+  meta?: {
+    status_anterior?: TarefaStatus
+    status_novo?: TarefaStatus
+    responsavel_anterior_nome?: string
+    responsavel_novo_nome?: string
+    checklist_item_nome?: string
+    tempo_decorrido_min?: number
+  }
+  criado_em: string
 }
 
-export interface EtapaObrigacao {
-  id: string
-  tenant_id: string
-  obrigacao_id: string
-  ordem: number
-  nome: string
-  descricao?: string
-  prazo_relativo_dias: number
-  responsavel_padrao?: string
-}
-
-export interface ClienteObrigacao {
-  id: string
-  tenant_id: string
-  cliente_id: string
-  obrigacao_id: string
-  ativo: boolean
-  data_inicio?: string
-  data_fim?: string
-}
-
-export interface Competencia {
-  id: string
-  tenant_id: string
-  obrigacao_id: string
-  periodo: string
-  data_vencimento: string
-  status: CompetenciaStatus
-}
-
-export interface TarefaObrigacao {
-  id: string
-  tenant_id: string
-  cliente_id: string
-  competencia_id: string
-  etapa_id: string
-  data_prevista: string
-  data_conclusao?: string
-  status: TarefaStatus
-  responsavel?: string
-  observacoes?: string
-  impedimento_descricao?: string
-  impedimento_responsavel?: string
-  impedimento_data?: string
-}
-
-// --- Módulo de Demandas Específicas ---
+// --- Módulo Unificado de Tarefas ---
 
 export type CategoriaDemanda = 'societario' | 'fiscal' | 'dp' | 'contabil' | 'outros'
-export type DemandaStatus = 'pendente' | 'em_andamento' | 'concluida' | 'cancelada'
 
-export interface DemandaTemplate {
+export type OcorrenciaStatus = 'pendente' | 'em_andamento' | 'concluida' | 'cancelada'
+export type OcorrenciaOrigem = 'manual' | 'fluxo' | 'rotina'
+
+export interface Fluxo {
   id: string
   tenant_id: string
   nome: string
@@ -522,40 +529,103 @@ export interface DemandaTemplate {
   ativo: boolean
 }
 
-export interface EtapaDemandaTemplate {
+export type OcorrenciaDocumentoTipo = 'entrada' | 'saida' | 'referencia'
+
+export interface OcorrenciaDocumentoConfig {
+  id: string
+  label: string
+  tipo: OcorrenciaDocumentoTipo
+  obrigatorio: boolean
+  pasta_padrao_id?: string
+  tipo_documento_id?: string
+}
+
+export interface OcorrenciaDocumento {
   id: string
   tenant_id: string
-  template_id: string
+  ocorrencia_id: string
+  client_id: string
+  tarefa_id?: string
+  config_id?: string
+  document_id?: string
+  storage_key?: string
+  nome: string
+  tipo: OcorrenciaDocumentoTipo
+  criado_em: string
+  criado_por: string
+}
+
+export interface FluxoTarefa {
+  id: string
+  tenant_id: string
+  fluxo_id: string
   ordem: number
   nome: string
   descricao?: string
   prazo_relativo_dias: number
   responsavel_padrao?: string
+  checklist?: ChecklistItemTemplate[]
+  documentos_config?: OcorrenciaDocumentoConfig[]
 }
 
-export interface DemandaEspecifica {
+export interface Rotina {
   id: string
   tenant_id: string
+  nome: string
+  fluxo_id?: string
+  periodicidade: Periodicidade
+  regra_vencimento: string
+  regime?: string
+  ativo: boolean
+  criado_em?: string
+}
+
+export interface RotinaCliente {
+  id: string
+  tenant_id: string
+  rotina_id: string
   cliente_id: string
-  template_id?: string
+  ativo: boolean
+  data_inicio?: string
+  data_fim?: string
+}
+
+export interface Ciclo {
+  id: string
+  tenant_id: string
+  rotina_id: string
+  periodo: string
+  data_vencimento: string
+  status: CompetenciaStatus
+}
+
+export interface Ocorrencia {
+  id: string
+  tenant_id: string
   titulo: string
-  descricao?: string
-  categoria: CategoriaDemanda
+  cliente_id?: string
+  origem: OcorrenciaOrigem
+  fluxo_id?: string
+  rotina_id?: string
+  ciclo_id?: string
+  lote_id?: string
+  categoria?: CategoriaDemanda
   valor?: number
-  data_solicitacao: string
+  data_solicitacao?: string
   data_prevista: string
   data_conclusao?: string
-  status: DemandaStatus
+  status: OcorrenciaStatus
   responsavel_id?: string
   criado_por: string
   criado_em: string
   invoice_id?: string
 }
 
-export interface EtapaDemandaEspecifica {
+export interface Tarefa {
   id: string
   tenant_id: string
-  demanda_id: string
+  ocorrencia_id: string
+  fluxo_tarefa_id?: string
   ordem: number
   nome: string
   descricao?: string
@@ -567,4 +637,6 @@ export interface EtapaDemandaEspecifica {
   impedimento_descricao?: string
   impedimento_responsavel?: string
   impedimento_data?: string
+  checklist_progresso?: ChecklistItemProgresso[]
+  documentos_config?: OcorrenciaDocumentoConfig[]
 }

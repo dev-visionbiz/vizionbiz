@@ -116,9 +116,8 @@ export default function GruposLista() {
   const isPending = createGrupo.isPending || updateGrupo.isPending
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Grupos</h1>
+    <div className="space-y-4">
+      <div className="flex justify-end">
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" /> Novo Grupo
         </Button>

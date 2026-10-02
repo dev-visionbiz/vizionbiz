@@ -17,6 +17,7 @@ import {
   Briefcase,
   LayoutList,
   HardDrive,
+  Network,
 } from 'lucide-react'
 import DadosEscritorio from './DadosEscritorio'
 import PoliticaCobranca from './PoliticaCobranca'
@@ -26,6 +27,7 @@ import Usuarios from './Usuarios'
 import Servicos from './Servicos'
 import Planos from './Planos'
 import Armazenamento from './Armazenamento'
+import GruposLista from '../Grupos/GruposLista'
 
 const sections = [
   {
@@ -83,6 +85,13 @@ const sections = [
     title: 'Armazenamento',
     description: 'Provedor de arquivos: VizionBiz Padrão, Google Drive e outros',
     content: <Armazenamento />,
+  },
+  {
+    value: 'grupos',
+    icon: Network,
+    title: 'Grupos',
+    description: 'Grupos econômicos, carteiras, segmentos e tags para classificar clientes',
+    content: <GruposLista />,
   },
 ]
 

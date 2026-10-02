@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { BottomNav } from './BottomNav'
 import { Toaster } from '@/components/ui/toaster'
+import { PomodoroProvider } from '@/context/PomodoroContext'
 
 const WIDE_CONTENT_ROUTES = ['/escritorio/documentos', '/portal/documentos']
 
@@ -75,33 +76,35 @@ export function AppLayout() {
   const pageTitle = getPageTitle(location.pathname)
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onPointerDown={handleBackdropPointerDown}
-          onPointerUp={handleBackdropPointerUp}
+    <PomodoroProvider>
+      <div className="flex h-screen overflow-hidden">
+        {mobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+            onPointerDown={handleBackdropPointerDown}
+            onPointerUp={handleBackdropPointerUp}
+          />
+        )}
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          pinned={sidebarPinned}
+          mobileOpen={mobileSidebarOpen}
+          onToggleCollapse={handleToggleCollapse}
+          onTogglePin={handleTogglePin}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
         />
-      )}
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        pinned={sidebarPinned}
-        mobileOpen={mobileSidebarOpen}
-        onToggleCollapse={handleToggleCollapse}
-        onTogglePin={handleTogglePin}
-        onCloseMobile={() => setMobileSidebarOpen(false)}
-      />
-      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-        <Header
-          onMenuToggle={() => setMobileSidebarOpen((o) => !o)}
-          pageTitle={pageTitle}
-        />
-        <main className="flex-1 overflow-auto p-4 md:p-6 min-h-0 pb-20 lg:pb-6">
-          <Outlet />
-        </main>
+        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+          <Header
+            onMenuToggle={() => setMobileSidebarOpen((o) => !o)}
+            pageTitle={pageTitle}
+          />
+          <main className="flex-1 overflow-auto p-4 md:p-6 min-h-0 pb-20 lg:pb-6">
+            <Outlet />
+          </main>
+        </div>
+        <BottomNav onOpenMenu={() => setMobileSidebarOpen(true)} />
+        <Toaster />
       </div>
-      <BottomNav onOpenMenu={() => setMobileSidebarOpen(true)} />
-      <Toaster />
-    </div>
+    </PomodoroProvider>
   )
 }

@@ -4,6 +4,8 @@ import { AuthProvider } from '@/auth/AuthProvider'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 import { router } from '@/router'
 import { runSeed } from '@/data/seed'
+import { migrarDemandas } from '@/lib/migrations/migrarDemandas'
+import { migrarObrigacoes } from '@/lib/migrations/migrarObrigacoes'
 import { useEffect } from 'react'
 
 const queryClient = new QueryClient({
@@ -18,6 +20,8 @@ const queryClient = new QueryClient({
 function AppInner() {
   useEffect(() => {
     runSeed()
+    migrarDemandas()
+    migrarObrigacoes()
   }, [])
 
   return <RouterProvider router={router} />

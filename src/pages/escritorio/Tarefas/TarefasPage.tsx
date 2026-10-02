@@ -1,91 +1,142 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
-import { CheckSquare, Clock, AlertTriangle, Users, Inbox } from 'lucide-react'
+import { Clock, AlertTriangle, Users, Inbox, CheckCircle2, List, PlayCircle, LayoutDashboard, Plus, SlidersHorizontal, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
-} from '@/components/ui/select'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/auth/AuthProvider'
 import { useClients } from '@/data/hooks/useClients'
-import { useObrigacoes } from '@/data/hooks/useObrigacoes'
-import { useTodasCompetencias } from '@/data/hooks/useCompetencias'
-import { useTodasEtapas } from '@/data/hooks/useEtapasObrigacao'
-import { useTarefasTenant, useUpdateTarefa, useConcluirTarefas } from '@/data/hooks/useTarefasObrigacao'
-import { useDemandas, useTodasEtapasDemanda, useUpdateEtapaDemanda, useConcluirEtapaDemanda } from '@/data/hooks/useDemandas'
+import { useTodasTarefas, useOcorrencias, useUpdateTarefaNova, useConcluirTarefa } from '@/data/hooks/useOcorrencias'
+import { useRegistrarHistoricoTarefa } from '@/data/hooks/useHistoricoTarefa'
 import { useUsers } from '@/data/hooks/useUsers'
-import { formatDate } from '@/lib/utils'
-import type { TarefaStatus } from '@/domain/types'
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop'
+import { formatDate, cn } from '@/lib/utils'
+import type { TarefaStatus, Ocorrencia } from '@/domain/types'
+import PainelRotinaModal from './PainelRotinaModal'
+import CatalogoRotinasModal from './CatalogoRotinasModal'
+import { NovaOcorrenciaDialog } from '../Ocorrencias/NovaOcorrenciaDialog'
+import { OcorrenciaDetalheDialog } from '../Ocorrencias/OcorrenciaDetalheDialog'
+import {
+  type Urgencia, type TarefaUnificada,
+  statusConfig, urgenciaConfig, calcularUrgencia,
+  TarefaDetalheConteudo,
+} from './TarefaDetalhe'
 
-// ─── Tipos ──────────────────────────────────────────────────────────────────
+// ─── ClienteCombobox ─────────────────────────────────────────────────────────
 
-type Urgencia = 'critico' | 'alta' | 'media' | 'normal'
+function ClienteCombobox({
+  clientes,
+  value,
+  onChange,
+}: {
+  clientes: { id: string; razao_social: string }[]
+  value: string
+  onChange: (id: string) => void
+}) {
+  const selected   = clientes.find(c => c.id === value)
+  const [query, setQuery]   = useState('')
+  const [open, setOpen]     = useState(false)
+  const containerRef        = useRef<HTMLDivElement>(null)
 
-interface TarefaUnificada {
-  id: string
-  tipo: 'obrigacao' | 'demanda'
-  clienteNome: string
-  clienteId: string
-  titulo: string        // nome da etapa
-  subtitulo: string     // nome da obrigação ou da demanda
-  dataPrevista: string
-  dataConclusao?: string
-  status: TarefaStatus
-  responsavelId: string
-  responsavelNome: string
-  urgencia: Urgencia
-  descricao?: string
-  observacoes?: string
-  // Campos de impedimento
-  impedimentoDescricao?: string
-  impedimentoResponsavel?: string   // id do responsável pela resolução
-  impedimentoResponsavelNome?: string
-  impedimentoData?: string
-  // Referências
-  tarefaObrigacaoId?: string
-  etapaDemandaId?: string
-  demandaId?: string
+  useEffect(() => {
+    if (!open) setQuery('')
+  }, [open])
+
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [])
+
+  const filtered = useMemo(() => {
+    if (!query) return clientes
+    const q = query.toLowerCase()
+    return clientes.filter(c => c.razao_social.toLowerCase().includes(q))
+  }, [clientes, query])
+
+  function handleSelect(c: { id: string; razao_social: string }) {
+    onChange(c.id)
+    setOpen(false)
+  }
+
+  function handleClear(e: React.MouseEvent) {
+    e.stopPropagation()
+    onChange('')
+    setOpen(false)
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div
+        className="flex items-center h-8 rounded-md border border-input bg-background text-sm ring-offset-background cursor-pointer"
+        onClick={() => setOpen(o => !o)}
+      >
+        {open ? (
+          <input
+            autoFocus
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onClick={e => e.stopPropagation()}
+            placeholder="Buscar cliente..."
+            className="flex-1 px-3 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+          />
+        ) : (
+          <span className={cn('flex-1 px-3 truncate', !selected && 'text-muted-foreground')}>
+            {selected?.razao_social ?? 'Todos os clientes'}
+          </span>
+        )}
+        {selected ? (
+          <button
+            className="px-2 text-muted-foreground hover:text-foreground"
+            onMouseDown={handleClear}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        ) : (
+          <span className="px-2 text-muted-foreground pointer-events-none">
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </span>
+        )}
+      </div>
+
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 min-w-[220px] bg-popover border rounded-md shadow-md max-h-[220px] overflow-y-auto">
+          {filtered.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado</p>
+          ) : (
+            filtered.map(c => (
+              <div
+                key={c.id}
+                className={cn(
+                  'px-3 py-1.5 text-sm cursor-pointer hover:bg-accent',
+                  value === c.id && 'bg-accent font-medium',
+                )}
+                onMouseDown={e => { e.preventDefault(); handleSelect(c) }}
+              >
+                {c.razao_social}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
-// ─── Status / urgência config ───────────────────────────────────────────────
-
-const statusConfig: Record<TarefaStatus, { label: string; className: string }> = {
-  pendente:      { label: 'Pendente',     className: 'bg-blue-100 text-blue-800 border-transparent' },
-  em_andamento:  { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent' },
-  concluida:     { label: 'Concluída',    className: 'bg-green-100 text-green-800 border-transparent' },
-  atrasada:      { label: 'Atrasada',     className: 'bg-red-100 text-red-800 border-transparent' },
-  nao_se_aplica: { label: 'N/A',          className: 'bg-gray-100 text-gray-500 border-transparent' },
-  impedido:      { label: 'Impedida',     className: 'bg-orange-100 text-orange-800 border-transparent' },
-}
-
-const urgenciaConfig: Record<Urgencia, { label: string; className: string }> = {
-  critico: { label: 'Crítico', className: 'bg-red-600 text-white border-transparent' },
-  alta:    { label: 'Alta',    className: 'bg-orange-500 text-white border-transparent' },
-  media:   { label: 'Média',   className: 'bg-yellow-500 text-white border-transparent' },
-  normal:  { label: '',        className: '' },
-}
-
-function calcularUrgencia(status: TarefaStatus, dataPrevista: string): Urgencia {
-  // impedido usa urgência por prazo (não tem badge especial — igual obrigações)
-  if (status === 'atrasada') return 'critico'
-  if (status === 'concluida' || status === 'nao_se_aplica') return 'normal'
-  const hoje = new Date()
-  hoje.setHours(0, 0, 0, 0)
-  const prevista = new Date(dataPrevista + 'T00:00:00')
-  const diff = Math.ceil((prevista.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
-  if (diff < 0) return 'critico'
-  if (diff < 3) return 'alta'
-  if (diff < 7) return 'media'
-  return 'normal'
-}
+// ─── sortByUrgencia ──────────────────────────────────────────────────────────
 
 function sortByUrgencia(a: TarefaUnificada, b: TarefaUnificada): number {
   const ordem: Record<Urgencia, number> = { critico: 0, alta: 1, media: 2, normal: 3 }
@@ -94,7 +145,7 @@ function sortByUrgencia(a: TarefaUnificada, b: TarefaUnificada): number {
   return a.dataPrevista.localeCompare(b.dataPrevista)
 }
 
-// ─── Dialog de detalhe da tarefa ────────────────────────────────────────────
+// ─── Dialog wrapper (mobile) ─────────────────────────────────────────────────
 
 interface TarefaDetalheDialogProps {
   tarefa: TarefaUnificada | null
@@ -109,228 +160,26 @@ interface TarefaDetalheDialogProps {
     impResp?: string,
   ) => void
   onConcluir: (t: TarefaUnificada) => void
+  onVerOrigem: (t: TarefaUnificada) => void
   isSaving: boolean
 }
 
 function TarefaDetalheDialog({
-  tarefa, colaboradores, onClose, onSalvar, onConcluir, isSaving,
+  tarefa, colaboradores, onClose, onSalvar, onConcluir, onVerOrigem, isSaving,
 }: TarefaDetalheDialogProps) {
-  const { toast } = useToast()
-  const [editStatus,  setEditStatus]  = useState<TarefaStatus>(tarefa?.status ?? 'pendente')
-  const [editResp,    setEditResp]    = useState(tarefa?.responsavelId ?? '')
-  const [editObs,     setEditObs]     = useState(tarefa?.observacoes ?? '')
-  const [editImpDesc, setEditImpDesc] = useState(tarefa?.impedimentoDescricao ?? '')
-  const [editImpResp, setEditImpResp] = useState(tarefa?.impedimentoResponsavel ?? '')
-
   if (!tarefa) return null
-
-  const sc          = statusConfig[tarefa.status]
-  const isConcluida = tarefa.status === 'concluida'
-  const isImpedida  = tarefa.status === 'impedido'
-
-  // Responsável exibido: quando impedido, mostra quem resolve o impedimento
-  const respExibido = isImpedida
-    ? (tarefa.impedimentoResponsavelNome || '—')
-    : (tarefa.responsavelNome || '—')
-
-  function handleSalvar() {
-    if (!tarefa) return
-    if (editStatus === 'concluida') {
-      onConcluir(tarefa)
-      return
-    }
-    if (editStatus === 'impedido') {
-      if (!editImpDesc.trim()) {
-        toast({ title: 'Informe a descrição do impedimento', variant: 'destructive' })
-        return
-      }
-      if (!editImpResp) {
-        toast({ title: 'Atribua um responsável pela resolução', variant: 'destructive' })
-        return
-      }
-    }
-    onSalvar(tarefa, editStatus, editResp, editObs,
-      editStatus === 'impedido' ? editImpDesc : undefined,
-      editStatus === 'impedido' ? editImpResp : undefined,
-    )
-  }
-
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent className="sm:max-w-lg flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b">
-          <div className="flex items-start gap-3">
-            <Badge
-              variant="outline"
-              className={tarefa.tipo === 'obrigacao'
-                ? 'text-blue-700 border-blue-300 bg-blue-50 shrink-0 mt-0.5'
-                : 'text-purple-700 border-purple-300 bg-purple-50 shrink-0 mt-0.5'}
-            >
-              {tarefa.tipo === 'obrigacao' ? 'Obrigação' : 'Demanda'}
-            </Badge>
-            <div className="min-w-0">
-              <DialogTitle className="leading-snug text-base">{tarefa.titulo}</DialogTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {tarefa.clienteNome} · {tarefa.subtitulo}
-              </p>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
-          {/* Informações somente-leitura */}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            <div>
-              <p className="text-xs text-muted-foreground">Status atual</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                {isImpedida && <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />}
-                <Badge className={`text-xs ${sc.className}`}>{sc.label}</Badge>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">
-                {isImpedida ? 'Responsável pela resolução' : 'Responsável'}
-              </p>
-              <p className="font-medium">{respExibido}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Data prevista</p>
-              <p>{formatDate(tarefa.dataPrevista)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Data conclusão</p>
-              <p>{tarefa.dataConclusao ? formatDate(tarefa.dataConclusao) : '—'}</p>
-            </div>
-
-            {/* Caixa de impedimento atual */}
-            {isImpedida && (tarefa.impedimentoDescricao || tarefa.impedimentoResponsavelNome) && (
-              <div className="col-span-2 rounded-md bg-orange-50 border border-orange-200 p-3 space-y-1">
-                <p className="text-xs font-semibold text-orange-800 flex items-center gap-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5" /> Impedimento registrado
-                  {tarefa.impedimentoData && (
-                    <span className="font-normal text-orange-600 ml-1">
-                      em {formatDate(tarefa.impedimentoData)}
-                    </span>
-                  )}
-                </p>
-                {tarefa.impedimentoDescricao && (
-                  <p className="text-xs text-orange-700 whitespace-pre-wrap">{tarefa.impedimentoDescricao}</p>
-                )}
-                {tarefa.impedimentoResponsavelNome && (
-                  <p className="text-xs text-orange-700">
-                    Responsável:{' '}
-                    <span className="font-medium">{tarefa.impedimentoResponsavelNome}</span>
-                  </p>
-                )}
-              </div>
-            )}
-
-            {tarefa.descricao && (
-              <div className="col-span-2">
-                <p className="text-xs text-muted-foreground mb-1">Instruções / informativo</p>
-                <p className="whitespace-pre-wrap text-sm bg-muted/40 rounded-md p-3 leading-relaxed">
-                  {tarefa.descricao}
-                </p>
-              </div>
-            )}
-
-            {tarefa.observacoes && (
-              <div className="col-span-2">
-                <p className="text-xs text-muted-foreground mb-1">Observações registradas</p>
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground italic">
-                  {tarefa.observacoes}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {!isConcluida && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Alterar status</Label>
-                  <Select value={editStatus} onValueChange={v => setEditStatus(v as TarefaStatus)}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(['pendente', 'em_andamento', 'concluida', 'nao_se_aplica', 'impedido'] as TarefaStatus[]).map(s => (
-                        <SelectItem key={s} value={s}>{statusConfig[s].label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Campos de impedimento — visíveis apenas quando status selecionado é impedido */}
-                {editStatus === 'impedido' && (
-                  <div className="rounded-md bg-orange-50 border border-orange-200 p-3 space-y-3">
-                    <p className="text-xs font-semibold text-orange-800 flex items-center gap-1.5">
-                      <AlertTriangle className="h-3.5 w-3.5" /> Registrar impedimento
-                    </p>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-orange-800">Descrição do impedimento *</Label>
-                      <Textarea
-                        value={editImpDesc}
-                        onChange={e => setEditImpDesc(e.target.value)}
-                        rows={2}
-                        className="text-sm border-orange-200 focus:ring-orange-400"
-                        placeholder="O que está bloqueando esta tarefa?"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-orange-800">Responsável pela resolução *</Label>
-                      <Select value={editImpResp || '_none'} onValueChange={v => setEditImpResp(v === '_none' ? '' : v)}>
-                        <SelectTrigger className="h-8 text-sm border-orange-200">
-                          <SelectValue placeholder="Quem vai resolver?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_none">Selecionar responsável</SelectItem>
-                          {colaboradores.map(u => (
-                            <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-
-                {editStatus !== 'impedido' && (
-                  <div className="space-y-1">
-                    <Label className="text-xs">Responsável</Label>
-                    <Select value={editResp || '_none'} onValueChange={v => setEditResp(v === '_none' ? '' : v)}>
-                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Sem responsável" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="_none">Sem responsável</SelectItem>
-                        {colaboradores.map(u => (
-                          <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="space-y-1">
-                  <Label className="text-xs">Observações</Label>
-                  <Textarea
-                    value={editObs}
-                    onChange={e => setEditObs(e.target.value)}
-                    rows={3}
-                    className="text-sm"
-                    placeholder="Anotações sobre esta tarefa..."
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <DialogFooter className="px-6 py-4 border-t shrink-0">
-          <Button variant="outline" onClick={onClose}>Fechar</Button>
-          {!isConcluida && (
-            <Button onClick={handleSalvar} disabled={isSaving}>
-              {isSaving ? 'Salvando...' : editStatus === 'concluida' ? 'Marcar como concluída' : 'Salvar'}
-            </Button>
-          )}
-        </DialogFooter>
+        <TarefaDetalheConteudo
+          tarefa={tarefa}
+          colaboradores={colaboradores}
+          onClose={onClose}
+          onSalvar={onSalvar}
+          onConcluir={onConcluir}
+          onVerOrigem={onVerOrigem}
+          isSaving={isSaving}
+        />
       </DialogContent>
     </Dialog>
   )
@@ -338,8 +187,9 @@ function TarefaDetalheDialog({
 
 // ─── Card de tarefa ──────────────────────────────────────────────────────────
 
-function TarefaCard({ t, onAbrir, onIniciar, onConcluir }: {
+function TarefaCard({ t, isSelected, onAbrir, onIniciar, onConcluir }: {
   t: TarefaUnificada
+  isSelected: boolean
   onAbrir: (t: TarefaUnificada) => void
   onIniciar: (t: TarefaUnificada) => void
   onConcluir: (t: TarefaUnificada) => void
@@ -351,26 +201,27 @@ function TarefaCard({ t, onAbrir, onIniciar, onConcluir }: {
 
   return (
     <div
-      className={`flex items-center gap-3 p-4 border rounded-lg transition-colors cursor-pointer ${
+      className={cn(
+        'flex items-center gap-3 p-4 border rounded-lg transition-colors cursor-pointer',
         isImpedida
           ? 'bg-orange-50/60 border-orange-200 hover:bg-orange-100/60'
-          : 'bg-card hover:bg-accent/20'
-      }`}
+          : 'bg-card hover:bg-accent/20',
+        isSelected && 'ring-2 ring-primary border-primary',
+      )}
       onClick={() => onAbrir(t)}
     >
       <Badge
         variant="outline"
-        className={t.tipo === 'obrigacao'
+        className={t.origemRotina
           ? 'text-blue-700 border-blue-300 bg-blue-50 shrink-0'
-          : 'text-purple-700 border-purple-300 bg-purple-50 shrink-0'}
+          : 'text-emerald-700 border-emerald-300 bg-emerald-50 shrink-0'}
       >
-        {t.tipo === 'obrigacao' ? 'Obrigação' : 'Demanda'}
+        {t.origemRotina ? 'Rotina' : 'Tarefa'}
       </Badge>
 
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{t.titulo}</p>
         <p className="text-xs text-muted-foreground truncate">{t.clienteNome} · {t.subtitulo}</p>
-        {/* Quando impedido: mostra quem resolve e a descrição do impedimento */}
         {isImpedida ? (
           <>
             {t.impedimentoResponsavelNome && (
@@ -396,6 +247,23 @@ function TarefaCard({ t, onAbrir, onIniciar, onConcluir }: {
         </div>
         <div className="flex items-center gap-1">
           {isImpedida && <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />}
+          {t.checklistProgresso && t.checklistProgresso.length > 0 && (
+            <span className="text-xs text-muted-foreground flex items-center gap-0.5 hidden sm:flex">
+              <List className="h-3 w-3" />
+              {t.checklistProgresso.filter(i => i.concluido).length}/{t.checklistProgresso.length}
+            </span>
+          )}
+          {(() => {
+            const ativos = t.checklistProgresso?.filter(i => i.inicio_em && !i.concluido) ?? []
+            if (!ativos.length) return null
+            const label = ativos.length === 1 ? ativos[0].nome : `${ativos.length} em execução`
+            return (
+              <span className="text-xs text-amber-600 hidden sm:flex items-center gap-0.5 max-w-[120px] truncate">
+                <PlayCircle className="h-3 w-3 shrink-0" />
+                <span className="truncate">{label}</span>
+              </span>
+            )
+          })()}
           {urg.label && (
             <Badge className={`text-xs py-0 ${urg.className}`}>{urg.label}</Badge>
           )}
@@ -403,7 +271,6 @@ function TarefaCard({ t, onAbrir, onIniciar, onConcluir }: {
         </div>
       </div>
 
-      {/* Ações rápidas — visíveis só em sm+; no mobile o toque abre o dialog */}
       {!isFinalizada && (
         <div className="hidden sm:flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
           {t.status !== 'em_andamento' && t.status !== 'impedido' && (
@@ -446,30 +313,68 @@ export default function TarefasPage() {
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const { toast } = useToast()
-  const isAdmin = currentUser?.papel === 'escritorio_admin'
+  const isAdmin   = currentUser?.papel === 'escritorio_admin'
+  const isDesktop = useIsDesktop()
 
-  const { data: tarefasObs = [] }    = useTarefasTenant(tenantId)
-  const { data: etapasDemanda = [] } = useTodasEtapasDemanda(tenantId)
-  const { data: demandas = [] }      = useDemandas(tenantId)
-  const { data: clientes = [] }      = useClients(tenantId)
-  const { data: obrigacoes = [] }    = useObrigacoes(tenantId)
-  const { data: competencias = [] }  = useTodasCompetencias(tenantId)
-  const { data: etapasObs = [] }     = useTodasEtapas(tenantId)
-  const { data: users = [] }         = useUsers(tenantId)
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const updateTarefaObs      = useUpdateTarefa()
-  const concluirTarefaObs    = useConcluirTarefas()
-  const updateEtapaDemanda   = useUpdateEtapaDemanda()
-  const concluirEtapaDemanda = useConcluirEtapaDemanda()
+  const { data: novasTarefas = [] } = useTodasTarefas(tenantId)
+  const { data: ocorrencias = [] }  = useOcorrencias(tenantId)
+  const { data: clientes = [] }     = useClients(tenantId)
+  const { data: users = [] }        = useUsers(tenantId)
 
-  const [tarefaSelecionada, setTarefaSelecionada] = useState<TarefaUnificada | null>(null)
+  const updateTarefaNova   = useUpdateTarefaNova()
+  const concluirTarefa     = useConcluirTarefa()
+  const registrarHistorico = useRegistrarHistoricoTarefa()
 
-  const clienteMap   = useMemo(() => Object.fromEntries(clientes.map(c => [c.id, c.razao_social])), [clientes])
-  const obrigacaoMap = useMemo(() => Object.fromEntries(obrigacoes.map(o => [o.id, o.nome])), [obrigacoes])
-  const etapaObsMap  = useMemo(() => Object.fromEntries(etapasObs.map(e => [e.id, e])), [etapasObs])
-  const compMap      = useMemo(() => Object.fromEntries(competencias.map(c => [c.id, c])), [competencias])
-  const demandaMap   = useMemo(() => Object.fromEntries(demandas.map(d => [d.id, d])), [demandas])
-  const userMap      = useMemo(() => Object.fromEntries(users.map(u => [u.id, u.nome])), [users])
+  const [tarefaSelecionada,   setTarefaSelecionada]   = useState<TarefaUnificada | null>(null)
+  const [catalogoOpen,        setCatalogoOpen]        = useState(false)
+  const [painelRotina,        setPainelRotina]        = useState<{ rotinaId: string; cicloId: string; initialEtapaId?: string; initialClienteId?: string } | null>(null)
+  const [novaOcorrenciaOpen,  setNovaOcorrenciaOpen]  = useState(false)
+  const [ocorrenciaDetalhe,   setOcorrenciaDetalhe]   = useState<Ocorrencia | null>(null)
+
+  const [filtrosOpen,      setFiltrosOpen]      = useState(false)
+  const [filtroCliente,    setFiltroCliente]    = useState('')
+  const [filtroStatus,     setFiltroStatus]     = useState<TarefaStatus | ''>('')
+  const [filtroDataInicio, setFiltroDataInicio] = useState('')
+  const [filtroDataFim,    setFiltroDataFim]    = useState('')
+
+  const filtrosAtivos = filtroCliente !== '' || filtroStatus !== '' || filtroDataInicio !== '' || filtroDataFim !== ''
+
+  function limparFiltros() {
+    setFiltroCliente('')
+    setFiltroStatus('')
+    setFiltroDataInicio('')
+    setFiltroDataFim('')
+  }
+
+  function handleSelectRotina(rotinaId: string, cicloId: string) {
+    setCatalogoOpen(false)
+    setPainelRotina({ rotinaId, cicloId })
+  }
+
+  function handleVerOrigem(tarefa: TarefaUnificada) {
+    const ocorrencia = ocorrenciaMap[tarefa.ocorrenciaId]
+    if (!ocorrencia) return
+    if (tarefa.origemRotina) {
+      if (ocorrencia.rotina_id && ocorrencia.ciclo_id) {
+        setPainelRotina({
+          rotinaId: ocorrencia.rotina_id,
+          cicloId: ocorrencia.ciclo_id,
+          initialEtapaId: tarefa.fluxoTarefaId,
+          initialClienteId: tarefa.clienteId || undefined,
+        })
+      } else {
+        setCatalogoOpen(true)
+      }
+    } else {
+      setOcorrenciaDetalhe(ocorrencia)
+    }
+  }
+
+  const clienteMap    = useMemo(() => Object.fromEntries(clientes.map(c => [c.id, c.razao_social])), [clientes])
+  const ocorrenciaMap = useMemo(() => Object.fromEntries(ocorrencias.map(o => [o.id, o])), [ocorrencias])
+  const userMap       = useMemo(() => Object.fromEntries(users.map(u => [u.id, u.nome])), [users])
 
   const colaboradores = useMemo(
     () => users.filter(u => u.papel !== 'cliente' && u.ativo).map(u => ({ id: u.id, nome: u.nome })),
@@ -479,66 +384,63 @@ export default function TarefasPage() {
   const todasUnificadas = useMemo<TarefaUnificada[]>(() => {
     const items: TarefaUnificada[] = []
 
-    for (const t of tarefasObs) {
-      const etapa = etapaObsMap[t.etapa_id]
-      const comp  = compMap[t.competencia_id]
-      const obr   = comp ? obrigacaoMap[comp.obrigacao_id] : undefined
+    for (const t of novasTarefas) {
+      const ocorrencia = ocorrenciaMap[t.ocorrencia_id]
+      if (!ocorrencia) continue
       items.push({
-        id: `obs-${t.id}`,
-        tipo: 'obrigacao',
-        clienteNome: clienteMap[t.cliente_id] ?? t.cliente_id,
-        clienteId: t.cliente_id,
-        titulo: etapa?.nome ?? 'Etapa',
-        subtitulo: obr ?? 'Obrigação',
+        id: `tar-${t.id}`,
+        origemRotina: ocorrencia.origem === 'rotina',
+        clienteNome: ocorrencia.cliente_id ? (clienteMap[ocorrencia.cliente_id] ?? ocorrencia.cliente_id) : 'Interno',
+        clienteId: ocorrencia.cliente_id ?? '',
+        titulo: t.nome,
+        subtitulo: ocorrencia.titulo,
         dataPrevista: t.data_prevista,
         dataConclusao: t.data_conclusao,
         status: t.status,
-        responsavelId: t.responsavel ?? '',
-        responsavelNome: t.responsavel ? (userMap[t.responsavel] ?? t.responsavel) : '',
+        responsavelId: t.responsavel_id ?? '',
+        responsavelNome: t.responsavel_id ? (userMap[t.responsavel_id] ?? '') : '',
         urgencia: calcularUrgencia(t.status, t.data_prevista),
-        descricao: etapa?.descricao,
+        descricao: t.descricao,
         observacoes: t.observacoes,
         impedimentoDescricao: t.impedimento_descricao,
         impedimentoResponsavel: t.impedimento_responsavel,
         impedimentoResponsavelNome: t.impedimento_responsavel ? (userMap[t.impedimento_responsavel] ?? '') : '',
         impedimentoData: t.impedimento_data,
-        tarefaObrigacaoId: t.id,
-      })
-    }
-
-    for (const e of etapasDemanda) {
-      const demanda = demandaMap[e.demanda_id]
-      if (!demanda) continue
-      items.push({
-        id: `dem-${e.id}`,
-        tipo: 'demanda',
-        clienteNome: clienteMap[demanda.cliente_id] ?? demanda.cliente_id,
-        clienteId: demanda.cliente_id,
-        titulo: e.nome,
-        subtitulo: demanda.titulo,
-        dataPrevista: e.data_prevista,
-        dataConclusao: e.data_conclusao,
-        status: e.status,
-        responsavelId: e.responsavel_id ?? '',
-        responsavelNome: e.responsavel_id ? (userMap[e.responsavel_id] ?? '') : '',
-        urgencia: calcularUrgencia(e.status, e.data_prevista),
-        descricao: e.descricao,
-        observacoes: e.observacoes,
-        impedimentoDescricao: e.impedimento_descricao,
-        impedimentoResponsavel: e.impedimento_responsavel,
-        impedimentoResponsavelNome: e.impedimento_responsavel ? (userMap[e.impedimento_responsavel] ?? '') : '',
-        impedimentoData: e.impedimento_data,
-        etapaDemandaId: e.id,
-        demandaId: e.demanda_id,
+        tarefaId: t.id,
+        ocorrenciaId: t.ocorrencia_id,
+        fluxoTarefaId: t.fluxo_tarefa_id,
+        checklistProgresso: t.checklist_progresso,
       })
     }
 
     return items
-  }, [tarefasObs, etapasDemanda, demandaMap, clienteMap, obrigacaoMap, etapaObsMap, compMap, userMap])
+  }, [novasTarefas, ocorrenciaMap, clienteMap, userMap])
+
+  // Auto-seleciona tarefa quando ?tarefa= está na URL (ex.: clique no Pomodoro flutuante)
+  const autoSelectDoneRef = useRef(false)
+  useEffect(() => {
+    const id = searchParams.get('tarefa')
+    if (!id || todasUnificadas.length === 0 || autoSelectDoneRef.current) return
+    const tarefa = todasUnificadas.find(t => t.tarefaId === id)
+    if (tarefa) {
+      setTarefaSelecionada(tarefa)
+      autoSelectDoneRef.current = true
+      setSearchParams({}, { replace: true })
+    }
+  }, [todasUnificadas, searchParams, setSearchParams])
+
+  const tarefasFiltradas = useMemo<TarefaUnificada[]>(() => {
+    let lista = todasUnificadas
+    if (filtroCliente)    lista = lista.filter(t => t.clienteId === filtroCliente)
+    if (filtroStatus)     lista = lista.filter(t => t.status === filtroStatus)
+    if (filtroDataInicio) lista = lista.filter(t => t.dataPrevista >= filtroDataInicio)
+    if (filtroDataFim)    lista = lista.filter(t => t.dataPrevista <= filtroDataFim)
+    return lista
+  }, [todasUnificadas, filtroCliente, filtroStatus, filtroDataInicio, filtroDataFim])
 
   const abertas = useMemo(() =>
-    todasUnificadas.filter(t => t.status !== 'concluida' && t.status !== 'nao_se_aplica'),
-    [todasUnificadas])
+    tarefasFiltradas.filter(t => t.status !== 'concluida' && t.status !== 'nao_se_aplica'),
+    [tarefasFiltradas])
 
   const meiasTarefas = useMemo(() => {
     if (isAdmin) return [...abertas].sort(sortByUrgencia)
@@ -552,45 +454,53 @@ export default function TarefasPage() {
   }, [abertas, isAdmin, currentUser])
 
   const atrasadas = useMemo(() =>
-    todasUnificadas
+    tarefasFiltradas
       .filter(t => t.urgencia === 'critico' && t.status !== 'concluida' && t.status !== 'nao_se_aplica')
       .sort(sortByUrgencia),
-    [todasUnificadas])
+    [tarefasFiltradas])
+
+  const concluidas = useMemo(() => {
+    const lista = tarefasFiltradas
+      .filter(t => t.status === 'concluida' || t.status === 'nao_se_aplica')
+    if (!isAdmin) {
+      return lista.filter(t => t.responsavelId === currentUser?.id || t.responsavelId === '')
+    }
+    return lista.sort((a, b) =>
+      (b.dataConclusao ?? b.dataPrevista).localeCompare(a.dataConclusao ?? a.dataPrevista)
+    )
+  }, [tarefasFiltradas, isAdmin, currentUser])
 
   const equipeTarefas = useMemo(() =>
     [...abertas].sort(sortByUrgencia),
     [abertas])
 
-  // Ações rápidas (sem abrir dialog)
   function handleIniciar(t: TarefaUnificada) {
-    if (t.tarefaObrigacaoId) {
-      updateTarefaObs.mutate(
-        { id: t.tarefaObrigacaoId, data: { status: 'em_andamento' } },
-        { onSuccess: () => toast({ title: 'Tarefa iniciada' }) }
-      )
-    } else if (t.etapaDemandaId) {
-      updateEtapaDemanda.mutate(
-        { id: t.etapaDemandaId, data: { status: 'em_andamento' } },
-        { onSuccess: () => toast({ title: 'Etapa iniciada' }) }
-      )
-    }
+    updateTarefaNova.mutate(
+      { id: t.tarefaId, data: { status: 'em_andamento' } },
+      {
+        onSuccess: () => {
+          toast({ title: 'Tarefa iniciada' })
+          registrarHistorico.mutate({
+            tenantId,
+            tarefaId: t.tarefaId,
+            tarefaTipo: 'tarefa',
+            tipo: 'status_alterado',
+            autorId: currentUser?.id,
+            autorNome: currentUser?.nome,
+            meta: { status_anterior: 'pendente', status_novo: 'em_andamento' },
+          })
+        },
+      }
+    )
   }
 
   function handleConcluir(t: TarefaUnificada) {
-    if (t.tarefaObrigacaoId) {
-      concluirTarefaObs.mutate(
-        [t.tarefaObrigacaoId],
-        { onSuccess: () => toast({ title: 'Tarefa concluída' }) }
-      )
-    } else if (t.etapaDemandaId && t.demandaId) {
-      concluirEtapaDemanda.mutate(
-        { etapaId: t.etapaDemandaId, demandaId: t.demandaId },
-        { onSuccess: () => toast({ title: 'Etapa concluída' }) }
-      )
-    }
+    concluirTarefa.mutate(
+      { tarefaId: t.tarefaId, ocorrenciaId: t.ocorrenciaId },
+      { onSuccess: () => toast({ title: 'Tarefa concluída' }) }
+    )
   }
 
-  // Salvar via dialog
   function handleSalvarDialog(
     t: TarefaUnificada,
     status: TarefaStatus,
@@ -600,198 +510,343 @@ export default function TarefasPage() {
     impResp?: string,
   ) {
     const hoje = format(new Date(), 'yyyy-MM-dd')
-
-    if (t.tarefaObrigacaoId) {
-      updateTarefaObs.mutate(
-        {
-          id: t.tarefaObrigacaoId,
-          data: {
-            status,
-            responsavel: responsavelId || undefined,
-            observacoes: observacoes || undefined,
-            ...(status === 'impedido'
-              ? {
-                  impedimento_descricao: impDesc,
-                  impedimento_responsavel: impResp,
-                  impedimento_data: t.impedimentoData ?? hoje,
-                }
-              : {
-                  impedimento_descricao: undefined,
-                  impedimento_responsavel: undefined,
-                }),
-          },
+    updateTarefaNova.mutate(
+      {
+        id: t.tarefaId,
+        data: {
+          status,
+          responsavel_id: responsavelId || undefined,
+          observacoes: observacoes || undefined,
+          ...(status === 'impedido'
+            ? {
+                impedimento_descricao: impDesc,
+                impedimento_responsavel: impResp,
+                impedimento_data: t.impedimentoData ?? hoje,
+              }
+            : {
+                impedimento_descricao: undefined,
+                impedimento_responsavel: undefined,
+              }),
         },
-        {
-          onSuccess: () => {
-            toast({ title: 'Tarefa atualizada' })
-            setTarefaSelecionada(null)
-          },
-        }
-      )
-    } else if (t.etapaDemandaId) {
-      updateEtapaDemanda.mutate(
-        {
-          id: t.etapaDemandaId,
-          data: {
-            status,
-            responsavel_id: responsavelId || undefined,
-            observacoes: observacoes || undefined,
-            ...(status === 'impedido'
-              ? {
-                  impedimento_descricao: impDesc,
-                  impedimento_responsavel: impResp,
-                  impedimento_data: t.impedimentoData ?? hoje,
-                }
-              : {
-                  impedimento_descricao: undefined,
-                  impedimento_responsavel: undefined,
-                }),
-          },
+      },
+      {
+        onSuccess: () => {
+          toast({ title: 'Tarefa atualizada' })
+          setTarefaSelecionada(null)
         },
-        {
-          onSuccess: () => {
-            toast({ title: 'Etapa atualizada' })
-            setTarefaSelecionada(null)
-          },
-        }
-      )
-    }
+      }
+    )
   }
 
   function handleConcluirDialog(t: TarefaUnificada) {
-    if (t.tarefaObrigacaoId) {
-      concluirTarefaObs.mutate(
-        [t.tarefaObrigacaoId],
-        {
-          onSuccess: () => {
-            toast({ title: 'Tarefa concluída' })
-            setTarefaSelecionada(null)
-          },
-        }
-      )
-    } else if (t.etapaDemandaId && t.demandaId) {
-      concluirEtapaDemanda.mutate(
-        { etapaId: t.etapaDemandaId, demandaId: t.demandaId },
-        {
-          onSuccess: () => {
-            toast({ title: 'Etapa concluída' })
-            setTarefaSelecionada(null)
-          },
-        }
-      )
-    }
+    concluirTarefa.mutate(
+      { tarefaId: t.tarefaId, ocorrenciaId: t.ocorrenciaId },
+      {
+        onSuccess: () => {
+          toast({ title: 'Tarefa concluída' })
+          setTarefaSelecionada(null)
+        },
+      }
+    )
   }
 
-  const isSaving =
-    updateTarefaObs.isPending ||
-    concluirTarefaObs.isPending ||
-    updateEtapaDemanda.isPending ||
-    concluirEtapaDemanda.isPending
+  const isSaving = updateTarefaNova.isPending || concluirTarefa.isPending
+
+  function renderCards(tarefas: TarefaUnificada[]) {
+    return tarefas.map(t => (
+      <TarefaCard
+        key={t.id}
+        t={t}
+        isSelected={tarefaSelecionada?.id === t.id}
+        onAbrir={setTarefaSelecionada}
+        onIniciar={handleIniciar}
+        onConcluir={handleConcluir}
+      />
+    ))
+  }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tarefas</h1>
-        <p className="text-muted-foreground text-sm">Obrigações e demandas em um só lugar</p>
-      </div>
+    /*
+     * Desktop: container ocupa exatamente a área de conteúdo do main
+     * (100vh - header 3.5rem - padding top 1.5rem - padding bottom 1.5rem = 6.5rem)
+     * evitando o scrollbar do main. Cada coluna controla seu próprio scroll.
+     */
+    <div className="lg:flex lg:gap-4 lg:h-[calc(100vh-6.5rem)] lg:overflow-hidden">
 
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: 'Abertas', value: abertas.length, icon: Inbox, color: 'text-blue-600' },
-          { label: 'Atrasadas', value: atrasadas.length, icon: AlertTriangle, color: 'text-red-600' },
-          { label: 'Total', value: todasUnificadas.length, icon: CheckSquare, color: 'text-muted-foreground' },
-        ].map(item => (
-          <div key={item.label} className="border rounded-lg p-3 sm:p-4 bg-card">
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground mb-1 min-w-0">
-              <item.icon className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${item.color}`} />
-              <span className="truncate">{item.label}</span>
+      {/* Coluna esquerda: flex-col, header fixo, só cards rolam */}
+      <div className="flex-1 min-w-0 lg:flex lg:flex-col lg:overflow-hidden">
+
+        {/* Header fixo: título + chips */}
+        <div className="shrink-0 mb-2 flex items-start justify-between gap-2">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">Tarefas</h1>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <p className="text-muted-foreground text-sm">Rotinas e ocorrências em um só lugar</p>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-2.5 py-0.5">
+                  <Inbox className="h-3 w-3" />
+                  {abertas.length} abertas
+                </span>
+                {atrasadas.length > 0 && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5">
+                    <AlertTriangle className="h-3 w-3" />
+                    {atrasadas.length} atrasadas
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground/70">
+                  {todasUnificadas.length} total
+                </span>
+              </div>
             </div>
-            <p className="text-xl sm:text-2xl font-bold">{item.value}</p>
           </div>
-        ))}
-      </div>
-
-      <Tabs defaultValue="meu-dia">
-        <div className="overflow-x-auto">
-          <TabsList className="w-max">
-            <TabsTrigger value="meu-dia">Meu Dia</TabsTrigger>
-            {isAdmin && <TabsTrigger value="equipe"><Users className="h-3.5 w-3.5 mr-1" />Equipe</TabsTrigger>}
-            <TabsTrigger value="atrasadas">
-              <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-              Atrasadas
-              {atrasadas.length > 0 && (
-                <Badge className="ml-1 h-4 text-xs bg-red-600 text-white border-transparent px-1">
-                  {atrasadas.length}
-                </Badge>
+          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            <Button
+              variant={filtrosAtivos ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFiltrosOpen(o => !o)}
+              className="gap-1.5"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filtros
+              {filtrosAtivos && (
+                <span className="ml-0.5 bg-white/25 text-[10px] font-bold rounded-full px-1.5 py-px leading-none">
+                  {[filtroCliente, filtroStatus, filtroDataInicio || filtroDataFim].filter(Boolean).length}
+                </span>
               )}
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="meu-dia" className="mt-4 space-y-2">
-          {meiasTarefas.length === 0 ? (
-            <ListaVazia msg="Nenhuma tarefa pendente para você" />
-          ) : (
-            meiasTarefas.map(t => (
-              <TarefaCard
-                key={t.id} t={t}
-                onAbrir={setTarefaSelecionada}
-                onIniciar={handleIniciar}
-                onConcluir={handleConcluir}
-              />
-            ))
-          )}
-        </TabsContent>
-
-        {isAdmin && (
-          <TabsContent value="equipe" className="mt-4 space-y-2">
-            {equipeTarefas.length === 0 ? (
-              <ListaVazia msg="Nenhuma tarefa em aberto" />
-            ) : (
+            </Button>
+            {currentUser?.papel !== 'cliente' && (
               <>
-                <p className="text-xs text-muted-foreground pb-1">
-                  {equipeTarefas.length} tarefa{equipeTarefas.length !== 1 ? 's' : ''} em aberto
-                </p>
-                <Separator />
-                {equipeTarefas.map(t => (
-                  <TarefaCard
-                    key={t.id} t={t}
-                    onAbrir={setTarefaSelecionada}
-                    onIniciar={handleIniciar}
-                    onConcluir={handleConcluir}
-                  />
-                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNovaOcorrenciaOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Nova Ocorrência
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCatalogoOpen(true)}
+                  className="gap-1.5"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  Painel de Rotinas
+                </Button>
               </>
             )}
-          </TabsContent>
+          </div>
+        </div>
+
+        {/* Barra de filtros */}
+        {filtrosOpen && (
+          <div className="shrink-0 mb-2 p-3 bg-accent/30 rounded-lg border flex flex-wrap gap-3 items-end">
+            <div className="flex flex-col gap-1 min-w-[200px] flex-1">
+              <Label className="text-xs text-muted-foreground">Cliente</Label>
+              <ClienteCombobox
+                clientes={clientes}
+                value={filtroCliente}
+                onChange={setFiltroCliente}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Data prevista — de</Label>
+              <Input
+                type="date"
+                value={filtroDataInicio}
+                onChange={e => setFiltroDataInicio(e.target.value)}
+                className="h-8 text-sm w-[150px]"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">até</Label>
+              <Input
+                type="date"
+                value={filtroDataFim}
+                onChange={e => setFiltroDataFim(e.target.value)}
+                className="h-8 text-sm w-[150px]"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-muted-foreground">Status</Label>
+              <Select value={filtroStatus} onValueChange={v => setFiltroStatus(v as TarefaStatus | '')}>
+                <SelectTrigger className="h-8 text-sm w-[160px]">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos</SelectItem>
+                  {Object.entries(statusConfig).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {filtrosAtivos && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 text-muted-foreground"
+                onClick={limparFiltros}
+              >
+                <X className="h-3.5 w-3.5" />
+                Limpar
+              </Button>
+            )}
+          </div>
         )}
 
-        <TabsContent value="atrasadas" className="mt-4 space-y-2">
-          {atrasadas.length === 0 ? (
-            <ListaVazia msg="Nenhuma tarefa atrasada" />
-          ) : (
-            atrasadas.map(t => (
-              <TarefaCard
-                key={t.id} t={t}
-                onAbrir={setTarefaSelecionada}
-                onIniciar={handleIniciar}
-                onConcluir={handleConcluir}
-              />
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
+        {/* Tabs: ocupa o restante da altura, TabsList fixo, conteúdo rola */}
+        <Tabs defaultValue="meu-dia" className="lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
 
+          {/* TabsList — fixo, não rola */}
+          <div className="overflow-x-auto shrink-0">
+            <TabsList className="w-max">
+              <TabsTrigger value="meu-dia" className="gap-1.5">
+                Meu Dia
+                {meiasTarefas.length > 0 && (
+                  <span className="text-[10px] font-semibold bg-primary/15 text-primary rounded-full px-1.5 py-px leading-none">
+                    {meiasTarefas.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="equipe" className="gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  Equipe
+                  {equipeTarefas.length > 0 && (
+                    <span className="text-[10px] font-semibold bg-primary/15 text-primary rounded-full px-1.5 py-px leading-none">
+                      {equipeTarefas.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="atrasadas" className="gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Atrasadas
+                {atrasadas.length > 0 && (
+                  <span className="text-[10px] font-semibold bg-red-600 text-white rounded-full px-1.5 py-px leading-none">
+                    {atrasadas.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="concluidas" className="gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Concluídas
+                {concluidas.length > 0 && (
+                  <span className="text-[10px] font-semibold bg-green-600 text-white rounded-full px-1.5 py-px leading-none">
+                    {concluidas.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Área scrollável — apenas os cards rolam */}
+          <div className="mt-2 lg:flex-1 lg:overflow-y-auto lg:min-h-0 lg:pr-1">
+            <TabsContent value="meu-dia" className="space-y-2 mt-0">
+              {meiasTarefas.length === 0 ? (
+                <ListaVazia msg="Nenhuma tarefa pendente para você" />
+              ) : renderCards(meiasTarefas)}
+            </TabsContent>
+
+            {isAdmin && (
+              <TabsContent value="equipe" className="space-y-2 mt-0">
+                {equipeTarefas.length === 0 ? (
+                  <ListaVazia msg="Nenhuma tarefa em aberto" />
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground pb-1">
+                      {equipeTarefas.length} tarefa{equipeTarefas.length !== 1 ? 's' : ''} em aberto
+                    </p>
+                    <Separator />
+                    {renderCards(equipeTarefas)}
+                  </>
+                )}
+              </TabsContent>
+            )}
+
+            <TabsContent value="atrasadas" className="space-y-2 mt-0">
+              {atrasadas.length === 0 ? (
+                <ListaVazia msg="Nenhuma tarefa atrasada" />
+              ) : renderCards(atrasadas)}
+            </TabsContent>
+
+            <TabsContent value="concluidas" className="space-y-2 mt-0">
+              {concluidas.length === 0 ? (
+                <ListaVazia msg="Nenhuma tarefa concluída ainda" />
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground pb-1">
+                    {concluidas.length} tarefa{concluidas.length !== 1 ? 's' : ''} concluída{concluidas.length !== 1 ? 's' : ''}
+                  </p>
+                  <Separator />
+                  {renderCards(concluidas)}
+                </>
+              )}
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
+
+      {/* Painel direito: altura total do container, footer sempre visível */}
       {tarefaSelecionada && (
+        <div className="hidden lg:flex lg:flex-col lg:w-2/5 shrink-0 lg:h-full rounded-lg overflow-hidden border border-primary/40 ring-2 ring-primary/20 shadow-lg shadow-primary/10">
+          <TarefaDetalheConteudo
+            key={tarefaSelecionada.id}
+            tarefa={tarefaSelecionada}
+            colaboradores={colaboradores}
+            onClose={() => setTarefaSelecionada(null)}
+            onSalvar={handleSalvarDialog}
+            onConcluir={handleConcluirDialog}
+            onVerOrigem={handleVerOrigem}
+            isSaving={isSaving}
+          />
+        </div>
+      )}
+
+      {/* Dialog mobile — só abre quando não for desktop */}
+      {tarefaSelecionada && !isDesktop && (
         <TarefaDetalheDialog
+          key={tarefaSelecionada.id}
           tarefa={tarefaSelecionada}
           colaboradores={colaboradores}
           onClose={() => setTarefaSelecionada(null)}
           onSalvar={handleSalvarDialog}
           onConcluir={handleConcluirDialog}
+          onVerOrigem={handleVerOrigem}
           isSaving={isSaving}
         />
       )}
+
+      <CatalogoRotinasModal
+        open={catalogoOpen}
+        onClose={() => setCatalogoOpen(false)}
+        onSelectRotina={handleSelectRotina}
+      />
+      {painelRotina && (
+        <PainelRotinaModal
+          open={!!painelRotina}
+          onClose={() => setPainelRotina(null)}
+          rotinaId={painelRotina.rotinaId}
+          cicloId={painelRotina.cicloId}
+          initialEtapaId={painelRotina.initialEtapaId}
+          initialClienteId={painelRotina.initialClienteId}
+        />
+      )}
+      <NovaOcorrenciaDialog
+        open={novaOcorrenciaOpen}
+        onOpenChange={setNovaOcorrenciaOpen}
+      />
+      <OcorrenciaDetalheDialog
+        ocorrencia={ocorrenciaDetalhe}
+        open={!!ocorrenciaDetalhe}
+        onOpenChange={(v) => { if (!v) setOcorrenciaDetalhe(null) }}
+      />
     </div>
   )
 }

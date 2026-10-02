@@ -13,11 +13,11 @@ const ClientesLista = React.lazy(() => import('@/pages/escritorio/Clientes/Clien
 const ClienteFicha = React.lazy(() => import('@/pages/escritorio/Clientes/ClienteFicha'))
 const FinanceiroPage = React.lazy(() => import('@/pages/escritorio/Financeiro/FinanceiroPage'))
 const DocumentosPage = React.lazy(() => import('@/pages/escritorio/Documentos/DocumentosPage'))
-const GruposLista = React.lazy(() => import('@/pages/escritorio/Grupos/GruposLista'))
 const GrupoFicha = React.lazy(() => import('@/pages/escritorio/Grupos/GrupoFicha'))
-const ObrigacoesPage = React.lazy(() => import('@/pages/escritorio/Obrigacoes/ObrigacoesPage'))
 const TarefasPage = React.lazy(() => import('@/pages/escritorio/Tarefas/TarefasPage'))
-const DemandasPage = React.lazy(() => import('@/pages/escritorio/Demandas/DemandasPage'))
+const OcorrenciasPage = React.lazy(() => import('@/pages/escritorio/Ocorrencias/OcorrenciasPage'))
+const RotinasPage = React.lazy(() => import('@/pages/escritorio/Rotinas/RotinasPage'))
+const FluxosPage = React.lazy(() => import('@/pages/escritorio/Fluxos/FluxosPage'))
 const PortalInicio = React.lazy(() => import('@/pages/cliente/PortalInicio'))
 const PortalDocumentos = React.lazy(() => import('@/pages/cliente/PortalDocumentos'))
 const PortalFinanceiro = React.lazy(() => import('@/pages/cliente/PortalFinanceiro'))
@@ -62,25 +62,27 @@ export const router = createBrowserRouter([
             element: <EscritorioRoute modulo="financeiro"><Lazy><FinanceiroPage /></Lazy></EscritorioRoute>,
           },
           {
-            path: 'grupos',
-            element: <EscritorioRoute modulo="grupos"><Lazy><GruposLista /></Lazy></EscritorioRoute>,
-          },
-          {
             path: 'grupos/:id',
             element: <EscritorioRoute modulo="grupos"><Lazy><GrupoFicha /></Lazy></EscritorioRoute>,
-          },
-          {
-            path: 'obrigacoes',
-            element: <EscritorioRoute modulo="obrigacoes"><Lazy><ObrigacoesPage /></Lazy></EscritorioRoute>,
           },
           {
             path: 'tarefas',
             element: <EscritorioRoute modulo="tarefas"><Lazy><TarefasPage /></Lazy></EscritorioRoute>,
           },
           {
-            path: 'demandas',
-            element: <EscritorioRoute modulo="demandas"><Lazy><DemandasPage /></Lazy></EscritorioRoute>,
+            path: 'ocorrencias',
+            element: <EscritorioRoute modulo="tarefas"><Lazy><OcorrenciasPage /></Lazy></EscritorioRoute>,
           },
+          {
+            path: 'rotinas',
+            element: <EscritorioRoute modulo="tarefas"><Lazy><RotinasPage /></Lazy></EscritorioRoute>,
+          },
+          {
+            path: 'fluxos',
+            element: <EscritorioRoute modulo="tarefas"><Lazy><FluxosPage /></Lazy></EscritorioRoute>,
+          },
+          { path: 'obrigacoes', element: <Navigate to="/escritorio/rotinas" replace /> },
+          { path: 'demandas', element: <Navigate to="/escritorio/ocorrencias" replace /> },
           { path: 'configuracoes', element: <Lazy><Configuracoes /></Lazy> },
           { path: 'configuracoes/*', element: <Lazy><Configuracoes /></Lazy> },
         ],
