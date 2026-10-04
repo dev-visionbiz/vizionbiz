@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { Plus, Building2, FileText, Users, Calculator, Inbox, Layers } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
@@ -50,7 +49,7 @@ function ListaOcorrencias({
   onDetalhes,
 }: {
   tenantId: string
-  onNova: () => void
+  onNova: (clienteId?: string) => void
   onDetalhes: (o: Ocorrencia) => void
 }) {
   const { data: ocorrencias = [] } = useOcorrencias(tenantId)
@@ -59,7 +58,7 @@ function ListaOcorrencias({
 
   const [filtroStatus,    setFiltroStatus]    = useState<OcorrenciaStatus | ''>('')
   const [filtroCategoria, setFiltroCategoria] = useState<CategoriaDemanda | ''>('')
-  const [filtroCliente,   setFiltroCliente]   = useState('')
+  const [filtroClienteId, setFiltroClienteId] = useState('')
   const [filtroResp,      setFiltroResp]      = useState('')
   const [filtroLote,      setFiltroLote]      = useState('')
 
@@ -80,14 +79,14 @@ function ListaOcorrencias({
   const filtradas = useMemo(() =>
     ocorrencias
       .filter(o =>
-        (!filtroLote      || o.lote_id === filtroLote) &&
-        (!filtroStatus    || o.status === filtroStatus) &&
-        (!filtroCategoria || o.categoria === filtroCategoria) &&
-        (!filtroCliente   || clienteMap[o.cliente_id ?? '']?.toLowerCase().includes(filtroCliente.toLowerCase())) &&
-        (!filtroResp      || o.responsavel_id === filtroResp)
+        (!filtroLote       || o.lote_id === filtroLote) &&
+        (!filtroStatus     || o.status === filtroStatus) &&
+        (!filtroCategoria  || o.categoria === filtroCategoria) &&
+        (!filtroClienteId  || o.cliente_id === filtroClienteId) &&
+        (!filtroResp       || o.responsavel_id === filtroResp)
       )
       .sort((a, b) => a.data_prevista.localeCompare(b.data_prevista)),
-    [ocorrencias, filtroLote, filtroStatus, filtroCategoria, filtroCliente, filtroResp, clienteMap]
+    [ocorrencias, filtroLote, filtroStatus, filtroCategoria, filtroClienteId, filtroResp]
   )
 
   const colaboradores = users.filter(u => u.papel !== 'cliente' && u.ativo)
@@ -98,12 +97,15 @@ function ListaOcorrencias({
       <div className="flex flex-wrap gap-2 items-end">
         <div>
           <Label className="text-xs">Cliente</Label>
-          <Input
-            className="h-8 w-40 text-sm"
-            placeholder="Filtrar..."
-            value={filtroCliente}
-            onChange={e => setFiltroCliente(e.target.value)}
-          />
+          <Select value={filtroClienteId} onValueChange={setFiltroClienteId}>
+            <SelectTrigger className="h-8 w-44 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todos</SelectItem>
+              {clientes.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="text-xs">Status</Label>
@@ -157,8 +159,8 @@ function ListaOcorrencias({
             </Select>
           </div>
         )}
-        {(filtroStatus || filtroCategoria || filtroCliente || filtroResp || filtroLote) && (
-          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFiltroStatus(''); setFiltroCategoria(''); setFiltroCliente(''); setFiltroResp(''); setFiltroLote('') }}>
+        {(filtroStatus || filtroCategoria || filtroClienteId || filtroResp || filtroLote) && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFiltroStatus(''); setFiltroCategoria(''); setFiltroClienteId(''); setFiltroResp(''); setFiltroLote('') }}>
             Limpar filtros
           </Button>
         )}
@@ -170,7 +172,7 @@ function ListaOcorrencias({
           <div className="text-center py-12 text-muted-foreground">
             <Inbox className="h-8 w-8 mx-auto mb-2 opacity-30" />
             <p className="text-sm">Nenhuma ocorrência encontrada</p>
-            <Button size="sm" variant="outline" className="mt-4" onClick={onNova}>
+            <Button size="sm" variant="outline" className="mt-4" onClick={() => onNova(filtroClienteId || undefined)}>
               <Plus className="h-4 w-4 mr-1" /> Nova Ocorrência
             </Button>
           </div>
@@ -266,9 +268,15 @@ export default function OcorrenciasPage() {
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
 
-  const [novaOcorrenciaOpen, setNovaOcorrenciaOpen]     = useState(false)
-  const [ocorrenciaSelecionada, setOcorrenciaSelecionada] = useState<Ocorrencia | null>(null)
-  const [detalheOpen, setDetalheOpen]                   = useState(false)
+  const [novaOcorrenciaOpen, setNovaOcorrenciaOpen]         = useState(false)
+  const [novaOcorrenciaClienteId, setNovaOcorrenciaClienteId] = useState<string | undefined>()
+  const [ocorrenciaSelecionada, setOcorrenciaSelecionada]   = useState<Ocorrencia | null>(null)
+  const [detalheOpen, setDetalheOpen]                       = useState(false)
+
+  function handleNova(clienteId?: string) {
+    setNovaOcorrenciaClienteId(clienteId)
+    setNovaOcorrenciaOpen(true)
+  }
 
   function handleDetalhes(o: Ocorrencia) {
     setOcorrenciaSelecionada(o)
@@ -282,20 +290,21 @@ export default function OcorrenciasPage() {
           <h1 className="text-xl font-bold tracking-tight">Ocorrências</h1>
           <p className="text-muted-foreground text-sm">Processos e solicitações de clientes</p>
         </div>
-        <Button onClick={() => setNovaOcorrenciaOpen(true)}>
+        <Button onClick={() => handleNova()}>
           <Plus className="h-4 w-4 mr-1.5" /> Nova Ocorrência
         </Button>
       </div>
 
       <ListaOcorrencias
         tenantId={tenantId}
-        onNova={() => setNovaOcorrenciaOpen(true)}
+        onNova={handleNova}
         onDetalhes={handleDetalhes}
       />
 
       <NovaOcorrenciaDialog
         open={novaOcorrenciaOpen}
         onOpenChange={setNovaOcorrenciaOpen}
+        initialClienteId={novaOcorrenciaClienteId}
       />
 
       <OcorrenciaDetalheDialog

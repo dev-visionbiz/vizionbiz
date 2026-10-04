@@ -6,11 +6,11 @@ import type {
   Pessoa, EmpresaPessoa, Grupo, GrupoEmpresa, Servico, Plano,
   StorageConnection, FichaBloco, FichaCampo,
   Fluxo, FluxoTarefa, Rotina, RotinaCliente, Ciclo, Ocorrencia, Tarefa,
-  ChecklistItemTemplate,
+  ChecklistItemTemplate, GuiaRecolhimento,
 } from '@/domain/types'
 
 const TENANT_ID = 'tenant-001'
-const SEED_KEY = 'vb_seeded_v18'
+const SEED_KEY = 'vb_seeded_v19'
 
 // suppress unused import warning
 const _uuidv4 = uuidv4
@@ -702,6 +702,98 @@ export function runSeed(): void {
     { id: 'tar-012', tenant_id: TENANT_ID, ocorrencia_id: 'occ-003', fluxo_tarefa_id: 'ft-013', ordem: 4, nome: 'Entregar ao cliente', data_prevista: '2026-09-30', status: 'pendente' },
   ]
   localStorage.setItem('vb_tarefas', JSON.stringify(tarefas))
+
+  // --- Guias e Recolhimentos ---
+  const guias: GuiaRecolhimento[] = [
+    // DAS Padaria São Bento — paga
+    {
+      id: 'guia-001', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      tipo: 'das', descricao: 'DAS ' + competencia(1),
+      competencia: competencia(1), vencimento: vencimento(1, 20),
+      valor: 892.50, status: 'paga', origem: 'manual',
+      segunda_via_status: 'nao_solicitada',
+      pago_em: vencimento(1, 18), pago_valor: 892.50, pago_por: 'user-colab',
+      codigo_receita: '0651', periodo_apuracao: competencia(1),
+      criado_em: vencimento(1, 15), criado_por: 'user-colab',
+    },
+    // DAS Padaria São Bento — emitida (mês atual)
+    {
+      id: 'guia-002', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      tipo: 'das', descricao: 'DAS ' + competencia(0),
+      competencia: competencia(0), vencimento: format(addDays(new Date(), 12), 'yyyy-MM-dd'),
+      valor: 1024.80, status: 'emitida', origem: 'manual',
+      segunda_via_status: 'nao_solicitada',
+      codigo_receita: '0651', periodo_apuracao: competencia(0),
+      linha_digitavel: '07690.00018 10000.100510 81600.000025 1 00000000000000',
+      criado_em: format(subDays(new Date(), 5), 'yyyy-MM-dd'), criado_por: 'user-colab',
+    },
+    // FGTS Padaria — emitida
+    {
+      id: 'guia-003', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      tipo: 'fgts', descricao: 'FGTS ' + competencia(0),
+      competencia: competencia(0), vencimento: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
+      valor: 340.00, status: 'emitida', origem: 'manual',
+      segunda_via_status: 'nao_solicitada',
+      periodo_apuracao: competencia(0),
+      criado_em: format(subDays(new Date(), 3), 'yyyy-MM-dd'), criado_por: 'user-colab',
+    },
+    // DARF Tech Solutions — vencida
+    {
+      id: 'guia-004', tenant_id: TENANT_ID, cliente_id: 'client-002',
+      tipo: 'darf', descricao: 'DARF IRPJ ' + competencia(2),
+      competencia: competencia(2), vencimento: vencimento(2, 20),
+      valor: 3200.00, valor_multa: 64.00, valor_juros: 48.00,
+      status: 'vencida', origem: 'manual',
+      segunda_via_status: 'solicitada',
+      segunda_via_solicitada_em: format(subDays(new Date(), 5), 'yyyy-MM-dd'),
+      codigo_receita: '2362', periodo_apuracao: competencia(2),
+      numero_referencia: 'TRIM-2026-3',
+      criado_em: vencimento(2, 10), criado_por: 'user-admin',
+      atualizado_em: format(subDays(new Date(), 5), 'yyyy-MM-dd'),
+    },
+    // Bombeiros ABC Comércio — aguardando emissão
+    {
+      id: 'guia-005', tenant_id: TENANT_ID, cliente_id: 'client-003',
+      tipo: 'bombeiros', descricao: 'Taxa Vistoria Bombeiros 2026',
+      competencia: competencia(0), vencimento: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+      valor: 280.00, status: 'aguardando_emissao', origem: 'manual',
+      segunda_via_status: 'nao_solicitada',
+      observacoes: 'Aguardando vistoria agendada para próximo mês',
+      criado_em: format(subDays(new Date(), 2), 'yyyy-MM-dd'), criado_por: 'user-admin',
+    },
+    // ISS ABC Comércio — paga
+    {
+      id: 'guia-006', tenant_id: TENANT_ID, cliente_id: 'client-003',
+      tipo: 'iss', descricao: 'ISS ' + competencia(1),
+      competencia: competencia(1), vencimento: vencimento(1, 10),
+      valor: 150.00, status: 'paga', origem: 'manual',
+      segunda_via_status: 'nao_solicitada',
+      pago_em: vencimento(1, 9), pago_valor: 150.00, pago_por: 'user-colab',
+      criado_em: vencimento(1, 5), criado_por: 'user-colab',
+    },
+    // DARF CSLL Tech Solutions — emitida
+    {
+      id: 'guia-007', tenant_id: TENANT_ID, cliente_id: 'client-002',
+      tipo: 'darf', descricao: 'DARF CSLL ' + competencia(0),
+      competencia: competencia(0), vencimento: format(addDays(new Date(), 18), 'yyyy-MM-dd'),
+      valor: 980.00, status: 'emitida', origem: 'manual',
+      segunda_via_status: 'nao_solicitada',
+      codigo_receita: '2484', periodo_apuracao: competencia(0),
+      linha_digitavel: '85890000009 80000000001 02430000054 6 93040000098000',
+      criado_em: format(subDays(new Date(), 4), 'yyyy-MM-dd'), criado_por: 'user-admin',
+    },
+    // DAS ABC Comércio — emitida
+    {
+      id: 'guia-008', tenant_id: TENANT_ID, cliente_id: 'client-003',
+      tipo: 'das', descricao: 'DAS ' + competencia(0),
+      competencia: competencia(0), vencimento: format(addDays(new Date(), 15), 'yyyy-MM-dd'),
+      valor: 420.30, status: 'emitida', origem: 'manual',
+      segunda_via_status: 'nao_solicitada',
+      codigo_receita: '0651', periodo_apuracao: competencia(0),
+      criado_em: format(subDays(new Date(), 6), 'yyyy-MM-dd'), criado_por: 'user-colab',
+    },
+  ]
+  localStorage.setItem('vb_guias', JSON.stringify(guias))
 
   // Marca seed como executado
   localStorage.setItem(SEED_KEY, new Date().toISOString())

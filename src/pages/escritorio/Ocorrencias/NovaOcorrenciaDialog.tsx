@@ -27,6 +27,7 @@ import { useFluxosAtivos, useFluxoTarefas } from '@/data/hooks/useFluxos'
 import { useRotinas } from '@/data/hooks/useRotinas'
 import { useCreateOcorrencia, useCreateOcorrenciasLote } from '@/data/hooks/useOcorrencias'
 import { useClientFolders } from '@/data/hooks/useFolders'
+import { cn } from '@/lib/utils'
 import type { CategoriaDemanda, OcorrenciaDocumentoConfig, OcorrenciaDocumentoTipo } from '@/domain/types'
 
 const categoriaConfig: Record<CategoriaDemanda, {
@@ -313,9 +314,10 @@ function TarefaEditavelDialog({ tarefa, ordem, colaboradores, tenantId, clienteI
 interface Props {
   open: boolean
   onOpenChange: (v: boolean) => void
+  initialClienteId?: string
 }
 
-export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
+export function NovaOcorrenciaDialog({ open, onOpenChange, initialClienteId }: Props) {
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const { toast } = useToast()
@@ -339,6 +341,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
   const [clienteId, setClienteId]       = useState('')
   const [clienteIds, setClienteIds]     = useState<string[]>([])
   const [clienteBusca, setClienteBusca] = useState('')
+  const [clienteModalOpen, setClienteModalOpen] = useState(false)
   const [titulo, setTitulo]             = useState('')
   const [descricao, setDescricao]       = useState('')
   const [categoria, setCategoria]       = useState<CategoriaDemanda>('outros')
@@ -365,7 +368,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
   const todosClientesSelecionados =
     clientesFiltrados.length > 0 && clientesFiltrados.every(c => clienteIds.includes(c.id))
 
-  // ── Reset ao fechar ───────────────────────────────────────────────────────
+  // ── Reset ao fechar / init ao abrir ──────────────────────────────────────
   useEffect(() => {
     if (!open) {
       setStep(0)
@@ -381,6 +384,11 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
       setResponsavelId('')
       setTarefas([])
       setTarefaDialog(null)
+    } else if (initialClienteId) {
+      setClienteId(initialClienteId)
+      setFluxoId(null)
+      setTarefas([{ _id: uuid(), nome: '', descricao: '', prazo_relativo_dias: 0, responsavel_id: '', checklist: [], documentos_config: [] }])
+      setStep(1)
     }
   }, [open])
 
@@ -502,6 +510,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
       const ocorrenciaBase = {
         tenant_id: tenantId,
         titulo: titulo.trim(),
+        descricao: descricao.trim() || undefined,
         origem: 'fluxo' as const,
         fluxo_id: fluxoId,
         categoria,
@@ -542,6 +551,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
         ocorrencia: {
           tenant_id: tenantId,
           titulo: titulo.trim(),
+          descricao: descricao.trim() || undefined,
           cliente_id: clienteId,
           origem: 'manual',
           categoria,
@@ -633,8 +643,22 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
             {step === 0 && (
               <div className="px-6 py-5 space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Selecione um fluxo para pré-preencher as tarefas, ou crie do zero.
+                  Crie do zero ou selecione um fluxo para pré-preencher as tarefas.
                 </p>
+
+                {/* Criar do zero — primeiro */}
+                <button
+                  onClick={() => selecionarFluxo(null)}
+                  className="w-full flex items-center gap-3 p-4 border border-dashed rounded-lg hover:bg-accent text-left transition-colors"
+                >
+                  <Plus className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">Criar do zero</p>
+                    <p className="text-xs text-muted-foreground">Defina título, tarefas e prazo manualmente</p>
+                  </div>
+                </button>
+
+                {fluxos.length > 0 && <Separator />}
 
                 {fluxos.length > 0 && (
                   <div className="grid grid-cols-2 gap-3">
@@ -675,19 +699,6 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
                     })}
                   </div>
                 )}
-
-                {fluxos.length > 0 && <Separator />}
-
-                <button
-                  onClick={() => selecionarFluxo(null)}
-                  className="w-full flex items-center gap-3 p-4 border border-dashed rounded-lg hover:bg-accent text-left transition-colors"
-                >
-                  <Plus className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="font-medium text-sm">Criar do zero</p>
-                    <p className="text-xs text-muted-foreground">Defina título, tarefas e prazo manualmente</p>
-                  </div>
-                </button>
               </div>
             )}
 
@@ -703,44 +714,45 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
 
                 {/* Clientes */}
                 {fluxoId ? (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label>Clientes *</Label>
-                      <span className="text-xs text-muted-foreground">
-                        {clienteIds.length === 0 ? 'Nenhum selecionado' : `${clienteIds.length} selecionado${clienteIds.length > 1 ? 's' : ''}`}
-                      </span>
-                    </div>
-                    <Input
-                      className="h-8 text-sm"
-                      placeholder="Buscar cliente..."
-                      value={clienteBusca}
-                      onChange={e => setClienteBusca(e.target.value)}
-                    />
-                    <div className="border rounded-md overflow-hidden">
-                      <button
+                  <div className="space-y-2">
+                    <Label>Cliente *</Label>
+                    <div className="flex gap-2">
+                      {clienteIds.length > 1 ? (
+                        <div className="flex-1 flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/30 min-w-0">
+                          <Layers className="h-4 w-4 text-primary shrink-0" />
+                          <span className="text-sm flex-1 truncate">{clienteIds.length} clientes selecionados</span>
+                          <button
+                            type="button"
+                            onClick={() => setClienteIds([])}
+                            className="text-muted-foreground hover:text-foreground shrink-0"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <Select
+                          value={clienteIds[0] ?? ''}
+                          onValueChange={v => setClienteIds(v ? [v] : [])}
+                        >
+                          <SelectTrigger className="flex-1" autoFocus>
+                            <SelectValue placeholder="Selecione o cliente" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {clientesAtivos.map(c => (
+                              <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <Button
                         type="button"
-                        onClick={toggleTodosClientes}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:bg-accent/40 border-b transition-colors"
+                        variant="outline"
+                        onClick={() => { setClienteBusca(''); setClienteModalOpen(true) }}
+                        className="shrink-0 gap-1.5"
                       >
-                        {todosClientesSelecionados
-                          ? <CheckSquare className="h-3.5 w-3.5 text-primary shrink-0" />
-                          : <Square className="h-3.5 w-3.5 shrink-0" />}
-                        Selecionar todos ({clientesFiltrados.length})
-                      </button>
-                      <div className="max-h-40 overflow-y-auto divide-y">
-                        {clientesFiltrados.length === 0 ? (
-                          <p className="text-xs text-muted-foreground text-center py-3">Nenhum cliente encontrado</p>
-                        ) : clientesFiltrados.map(c => (
-                          <label key={c.id} className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-accent/30 cursor-pointer transition-colors">
-                            <Checkbox
-                              checked={clienteIds.includes(c.id)}
-                              onCheckedChange={() => toggleCliente(c.id)}
-                              className="h-4 w-4"
-                            />
-                            <span className="text-sm truncate">{c.razao_social}</span>
-                          </label>
-                        ))}
-                      </div>
+                        <Users className="h-4 w-4" />
+                        Vários
+                      </Button>
                     </div>
                     {clienteIds.length > 1 && (
                       <div className="rounded-md bg-primary/5 border border-primary/20 px-3 py-2.5 space-y-1">
@@ -748,7 +760,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
                           <Layers className="h-3.5 w-3.5" />
                           Criação em lote: {clienteIds.length} ocorrências
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                           {clienteIds.map(id => clientes.find(c => c.id === id)?.razao_social ?? id).join(' · ')}
                         </p>
                       </div>
@@ -758,7 +770,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
                   <div className="space-y-1.5">
                     <Label>Cliente *</Label>
                     <Select value={clienteId} onValueChange={setClienteId}>
-                      <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                      <SelectTrigger autoFocus><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
                       <SelectContent>
                         {clientesAtivos.map(c => (
                           <SelectItem key={c.id} value={c.id}>{c.razao_social}</SelectItem>
@@ -771,7 +783,6 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
                 <div className="space-y-1.5">
                   <Label>Título *</Label>
                   <Input
-                    autoFocus
                     value={titulo}
                     onChange={e => setTitulo(e.target.value)}
                     placeholder="Ex: Alteração de Contrato Social"
@@ -951,6 +962,80 @@ export function NovaOcorrenciaDialog({ open, onOpenChange }: Props) {
           onSalvar={handleTarefaDialogSalvar}
         />
       )}
+
+      {/* Modal — seleção múltipla de clientes */}
+      <Dialog open={clienteModalOpen} onOpenChange={setClienteModalOpen}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
+            <DialogTitle>Selecionar Clientes</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-hidden flex flex-col px-6 py-4 gap-3 min-h-0">
+            <div className="flex items-center justify-between shrink-0">
+              <span className="text-sm text-muted-foreground">
+                {clienteIds.length === 0
+                  ? 'Nenhum selecionado'
+                  : `${clienteIds.length} selecionado${clienteIds.length > 1 ? 's' : ''}`}
+              </span>
+              {clienteIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setClienteIds([])}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Limpar seleção
+                </button>
+              )}
+            </div>
+
+            <Input
+              className="h-8 text-sm shrink-0"
+              placeholder="Buscar cliente..."
+              value={clienteBusca}
+              onChange={e => setClienteBusca(e.target.value)}
+            />
+
+            <div className="border rounded-md overflow-hidden flex flex-col min-h-0 flex-1">
+              <button
+                type="button"
+                onClick={toggleTodosClientes}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:bg-accent/40 border-b transition-colors shrink-0"
+              >
+                {todosClientesSelecionados
+                  ? <CheckSquare className="h-3.5 w-3.5 text-primary shrink-0" />
+                  : <Square className="h-3.5 w-3.5 shrink-0" />}
+                Selecionar todos ({clientesFiltrados.length})
+              </button>
+              <div className="overflow-y-auto divide-y flex-1">
+                {clientesFiltrados.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">Nenhum cliente encontrado</p>
+                ) : clientesFiltrados.map(c => (
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-accent/30 cursor-pointer transition-colors"
+                  >
+                    <Checkbox
+                      checked={clienteIds.includes(c.id)}
+                      onCheckedChange={() => toggleCliente(c.id)}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm truncate">{c.razao_social}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 border-t shrink-0 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setClienteModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => setClienteModalOpen(false)}>
+              {clienteIds.length > 0 ? `Confirmar (${clienteIds.length})` : 'Confirmar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

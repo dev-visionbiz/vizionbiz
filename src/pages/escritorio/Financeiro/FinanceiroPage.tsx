@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { Plus, Receipt, X } from 'lucide-react'
 import type { Invoice, InvoiceStatus } from '@/domain/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -68,6 +69,7 @@ export default function FinanceiroPage() {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
+  const [lotePermiteReneg, setLotePermiteReneg] = useState(true)
 
   // Avulsa dialog
   const [avulsaDialog, setAvulsaDialog] = useState(false)
@@ -76,6 +78,7 @@ export default function FinanceiroPage() {
     competencia: '',
     vencimento: '',
     valor_original: '',
+    permite_renegociacao: true,
   })
 
   // Pay dialog
@@ -130,6 +133,7 @@ export default function FinanceiroPage() {
         valor_original: contract.valor_mensal,
         status: 'aberta',
         origem: 'contrato',
+        permite_renegociacao: lotePermiteReneg,
       }
       await createInvoice.mutateAsync(nova)
       count++
@@ -140,7 +144,7 @@ export default function FinanceiroPage() {
   }
 
   const createAvulsa = async () => {
-    const { client_id, competencia, vencimento, valor_original } = avulsaForm
+    const { client_id, competencia, vencimento, valor_original, permite_renegociacao } = avulsaForm
     if (!client_id || !competencia || !vencimento || !valor_original) return
     const nova: Invoice = {
       id: uuidv4(),
@@ -151,12 +155,13 @@ export default function FinanceiroPage() {
       valor_original: parseFloat(valor_original),
       status: 'aberta',
       origem: 'avulsa',
+      permite_renegociacao,
     }
     try {
       await createInvoice.mutateAsync(nova)
       toast({ title: 'Fatura avulsa criada' })
       setAvulsaDialog(false)
-      setAvulsaForm({ client_id: '', competencia: '', vencimento: '', valor_original: '' })
+      setAvulsaForm({ client_id: '', competencia: '', vencimento: '', valor_original: '', permite_renegociacao: true })
     } catch {
       toast({ title: 'Erro', variant: 'destructive' })
     }
@@ -336,6 +341,15 @@ export default function FinanceiroPage() {
               <Label htmlFor="lote-comp">Competência</Label>
               <Input id="lote-comp" placeholder="2025-07" value={loteComp} onChange={(e) => setLoteComp(e.target.value)} />
             </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Permite renegociação</p>
+                <p className="text-xs text-muted-foreground">
+                  Desative para exigir quitação à vista (taxas obrigatórias)
+                </p>
+              </div>
+              <Switch checked={lotePermiteReneg} onCheckedChange={setLotePermiteReneg} />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLoteDialog(false)}>Cancelar</Button>
@@ -375,6 +389,18 @@ export default function FinanceiroPage() {
             <div className="space-y-1">
               <Label htmlFor="av-valor">Valor (R$)</Label>
               <Input id="av-valor" type="number" step="0.01" value={avulsaForm.valor_original} onChange={(e) => setAvulsaForm((f) => ({ ...f, valor_original: e.target.value }))} />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Permite renegociação</p>
+                <p className="text-xs text-muted-foreground">
+                  Desative para exigir quitação à vista
+                </p>
+              </div>
+              <Switch
+                checked={avulsaForm.permite_renegociacao}
+                onCheckedChange={(v) => setAvulsaForm((f) => ({ ...f, permite_renegociacao: v }))}
+              />
             </div>
           </div>
           <DialogFooter>

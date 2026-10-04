@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,8 @@ import { AlertCircle } from 'lucide-react'
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirectTo = searchParams.get('redirect')
 
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -26,7 +28,8 @@ export default function Login() {
       setErro(result.erro ?? 'Erro ao fazer login.')
       return
     }
-    navigate(result.papel === 'cliente' ? '/portal/inicio' : '/escritorio/dashboard', { replace: true })
+    const destino = redirectTo ?? (result.papel === 'cliente' ? '/portal/inicio' : '/escritorio/dashboard')
+    navigate(destino, { replace: true })
   }
 
   return (

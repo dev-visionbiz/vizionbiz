@@ -24,11 +24,12 @@ export function podeBaixar(
   // Verifica gate de cobrança vinculada ao documento
   if (document.invoice_id && document.download_apos_pagamento) {
     const inv = allInvoices.find((i) => i.id === document.invoice_id)
-    if (!inv || inv.status !== 'paga') {
+    const quitada = inv?.status === 'paga' || inv?.status === 'renegociada'
+    if (!inv || !quitada) {
       return {
         permitido: false,
         motivo: 'cobranca_pendente',
-        mensagem: 'Este documento só pode ser baixado após o pagamento da cobrança vinculada.',
+        mensagem: 'Este documento só pode ser baixado após o pagamento ou renegociação da cobrança vinculada.',
         invoice_id: document.invoice_id,
       }
     }

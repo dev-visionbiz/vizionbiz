@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Menu,
-  Home, FolderOpen, Receipt, UserCog,
-  Layers, Workflow, ClipboardList, CheckSquare, X, GitBranch,
+  Home, FolderOpen, Receipt, UserCog, FileText,
+  Layers, Workflow, ClipboardList, CheckSquare, X, GitBranch, FileBarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
@@ -20,7 +20,7 @@ const PROCESSOS_ITEMS: { label: string; href: string; icon: React.ElementType; s
   { label: 'Tarefas',     href: '/escritorio/tarefas',     icon: CheckSquare },
   { label: 'Ocorrências', href: '/escritorio/ocorrencias', icon: Layers,       submodulo: 'ocorrencias' },
   { label: 'Rotinas',     href: '/escritorio/rotinas',     icon: ClipboardList, submodulo: 'rotinas' },
-  { label: 'Fluxos',      href: '/escritorio/fluxos',      icon: GitBranch },
+  { label: 'Modelo de fluxos', href: '/escritorio/fluxos', icon: GitBranch },
 ]
 
 const PROCESSOS_HREFS = PROCESSOS_ITEMS.map(i => i.href)
@@ -29,12 +29,14 @@ const escritorioItems: { label: string; href: string; icon: React.ElementType; m
   { label: 'Início',    href: '/escritorio/dashboard', icon: LayoutDashboard },
   { label: 'Processos', href: '',                      icon: Workflow,        modulo: 'tarefas', isProcessos: true },
   { label: 'Clientes',  href: '/escritorio/clientes',  icon: Users,           modulo: 'clientes' },
+  { label: 'Guias',     href: '/escritorio/guias',     icon: FileBarChart2,   modulo: 'financeiro' },
 ]
 
 const portalItemsBase: { label: string; href: string; icon: React.ElementType; somenteResponsavel?: boolean }[] = [
   { label: 'Início',     href: '/portal/inicio',     icon: Home },
   { label: 'Documentos', href: '/portal/documentos', icon: FolderOpen },
   { label: 'Financeiro', href: '/portal/financeiro', icon: Receipt },
+  { label: 'Guias',      href: '/portal/guias',      icon: FileText },
   { label: 'Equipe',     href: '/portal/equipe',     icon: UserCog, somenteResponsavel: true },
 ]
 
@@ -60,7 +62,7 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
     ? portalItemsBase.filter((item) => {
         if (item.somenteResponsavel && papelPortal !== 'responsavel') return false
         if (!item.somenteResponsavel && item.href !== '/portal/inicio') {
-          const secao = item.href.split('/').pop() as 'documentos' | 'financeiro'
+          const secao = item.href.split('/').pop() as 'documentos' | 'financeiro' | 'guias'
           return secoesPermitidas.includes(secao)
         }
         return true

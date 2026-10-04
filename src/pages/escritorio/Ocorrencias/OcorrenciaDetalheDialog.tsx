@@ -485,7 +485,8 @@ interface EditOcorrenciaFormProps {
 
 function EditOcorrenciaForm({ ocorrencia, colaboradores, onSalvar, onCancelar, isSaving }: EditOcorrenciaFormProps) {
   const [titulo, setTitulo]             = useState(ocorrencia.titulo)
-  const [descricao, setDescricao]       = useState('')
+  const [descricao, setDescricao]       = useState(ocorrencia.descricao ?? '')
+  const [categoria, setCategoria]       = useState<CategoriaDemanda>(ocorrencia.categoria ?? 'outros')
   const [valor, setValor]               = useState(ocorrencia.valor ? String(ocorrencia.valor) : '')
   const [dataPrevista, setDataPrevista] = useState(ocorrencia.data_prevista)
   const [responsavelId, setResp]        = useState(ocorrencia.responsavel_id ?? '')
@@ -495,6 +496,8 @@ function EditOcorrenciaForm({ ocorrencia, colaboradores, onSalvar, onCancelar, i
     if (!titulo.trim()) return toast({ title: 'Informe o título', variant: 'destructive' })
     onSalvar({
       titulo: titulo.trim(),
+      descricao: descricao.trim() || undefined,
+      categoria,
       valor: valor ? parseFloat(valor) : undefined,
       data_prevista: dataPrevista,
       responsavel_id: responsavelId || undefined,
@@ -504,20 +507,49 @@ function EditOcorrenciaForm({ ocorrencia, colaboradores, onSalvar, onCancelar, i
   return (
     <div className="space-y-3 border rounded-lg p-4 bg-muted/20">
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Editar ocorrência</p>
+
+      <div className="space-y-1">
+        <Label className="text-xs">Título *</Label>
+        <Input value={titulo} onChange={e => setTitulo(e.target.value)} />
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs">Descrição</Label>
+        <Textarea
+          value={descricao}
+          onChange={e => setDescricao(e.target.value)}
+          placeholder="Detalhes do pedido do cliente..."
+          rows={2}
+          className="text-sm"
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2 space-y-1">
-          <Label className="text-xs">Título *</Label>
-          <Input value={titulo} onChange={e => setTitulo(e.target.value)} />
+        <div className="space-y-1">
+          <Label className="text-xs">Categoria</Label>
+          <Select value={categoria} onValueChange={v => setCategoria(v as CategoriaDemanda)}>
+            <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="societario">Societário</SelectItem>
+              <SelectItem value="fiscal">Fiscal</SelectItem>
+              <SelectItem value="dp">Dep. Pessoal</SelectItem>
+              <SelectItem value="contabil">Contábil</SelectItem>
+              <SelectItem value="outros">Outros</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Valor (opcional)</Label>
-          <Input type="number" value={valor} onChange={e => setValor(e.target.value)} placeholder="Incluso no contrato" step="0.01" />
+          <Input type="number" value={valor} onChange={e => setValor(e.target.value)} placeholder="Incluso no contrato" step="0.01" className="h-8 text-sm" />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className="text-xs">Data prevista</Label>
-          <Input type="date" value={dataPrevista} onChange={e => setDataPrevista(e.target.value)} />
+          <Input type="date" value={dataPrevista} onChange={e => setDataPrevista(e.target.value)} className="h-8 text-sm" />
         </div>
-        <div className="col-span-2 space-y-1">
+        <div className="space-y-1">
           <Label className="text-xs">Responsável</Label>
           <Select value={responsavelId || '_none'} onValueChange={v => setResp(v === '_none' ? '' : v)}>
             <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Sem responsável" /></SelectTrigger>
@@ -530,6 +562,7 @@ function EditOcorrenciaForm({ ocorrencia, colaboradores, onSalvar, onCancelar, i
           </Select>
         </div>
       </div>
+
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onCancelar}>Cancelar</Button>
         <Button size="sm" onClick={handleSalvar} disabled={isSaving}>

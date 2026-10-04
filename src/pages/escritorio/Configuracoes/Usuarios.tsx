@@ -25,13 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Users, AlertTriangle } from 'lucide-react'
+import { Plus, Users, AlertTriangle, Eye, EyeOff, Pencil, UserX, UserCheck } from 'lucide-react'
 import type { User, UserRole, ModuloEscritorio, PapelPortalCliente, PortalSecao } from '@/domain/types'
 import { MODULOS_ESCRITORIO, moduloLabels } from '@/auth/roles'
 import { v4 as uuidv4 } from 'uuid'
 
 const papelLabels: Record<UserRole, string> = {
-  escritorio_admin: 'Admin Escritório',
+  escritorio_admin: 'Admin',
   escritorio_colaborador: 'Colaborador',
   cliente: 'Cliente',
 }
@@ -45,6 +45,7 @@ const papelVariant: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
 const SECOES_PORTAL: { secao: PortalSecao; label: string }[] = [
   { secao: 'documentos', label: 'Documentos' },
   { secao: 'financeiro', label: 'Financeiro' },
+  { secao: 'guias',      label: 'Guias e Recolhimentos' },
 ]
 
 interface FormState {
@@ -69,6 +70,35 @@ const defaultForm: FormState = {
   secoes_portal: [],
 }
 
+function UserAvatar({ nome }: { nome: string }) {
+  const initials = nome
+    .split(' ')
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+  return (
+    <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0 select-none">
+      {initials || '?'}
+    </div>
+  )
+}
+
+function ModulosBadges({ modulos }: { modulos?: ModuloEscritorio[] }) {
+  if (!modulos || modulos.length === 0) {
+    return <span className="text-xs text-muted-foreground italic">Todos os módulos</span>
+  }
+  return (
+    <div className="flex flex-wrap gap-1">
+      {modulos.map((m) => (
+        <Badge key={m} variant="outline" className="text-xs py-0 px-1.5 h-4">
+          {moduloLabels[m]}
+        </Badge>
+      ))}
+    </div>
+  )
+}
+
 export default function Usuarios() {
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
@@ -83,10 +113,12 @@ export default function Usuarios() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
   const [form, setForm] = useState<FormState>(defaultForm)
+  const [showPassword, setShowPassword] = useState(false)
 
   const openCreate = () => {
     setEditTarget(null)
     setForm(defaultForm)
+    setShowPassword(false)
     setDialogOpen(true)
   }
 
@@ -97,11 +129,12 @@ export default function Usuarios() {
       email: u.email,
       papel: u.papel,
       client_id: u.client_id ?? '',
-      senha_hash: u.senha_hash ?? '',
+      senha_hash: '',
       modulos: u.modulos ?? [],
       papel_portal: u.papel_portal ?? 'responsavel',
       secoes_portal: u.secoes_portal ?? [],
     })
+    setShowPassword(false)
     setDialogOpen(true)
   }
 
@@ -133,8 +166,9 @@ export default function Usuarios() {
             ...permissoes,
           },
         })
-        toast({ title: 'Usuário atualizado' })
+        toast({ title: 'Usuário atualizado com sucesso' })
       } else {
+        const senhaInicial = form.senha_hash.trim() || 'senha123'
         const novo: User = {
           id: uuidv4(),
           tenant_id: tenantId,
@@ -143,11 +177,11 @@ export default function Usuarios() {
           papel: form.papel,
           client_id: form.papel === 'cliente' ? form.client_id : undefined,
           ativo: true,
-          senha_hash: form.senha_hash.trim() || 'senha123',
+          senha_hash: senhaInicial,
           ...permissoes,
         }
         await createUser.mutateAsync(novo)
-        toast({ title: 'Usuário criado', description: `Senha inicial: ${novo.senha_hash}` })
+        toast({ title: 'Usuário criado', description: `Senha inicial: ${senhaInicial}` })
       }
       setDialogOpen(false)
     } catch {
@@ -173,6 +207,19 @@ export default function Usuarios() {
     }
   }
 
+  const toggleModulo = (mod: ModuloEscritorio, checked: boolean) => {
+    setForm((f) => ({
+      ...f,
+      modulos: checked ? [...f.modulos, mod] : f.modulos.filter((m) => m !== mod),
+    }))
+  }
+
+  const selecionarTodosModulos = () => setForm((f) => ({ ...f, modulos: [...MODULOS_ESCRITORIO] }))
+  const limparModulos = () => setForm((f) => ({ ...f, modulos: [] }))
+
+  const clienteNome = (clientId: string) =>
+    clients?.find((c) => c.id === clientId)?.razao_social ?? '—'
+
   if (isLoading) return <PageLoader />
 
   return (
@@ -180,7 +227,9 @@ export default function Usuarios() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Usuários</h3>
-          <p className="text-sm text-muted-foreground">Gerencie os usuários do escritório e do portal do cliente.</p>
+          <p className="text-sm text-muted-foreground">
+            Gerencie os usuários do escritório e do portal do cliente.
+          </p>
         </div>
         <PermissionGuard permission="manageUsers">
           <Button onClick={openCreate} size="sm">
@@ -205,41 +254,58 @@ export default function Usuarios() {
           {users.map((u) => (
             <div
               key={u.id}
-              className={`rounded-lg border bg-card px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2 ${!u.ativo ? 'opacity-60' : ''}`}
+              className={`rounded-lg border bg-card px-4 py-3 flex flex-wrap items-start gap-3 ${!u.ativo ? 'opacity-60' : ''}`}
             >
-              <div className="flex items-center gap-2 flex-1 min-w-48">
-                <p className="font-semibold text-sm">{u.nome}</p>
-                {u.papel === 'cliente' && !u.client_id && (
-                  <span title="Sem empresa vinculada">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                  </span>
+              <UserAvatar nome={u.nome} />
+
+              <div className="flex-1 min-w-0 space-y-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-sm leading-tight">{u.nome}</p>
+                  {u.papel === 'cliente' && !u.client_id && (
+                    <span title="Sem empresa vinculada">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    </span>
+                  )}
+                  <Badge variant={papelVariant[u.papel]} className="text-xs">
+                    {papelLabels[u.papel]}
+                  </Badge>
+                  <Badge
+                    variant={u.ativo ? 'outline' : 'secondary'}
+                    className={`text-xs ${u.ativo ? 'border-green-500 text-green-600' : ''}`}
+                  >
+                    {u.ativo ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">{u.email}</p>
+                {u.papel === 'escritorio_colaborador' && (
+                  <div className="pt-0.5">
+                    <ModulosBadges modulos={u.modulos} />
+                  </div>
+                )}
+                {u.papel === 'cliente' && u.client_id && (
+                  <p className="text-xs text-muted-foreground pt-0.5">
+                    Empresa: {clienteNome(u.client_id)}
+                    {u.papel_portal && (
+                      <span className="ml-2 capitalize">· {u.papel_portal === 'responsavel' ? 'Responsável' : 'Membro'}</span>
+                    )}
+                  </p>
                 )}
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{u.email}</span>
-              <div className="flex items-center gap-2 shrink-0">
-                <Badge variant={papelVariant[u.papel]} className="text-xs">
-                  {papelLabels[u.papel]}
-                </Badge>
-                <Badge
-                  variant={u.ativo ? 'outline' : 'secondary'}
-                  className={`text-xs ${u.ativo ? 'border-green-500 text-green-600' : ''}`}
-                >
-                  {u.ativo ? 'Ativo' : 'Inativo'}
-                </Badge>
-              </div>
+
               <PermissionGuard permission="manageUsers">
-                <div className="flex items-center gap-1 ml-auto shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(u)}>
-                    Editar
+                <div className="flex items-center gap-1 shrink-0 self-start">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(u)} title="Editar">
+                    <Pencil className="h-3.5 w-3.5" />
                   </Button>
                   <Button
-                    variant={u.ativo ? 'ghost' : 'outline'}
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${u.ativo ? 'text-destructive hover:text-destructive' : 'text-green-600 hover:text-green-600'}`}
                     onClick={() => handleToggleAtivo(u)}
                     disabled={u.id === currentUser?.id}
-                    className={u.ativo ? 'text-destructive hover:text-destructive' : ''}
+                    title={u.ativo ? 'Desativar' : 'Reativar'}
                   >
-                    {u.ativo ? 'Desativar' : 'Reativar'}
+                    {u.ativo ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
               </PermissionGuard>
@@ -248,157 +314,239 @@ export default function Usuarios() {
         </div>
       )}
 
+      {/* Formulário unificado: mesmo para criar e editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh]">
+        <DialogContent className="sm:max-w-lg flex flex-col max-h-[90dvh]">
           <DialogHeader className="shrink-0">
-            <DialogTitle>{editTarget ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
+            <DialogTitle>{editTarget ? `Editar — ${editTarget.nome}` : 'Novo Usuário'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2 overflow-y-auto flex-1 pr-1">
-            <div className="space-y-1">
-              <Label htmlFor="u-nome">Nome</Label>
-              <Input
-                id="u-nome"
-                value={form.nome}
-                onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
-                placeholder="Nome completo"
-                autoFocus
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="u-email">Email</Label>
-              <Input
-                id="u-email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                placeholder="email@exemplo.com"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Papel</Label>
-              <Select
-                value={form.papel}
-                onValueChange={(v) => setForm((f) => ({ ...f, papel: v as UserRole }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="escritorio_admin">Admin Escritório</SelectItem>
-                  <SelectItem value="escritorio_colaborador">Colaborador</SelectItem>
-                  <SelectItem value="cliente">Cliente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {form.papel === 'escritorio_colaborador' && (
-              <div className="space-y-2">
-                <Label>Módulos de acesso</Label>
-                <p className="text-xs text-muted-foreground">Sem seleção = acesso total.</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {MODULOS_ESCRITORIO.map((mod) => (
-                    <div key={mod} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`mod-${mod}`}
-                        checked={form.modulos.includes(mod)}
-                        onCheckedChange={(checked) =>
-                          setForm((f) => ({
-                            ...f,
-                            modulos: checked
-                              ? [...f.modulos, mod]
-                              : f.modulos.filter((m) => m !== mod),
-                          }))
-                        }
-                      />
-                      <label htmlFor={`mod-${mod}`} className="text-sm cursor-pointer select-none">
-                        {moduloLabels[mod]}
-                      </label>
-                    </div>
-                  ))}
+
+          <div className="overflow-y-auto flex-1 pr-1 space-y-5 py-1">
+
+            {/* Seção: Informações básicas */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Informações Básicas
+              </p>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="u-nome">Nome completo</Label>
+                  <Input
+                    id="u-nome"
+                    value={form.nome}
+                    onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+                    placeholder="Ex.: Maria Silva"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="u-email">E-mail</Label>
+                  <Input
+                    id="u-email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="email@exemplo.com"
+                  />
                 </div>
               </div>
-            )}
-            {form.papel === 'cliente' && (
+            </div>
+
+            <div className="border-t" />
+
+            {/* Seção: Papel e acesso */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Papel e Acesso
+              </p>
+
               <div className="space-y-1">
-                <Label>Cliente Vinculado</Label>
+                <Label>Papel</Label>
                 <Select
-                  value={form.client_id}
-                  onValueChange={(v) => setForm((f) => ({ ...f, client_id: v }))}
+                  value={form.papel}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, papel: v as UserRole, modulos: [], secoes_portal: [] }))
+                  }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o cliente..." />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients?.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.razao_social}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="escritorio_admin">Admin Escritório</SelectItem>
+                    <SelectItem value="escritorio_colaborador">Colaborador</SelectItem>
+                    <SelectItem value="cliente">Cliente (portal)</SelectItem>
                   </SelectContent>
                 </Select>
+                {form.papel === 'escritorio_admin' && (
+                  <p className="text-xs text-muted-foreground pt-1">
+                    Admin tem acesso irrestrito a todos os módulos e configurações.
+                  </p>
+                )}
               </div>
-            )}
-            {form.papel === 'cliente' && (
-              <div className="space-y-1">
-                <Label>Papel no Portal</Label>
-                <Select
-                  value={form.papel_portal}
-                  onValueChange={(v) => setForm((f) => ({ ...f, papel_portal: v as PapelPortalCliente }))}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="responsavel">Responsável</SelectItem>
-                    <SelectItem value="membro">Membro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {form.papel === 'cliente' && form.papel_portal === 'membro' && (
-              <div className="space-y-2">
-                <Label>Seções do Portal</Label>
-                <p className="text-xs text-muted-foreground">Sem seleção = acesso a todas as seções.</p>
-                <div className="flex flex-col gap-2">
-                  {SECOES_PORTAL.map(({ secao, label }) => (
-                    <div key={secao} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`secao-${secao}`}
-                        checked={form.secoes_portal.includes(secao)}
-                        onCheckedChange={(checked) =>
-                          setForm((f) => ({
-                            ...f,
-                            secoes_portal: checked
-                              ? [...f.secoes_portal, secao]
-                              : f.secoes_portal.filter((s) => s !== secao),
-                          }))
-                        }
-                      />
-                      <label htmlFor={`secao-${secao}`} className="text-sm cursor-pointer select-none">
-                        {label}
-                      </label>
+
+              {/* Módulos — só para colaborador */}
+              {form.papel === 'escritorio_colaborador' && (
+                <div className="space-y-2 rounded-md border p-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Módulos liberados</Label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={selecionarTodosModulos}
+                        className="text-xs text-primary underline-offset-2 hover:underline"
+                      >
+                        Todos
+                      </button>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <button
+                        type="button"
+                        onClick={limparModulos}
+                        className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                      >
+                        Limpar
+                      </button>
                     </div>
-                  ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground -mt-1">
+                    Sem seleção = acesso a todos os módulos.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {MODULOS_ESCRITORIO.map((mod) => (
+                      <div key={mod} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`mod-${mod}`}
+                          checked={form.modulos.includes(mod)}
+                          onCheckedChange={(checked) => toggleModulo(mod, !!checked)}
+                        />
+                        <label htmlFor={`mod-${mod}`} className="text-sm cursor-pointer select-none">
+                          {moduloLabels[mod]}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {/* Vinculação de cliente */}
+              {form.papel === 'cliente' && (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label>Empresa vinculada</Label>
+                    <Select
+                      value={form.client_id}
+                      onValueChange={(v) => setForm((f) => ({ ...f, client_id: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a empresa..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients?.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.razao_social}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label>Papel no portal</Label>
+                    <Select
+                      value={form.papel_portal}
+                      onValueChange={(v) =>
+                        setForm((f) => ({ ...f, papel_portal: v as PapelPortalCliente, secoes_portal: [] }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="responsavel">Responsável (acesso total)</SelectItem>
+                        <SelectItem value="membro">Membro (acesso restrito)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {form.papel_portal === 'membro' && (
+                    <div className="space-y-2 rounded-md border p-3 bg-muted/30">
+                      <Label className="text-sm">Seções liberadas no portal</Label>
+                      <p className="text-xs text-muted-foreground -mt-1">
+                        Sem seleção = acesso a todas as seções.
+                      </p>
+                      <div className="flex flex-col gap-2 pt-1">
+                        {SECOES_PORTAL.map(({ secao, label }) => (
+                          <div key={secao} className="flex items-center gap-2">
+                            <Checkbox
+                              id={`secao-${secao}`}
+                              checked={form.secoes_portal.includes(secao)}
+                              onCheckedChange={(checked) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  secoes_portal: checked
+                                    ? [...f.secoes_portal, secao]
+                                    : f.secoes_portal.filter((s) => s !== secao),
+                                }))
+                              }
+                            />
+                            <label htmlFor={`secao-${secao}`} className="text-sm cursor-pointer select-none">
+                              {label}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t" />
+
+            {/* Seção: Senha */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Senha
+              </p>
+              <div className="space-y-1">
+                <Label htmlFor="u-senha">
+                  {editTarget ? 'Nova senha' : 'Senha inicial'}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="u-senha"
+                    type={showPassword ? 'text' : 'password'}
+                    value={form.senha_hash}
+                    onChange={(e) => setForm((f) => ({ ...f, senha_hash: e.target.value }))}
+                    placeholder={editTarget ? 'Deixe em branco para não alterar' : 'senha123'}
+                    className="pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {!editTarget && (
+                  <p className="text-xs text-muted-foreground">
+                    Padrão: <code className="font-mono">senha123</code> se não informada.
+                  </p>
+                )}
               </div>
-            )}
-            <div className="space-y-1">
-              <Label htmlFor="u-senha">
-                {editTarget ? 'Nova Senha (deixe em branco para manter)' : 'Senha inicial'}
-              </Label>
-              <Input
-                id="u-senha"
-                type="text"
-                value={form.senha_hash}
-                onChange={(e) => setForm((f) => ({ ...f, senha_hash: e.target.value }))}
-                placeholder={editTarget ? 'sem alteração' : 'senha123'}
-              />
             </div>
           </div>
-          <DialogFooter className="shrink-0 pt-2 border-t">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+
+          <DialogFooter className="shrink-0 pt-3 border-t gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
+            </Button>
             <Button
               onClick={handleSave}
               disabled={!form.nome.trim() || !form.email.trim()}
             >
-              {editTarget ? 'Salvar' : 'Criar'}
+              {editTarget ? 'Salvar alterações' : 'Criar usuário'}
             </Button>
           </DialogFooter>
         </DialogContent>

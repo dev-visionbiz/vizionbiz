@@ -1,6 +1,6 @@
 export type UserRole = 'escritorio_admin' | 'escritorio_colaborador' | 'cliente'
 export type ContrataNatureza = 'principal' | 'avulso' | 'gestao_provisoria' | 'emissao'
-export type PortalSecao = 'inicio' | 'documentos' | 'financeiro'
+export type PortalSecao = 'inicio' | 'documentos' | 'financeiro' | 'guias'
 export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'tarefas'
 export type SubModuloTarefas = 'ocorrencias' | 'rotinas'
 export type PapelPortalCliente = 'responsavel' | 'membro'
@@ -298,6 +298,8 @@ export interface Invoice {
   status: InvoiceStatus
   origem: InvoiceOrigin
   renegotiation_id?: string
+  /** false = quitação obrigatória (taxas/encargos fixos); ausente ou true = aceita termo de renegociação */
+  permite_renegociacao?: boolean
 }
 
 export interface Payment {
@@ -603,6 +605,7 @@ export interface Ocorrencia {
   id: string
   tenant_id: string
   titulo: string
+  descricao?: string
   cliente_id?: string
   origem: OcorrenciaOrigem
   fluxo_id?: string
@@ -639,4 +642,101 @@ export interface Tarefa {
   impedimento_data?: string
   checklist_progresso?: ChecklistItemProgresso[]
   documentos_config?: OcorrenciaDocumentoConfig[]
+}
+
+// ==================== GUIAS E RECOLHIMENTOS ====================
+
+export type TipoGuia =
+  | 'darf'
+  | 'das'
+  | 'dae'
+  | 'darf_simples'
+  | 'fgts'
+  | 'gnre'
+  | 'iss'
+  | 'iptu'
+  | 'boleto_prefeitura'
+  | 'bombeiros'
+  | 'vigilancia_sanitaria'
+  | 'outro'
+
+export type GuiaStatus =
+  | 'aguardando_emissao'
+  | 'emitida'
+  | 'paga'
+  | 'vencida'
+  | 'cancelada'
+  | 'em_retificacao'
+
+export type GuiaOrigem = 'manual' | 'rotina' | 'api'
+
+export type SegundaViaStatus = 'nao_solicitada' | 'solicitada' | 'disponivel' | 'enviada'
+
+export interface GuiaRecolhimento {
+  id: string
+  tenant_id: string
+  cliente_id: string
+  tipo: TipoGuia
+  descricao: string
+  competencia: string        // YYYY-MM
+  vencimento: string         // YYYY-MM-DD
+  valor: number
+  valor_multa?: number
+  valor_juros?: number
+  status: GuiaStatus
+  origem: GuiaOrigem
+  // Identificação da guia
+  codigo_barras?: string
+  linha_digitavel?: string
+  pix_copia_cola?: string    // PIX copia e cola (EMV) — FGTS Digital e outros
+  numero_documento?: string
+  // Campos específicos DARF
+  codigo_receita?: string
+  periodo_apuracao?: string
+  numero_referencia?: string
+  // Pagamento
+  pago_em?: string           // YYYY-MM-DD
+  pago_por?: string          // user_id
+  pago_valor?: number
+  comprovante_storage_key?: string
+  // Segunda via
+  segunda_via_status: SegundaViaStatus
+  segunda_via_solicitada_em?: string
+  segunda_via_arquivo_key?: string
+  // Reservado para APIs futuras (SERPRO, prefeituras, etc.)
+  api_provider?: string
+  api_external_id?: string
+  api_dados?: Record<string, unknown>
+  // Arquivo da guia (PDF original ou gerado)
+  arquivo_key?: string
+  // Importação em lote
+  lote_id?: string
+  lote_arquivo_sha256?: string
+  lote_arquivo_original?: string
+  // Notas
+  observacoes?: string
+  // Auditoria
+  criado_em: string
+  criado_por: string
+  atualizado_em?: string
+  deleted_at?: string
+}
+
+// ==================== LOTES DE IMPORTAÇÃO ====================
+
+export type LoteStatus = 'processando' | 'revisar' | 'concluido' | 'cancelado'
+
+export interface LoteImportacao {
+  id: string
+  tenant_id: string
+  enviado_por: string
+  total_arquivos: number
+  organizados: number
+  para_revisar: number
+  com_erro: number
+  duplicatas_ignoradas: number
+  status: LoteStatus
+  created_at: string
+  concluido_em?: string
+  deleted_at?: string
 }

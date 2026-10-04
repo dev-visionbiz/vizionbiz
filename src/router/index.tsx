@@ -18,10 +18,13 @@ const TarefasPage = React.lazy(() => import('@/pages/escritorio/Tarefas/TarefasP
 const OcorrenciasPage = React.lazy(() => import('@/pages/escritorio/Ocorrencias/OcorrenciasPage'))
 const RotinasPage = React.lazy(() => import('@/pages/escritorio/Rotinas/RotinasPage'))
 const FluxosPage = React.lazy(() => import('@/pages/escritorio/Fluxos/FluxosPage'))
+const GuiasPage = React.lazy(() => import('@/pages/escritorio/Guias/GuiasPage'))
 const PortalInicio = React.lazy(() => import('@/pages/cliente/PortalInicio'))
 const PortalDocumentos = React.lazy(() => import('@/pages/cliente/PortalDocumentos'))
 const PortalFinanceiro = React.lazy(() => import('@/pages/cliente/PortalFinanceiro'))
 const PortalEquipe = React.lazy(() => import('@/pages/cliente/PortalEquipe'))
+const PortalGuias = React.lazy(() => import('@/pages/cliente/PortalGuias'))
+const ShareDocumentoPage = React.lazy(() => import('@/pages/share/ShareDocumentoPage'))
 
 function Lazy({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -35,6 +38,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Lazy><Login /></Lazy>,
+  },
+  {
+    path: '/share/:token',
+    element: <Lazy><ShareDocumentoPage /></Lazy>,
   },
   {
     path: '/escritorio',
@@ -81,6 +88,10 @@ export const router = createBrowserRouter([
             path: 'fluxos',
             element: <EscritorioRoute modulo="tarefas"><Lazy><FluxosPage /></Lazy></EscritorioRoute>,
           },
+          {
+            path: 'guias',
+            element: <EscritorioRoute modulo="financeiro"><Lazy><GuiasPage /></Lazy></EscritorioRoute>,
+          },
           { path: 'obrigacoes', element: <Navigate to="/escritorio/rotinas" replace /> },
           { path: 'demandas', element: <Navigate to="/escritorio/ocorrencias" replace /> },
           { path: 'configuracoes', element: <Lazy><Configuracoes /></Lazy> },
@@ -101,6 +112,7 @@ export const router = createBrowserRouter([
           { path: 'documentos', element: <Lazy><PortalDocumentos /></Lazy> },
           { path: 'financeiro', element: <Lazy><PortalFinanceiro /></Lazy> },
           { path: 'equipe', element: <Lazy><PortalEquipe /></Lazy> },
+          { path: 'guias', element: <Lazy><PortalGuias /></Lazy> },
         ],
       },
     ],

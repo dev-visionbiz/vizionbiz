@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Users, DollarSign, Settings,
   Home, FolderOpen, Receipt, ChevronLeft, ChevronRight, Pin, PinOff,
   UserCog, ClipboardList, CheckSquare, Layers, Workflow, ChevronDown, GitBranch,
+  FileBarChart2, FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
@@ -43,20 +44,22 @@ const escritorioNavBase: NavEntry[] = [
       { label: 'Tarefas',     href: '/escritorio/tarefas',     icon: CheckSquare,  modulo: 'tarefas' },
       { label: 'Ocorrências', href: '/escritorio/ocorrencias', icon: Layers,       modulo: 'tarefas', submodulo: 'ocorrencias' },
       { label: 'Rotinas',     href: '/escritorio/rotinas',     icon: ClipboardList, modulo: 'tarefas', submodulo: 'rotinas' },
-      { label: 'Fluxos',      href: '/escritorio/fluxos',      icon: GitBranch,    modulo: 'tarefas' },
+      { label: 'Modelo de fluxos', href: '/escritorio/fluxos', icon: GitBranch,    modulo: 'tarefas' },
     ],
   },
   { label: 'Clientes',      href: '/escritorio/clientes',      icon: Users,      modulo: 'clientes' },
   { label: 'Documentos',    href: '/escritorio/documentos',    icon: FolderOpen, modulo: 'documentos' },
-  { label: 'Financeiro',    href: '/escritorio/financeiro',    icon: DollarSign, modulo: 'financeiro' },
+  { label: 'Financeiro',    href: '/escritorio/financeiro',    icon: DollarSign,    modulo: 'financeiro' },
+  { label: 'Guias e Recolhimentos', href: '/escritorio/guias', icon: FileBarChart2, modulo: 'financeiro' },
   { label: 'Configurações', href: '/escritorio/configuracoes', icon: Settings },
 ]
 
 const clienteNavBase: { label: string; href: string; icon: React.ElementType; somenteResponsavel?: boolean }[] = [
-  { label: 'Início',     href: '/portal/inicio',      icon: Home },
-  { label: 'Documentos', href: '/portal/documentos',  icon: FolderOpen },
-  { label: 'Financeiro', href: '/portal/financeiro',  icon: Receipt },
-  { label: 'Equipe',     href: '/portal/equipe',      icon: UserCog, somenteResponsavel: true },
+  { label: 'Início',              href: '/portal/inicio',      icon: Home },
+  { label: 'Documentos',          href: '/portal/documentos',  icon: FolderOpen },
+  { label: 'Financeiro',          href: '/portal/financeiro',  icon: Receipt },
+  { label: 'Guias e Recolhimentos', href: '/portal/guias',     icon: FileText },
+  { label: 'Equipe',              href: '/portal/equipe',      icon: UserCog, somenteResponsavel: true },
 ]
 
 interface SidebarProps {
@@ -87,7 +90,7 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
         .filter((item) => {
           if (item.somenteResponsavel && papelPortal !== 'responsavel') return false
           if (!item.somenteResponsavel && item.href !== '/portal/inicio') {
-            const secao = item.href.split('/').pop() as 'documentos' | 'financeiro'
+            const secao = item.href.split('/').pop() as 'documentos' | 'financeiro' | 'guias'
             return secoesPermitidas.includes(secao)
           }
           return true

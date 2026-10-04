@@ -6,7 +6,9 @@ import type {
   ShareLink, Tenant, User,
   HistoricoTarefa,
   Fluxo, FluxoTarefa, Rotina, RotinaCliente, Ciclo, Ocorrencia, Tarefa, OcorrenciaStatus,
-  OcorrenciaDocumento
+  OcorrenciaDocumento,
+  GuiaRecolhimento, GuiaStatus, TipoGuia,
+  LoteImportacao,
 } from '@/domain/types'
 
 export interface Repository<T> {
@@ -187,4 +189,16 @@ export interface OcorrenciaDocumentoRepository extends Repository<OcorrenciaDocu
   findByTarefa(tenantId: string, tarefaId: string): Promise<OcorrenciaDocumento[]>
   findByCliente(tenantId: string, clienteId: string): Promise<OcorrenciaDocumento[]>
   findByDocument(documentId: string): Promise<OcorrenciaDocumento[]>
+}
+
+export interface GuiaRecolhimentoRepository extends Repository<GuiaRecolhimento> {
+  findByCliente(tenantId: string, clienteId: string): Promise<GuiaRecolhimento[]>
+  findByStatus(tenantId: string, status: GuiaStatus): Promise<GuiaRecolhimento[]>
+  findByCompetencia(tenantId: string, competencia: string): Promise<GuiaRecolhimento[]>
+  findByTipo(tenantId: string, tipo: TipoGuia): Promise<GuiaRecolhimento[]>
+  findBySHA256(sha256: string): Promise<GuiaRecolhimento | null>
+}
+
+export interface LoteImportacaoRepository extends Repository<LoteImportacao> {
+  findByTenant(tenantId: string): Promise<LoteImportacao[]>
 }
