@@ -83,11 +83,13 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
 
       {!isCliente && (
         <div
-          className={cn(
-            'fixed left-0 right-0 z-50 bg-card border border-b-0 rounded-t-2xl shadow-xl lg:hidden transition-transform duration-200',
-            processosOpen ? 'translate-y-0' : 'translate-y-full',
-          )}
-          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+          className="fixed left-0 right-0 z-50 bg-card border border-b-0 rounded-t-2xl shadow-xl lg:hidden transition-transform duration-200"
+          style={{
+            bottom: 'calc(4rem + env(safe-area-inset-bottom))',
+            transform: processosOpen
+              ? 'translateY(0)'
+              : 'translateY(calc(100% + 4rem + env(safe-area-inset-bottom)))',
+          }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <span className="text-sm font-semibold">Processos</span>
