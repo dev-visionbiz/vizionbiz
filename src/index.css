@@ -165,4 +165,22 @@ html {
     color: #fbbf24;
     border-color: #b45309;
   }
+
+  /* Alert warning — tema claro: fundo amarelo, borda laranja, texto cinza escuro */
+  .alert-warning {
+    background-color: #fef9c3; /* yellow-100 */
+    border-color: #fb923c;     /* orange-400 */
+    color: #374151;            /* gray-700 */
+  }
+  .alert-warning > svg {
+    color: #f97316;            /* orange-500 */
+  }
+  .dark .alert-warning {
+    background-color: rgba(66, 32, 6, 0.2); /* yellow-950/20 */
+    border-color: rgba(234, 179, 8, 0.5);   /* yellow-500/50 */
+    color: #facc15;                          /* yellow-400 */
+  }
+  .dark .alert-warning > svg {
+    color: #facc15;            /* yellow-400 */
+  }
 }

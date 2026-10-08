@@ -133,6 +133,16 @@ export function VisualizarGuiaPDFDialog({ guia, arquivoKey, titulo, open, onClos
         {/* Painel de detalhes (expansível na base) */}
         {detalhesAbertos && (
           <div className="shrink-0 border-t bg-background px-4 pt-3 pb-3 space-y-2.5">
+            <div className="flex items-center justify-between -mt-0.5 mb-1">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Detalhes da guia</span>
+              <button
+                onClick={() => setDetalhesAbertos(false)}
+                className="h-5 w-5 flex items-center justify-center rounded opacity-60 hover:opacity-100 hover:bg-accent transition-opacity"
+                title="Fechar detalhes"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div>
                 <p className="text-xs text-muted-foreground">Competência</p>

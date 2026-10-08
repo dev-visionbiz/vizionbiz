@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useAuth } from '@/auth/AuthProvider'
 import { useInvoices, useCreateInvoice, useUpdateInvoice } from '@/data/hooks/useInvoices'
 import { useContracts } from '@/data/hooks/useContracts'
@@ -195,7 +195,7 @@ export default function FinanceiroPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Financeiro</h1>
-          <p className="text-sm text-muted-foreground">Gestão de faturas e cobranças</p>
+          <p className="text-sm text-muted-foreground">GestÃ£o de faturas e cobranÃ§as</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setLoteDialog(true)}>
@@ -231,11 +231,11 @@ export default function FinanceiroPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pago no Mês</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pago no MÃªs</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">{formatCurrency(pagoMes)}</p>
-            <p className="text-xs text-muted-foreground">competência {currentMonth}</p>
+            <p className="text-xs text-muted-foreground">competÃªncia {currentMonth}</p>
           </CardContent>
         </Card>
       </div>
@@ -267,7 +267,7 @@ export default function FinanceiroPage() {
           </SelectContent>
         </Select>
         <Input
-          placeholder="Competência (ex: 2025-07)"
+          placeholder="CompetÃªncia (ex: 2025-07)"
           value={filterComp}
           onChange={(e) => setFilterComp(e.target.value)}
           className="w-full sm:w-48"
@@ -300,7 +300,7 @@ export default function FinanceiroPage() {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                   <span className="text-muted-foreground">Vencimento</span>
                   <span className="text-right font-medium">{formatDate(inv.vencimento)}</span>
-                  <span className="text-muted-foreground">Competência</span>
+                  <span className="text-muted-foreground">CompetÃªncia</span>
                   <span className="text-right">{inv.competencia}</span>
                   <span className="text-muted-foreground">Valor original</span>
                   <span className="text-right">{formatCurrency(inv.valor_original)}</span>
@@ -335,17 +335,17 @@ export default function FinanceiroPage() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <p className="text-sm text-muted-foreground">
-              Serão criadas faturas para todos os contratos ativos que ainda não têm fatura na competência selecionada.
+              SerÃ£o criadas faturas para todos os contratos ativos que ainda nÃ£o tÃªm fatura na competÃªncia selecionada.
             </p>
             <div className="space-y-1">
-              <Label htmlFor="lote-comp">Competência</Label>
+              <Label htmlFor="lote-comp">CompetÃªncia</Label>
               <Input id="lote-comp" placeholder="2025-07" value={loteComp} onChange={(e) => setLoteComp(e.target.value)} />
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <p className="text-sm font-medium">Permite renegociação</p>
+                <p className="text-sm font-medium">Permite renegociaÃ§Ã£o</p>
                 <p className="text-xs text-muted-foreground">
-                  Desative para exigir quitação à vista (taxas obrigatórias)
+                  Desative para exigir quitaÃ§Ã£o Ã  vista (taxas obrigatÃ³rias)
                 </p>
               </div>
               <Switch checked={lotePermiteReneg} onCheckedChange={setLotePermiteReneg} />
@@ -379,7 +379,7 @@ export default function FinanceiroPage() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="av-comp">Competência (AAAA-MM)</Label>
+              <Label htmlFor="av-comp">CompetÃªncia (AAAA-MM)</Label>
               <Input id="av-comp" placeholder="2025-07" value={avulsaForm.competencia} onChange={(e) => setAvulsaForm((f) => ({ ...f, competencia: e.target.value }))} />
             </div>
             <div className="space-y-1">
@@ -392,9 +392,9 @@ export default function FinanceiroPage() {
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <p className="text-sm font-medium">Permite renegociação</p>
+                <p className="text-sm font-medium">Permite renegociaÃ§Ã£o</p>
                 <p className="text-xs text-muted-foreground">
-                  Desative para exigir quitação à vista
+                  Desative para exigir quitaÃ§Ã£o Ã  vista
                 </p>
               </div>
               <Switch
@@ -425,7 +425,7 @@ export default function FinanceiroPage() {
             {payTarget && (
               <div className="rounded-md bg-muted p-3 text-sm space-y-1">
                 <p><span className="text-muted-foreground">Cliente:</span> {clientName(payTarget.client_id)}</p>
-                <p><span className="text-muted-foreground">Competência:</span> {payTarget.competencia}</p>
+                <p><span className="text-muted-foreground">CompetÃªncia:</span> {payTarget.competencia}</p>
                 <p><span className="text-muted-foreground">Valor:</span> {formatCurrency(payTarget.valor_original)}</p>
               </div>
             )}
@@ -440,6 +440,8 @@ export default function FinanceiroPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

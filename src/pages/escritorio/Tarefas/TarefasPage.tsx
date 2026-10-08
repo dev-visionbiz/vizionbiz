@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+﻿import { useState, useMemo, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { Clock, AlertTriangle, Users, Inbox, CheckCircle2, List, PlayCircle, LayoutDashboard, Plus, SlidersHorizontal, X } from 'lucide-react'
@@ -29,7 +29,7 @@ import {
   TarefaDetalheConteudo,
 } from './TarefaDetalhe'
 
-// ─── ClienteCombobox ─────────────────────────────────────────────────────────
+// â”€â”€â”€ ClienteCombobox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ClienteCombobox({
   clientes,
@@ -136,7 +136,7 @@ function ClienteCombobox({
   )
 }
 
-// ─── sortByUrgencia ──────────────────────────────────────────────────────────
+// â”€â”€â”€ sortByUrgencia â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function sortByUrgencia(a: TarefaUnificada, b: TarefaUnificada): number {
   const ordem: Record<Urgencia, number> = { critico: 0, alta: 1, media: 2, normal: 3 }
@@ -145,7 +145,7 @@ function sortByUrgencia(a: TarefaUnificada, b: TarefaUnificada): number {
   return a.dataPrevista.localeCompare(b.dataPrevista)
 }
 
-// ─── Dialog wrapper (mobile) ─────────────────────────────────────────────────
+// â”€â”€â”€ Dialog wrapper (mobile) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TarefaDetalheDialogProps {
   tarefa: TarefaUnificada | null
@@ -185,7 +185,7 @@ function TarefaDetalheDialog({
   )
 }
 
-// ─── Card de tarefa ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Card de tarefa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TarefaCard({ t, isSelected, onAbrir, onIniciar, onConcluir }: {
   t: TarefaUnificada
@@ -221,12 +221,12 @@ function TarefaCard({ t, isSelected, onAbrir, onIniciar, onConcluir }: {
 
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{t.titulo}</p>
-        <p className="text-xs text-muted-foreground truncate">{t.clienteNome} · {t.subtitulo}</p>
+        <p className="text-xs text-muted-foreground truncate">{t.clienteNome} Â· {t.subtitulo}</p>
         {isImpedida ? (
           <>
             {t.impedimentoResponsavelNome && (
               <p className="text-xs text-orange-700 font-medium truncate">
-                Resolução: {t.impedimentoResponsavelNome}
+                ResoluÃ§Ã£o: {t.impedimentoResponsavelNome}
               </p>
             )}
             {t.impedimentoDescricao && (
@@ -256,7 +256,7 @@ function TarefaCard({ t, isSelected, onAbrir, onIniciar, onConcluir }: {
           {(() => {
             const ativos = t.checklistProgresso?.filter(i => i.inicio_em && !i.concluido) ?? []
             if (!ativos.length) return null
-            const label = ativos.length === 1 ? ativos[0].nome : `${ativos.length} em execução`
+            const label = ativos.length === 1 ? ativos[0].nome : `${ativos.length} em execuÃ§Ã£o`
             return (
               <span className="text-xs text-amber-600 hidden sm:flex items-center gap-0.5 max-w-[120px] truncate">
                 <PlayCircle className="h-3 w-3 shrink-0" />
@@ -307,7 +307,7 @@ function ListaVazia({ msg }: { msg: string }) {
   )
 }
 
-// ─── Página principal ────────────────────────────────────────────────────────
+// â”€â”€â”€ PÃ¡gina principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function TarefasPage() {
   const { currentUser } = useAuth()
@@ -416,7 +416,7 @@ export default function TarefasPage() {
     return items
   }, [novasTarefas, ocorrenciaMap, clienteMap, userMap])
 
-  // Auto-seleciona tarefa quando ?tarefa= está na URL (ex.: clique no Pomodoro flutuante)
+  // Auto-seleciona tarefa quando ?tarefa= estÃ¡ na URL (ex.: clique no Pomodoro flutuante)
   const autoSelectDoneRef = useRef(false)
   useEffect(() => {
     const id = searchParams.get('tarefa')
@@ -497,7 +497,7 @@ export default function TarefasPage() {
   function handleConcluir(t: TarefaUnificada) {
     concluirTarefa.mutate(
       { tarefaId: t.tarefaId, ocorrenciaId: t.ocorrenciaId },
-      { onSuccess: () => toast({ title: 'Tarefa concluída' }) }
+      { onSuccess: () => toast({ title: 'Tarefa concluÃ­da' }) }
     )
   }
 
@@ -543,7 +543,7 @@ export default function TarefasPage() {
       { tarefaId: t.tarefaId, ocorrenciaId: t.ocorrenciaId },
       {
         onSuccess: () => {
-          toast({ title: 'Tarefa concluída' })
+          toast({ title: 'Tarefa concluÃ­da' })
           setTarefaSelecionada(null)
         },
       }
@@ -567,21 +567,21 @@ export default function TarefasPage() {
 
   return (
     /*
-     * Desktop: container ocupa exatamente a área de conteúdo do main
+     * Desktop: container ocupa exatamente a Ã¡rea de conteÃºdo do main
      * (100vh - header 3.5rem - padding top 1.5rem - padding bottom 1.5rem = 6.5rem)
-     * evitando o scrollbar do main. Cada coluna controla seu próprio scroll.
+     * evitando o scrollbar do main. Cada coluna controla seu prÃ³prio scroll.
      */
     <div className="lg:flex lg:gap-4 lg:h-[calc(100vh-6.5rem)] lg:overflow-hidden">
 
-      {/* Coluna esquerda: flex-col, header fixo, só cards rolam */}
+      {/* Coluna esquerda: flex-col, header fixo, sÃ³ cards rolam */}
       <div className="flex-1 min-w-0 lg:flex lg:flex-col lg:overflow-hidden">
 
-        {/* Header fixo: título + chips */}
+        {/* Header fixo: tÃ­tulo + chips */}
         <div className="shrink-0 mb-2 flex items-start justify-between gap-2">
           <div>
             <h1 className="text-xl font-bold tracking-tight">Tarefas</h1>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <p className="text-muted-foreground text-sm">Rotinas e ocorrências em um só lugar</p>
+              <p className="text-muted-foreground text-sm">Rotinas e ocorrÃªncias em um sÃ³ lugar</p>
               <div className="flex items-center gap-1.5">
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-2.5 py-0.5">
                   <Inbox className="h-3 w-3" />
@@ -623,7 +623,7 @@ export default function TarefasPage() {
                   className="gap-1.5"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Nova Ocorrência
+                  Nova OcorrÃªncia
                 </Button>
                 <Button
                   variant="outline"
@@ -652,7 +652,7 @@ export default function TarefasPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Data prevista — de</Label>
+              <Label className="text-xs text-muted-foreground">Data prevista â€” de</Label>
               <Input
                 type="date"
                 value={filtroDataInicio}
@@ -662,7 +662,7 @@ export default function TarefasPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">até</Label>
+              <Label className="text-xs text-muted-foreground">atÃ©</Label>
               <Input
                 type="date"
                 value={filtroDataFim}
@@ -700,10 +700,10 @@ export default function TarefasPage() {
           </div>
         )}
 
-        {/* Tabs: ocupa o restante da altura, TabsList fixo, conteúdo rola */}
+        {/* Tabs: ocupa o restante da altura, TabsList fixo, conteÃºdo rola */}
         <Tabs defaultValue="meu-dia" className="lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
 
-          {/* TabsList — fixo, não rola */}
+          {/* TabsList â€” fixo, nÃ£o rola */}
           <div className="overflow-x-auto shrink-0">
             <TabsList className="w-max">
               <TabsTrigger value="meu-dia" className="gap-1.5">
@@ -736,7 +736,7 @@ export default function TarefasPage() {
               </TabsTrigger>
               <TabsTrigger value="concluidas" className="gap-1.5">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Concluídas
+                ConcluÃ­das
                 {concluidas.length > 0 && (
                   <span className="text-[10px] font-semibold bg-green-600 text-white rounded-full px-1.5 py-px leading-none">
                     {concluidas.length}
@@ -746,11 +746,11 @@ export default function TarefasPage() {
             </TabsList>
           </div>
 
-          {/* Área scrollável — apenas os cards rolam */}
+          {/* Ãrea scrollÃ¡vel â€” apenas os cards rolam */}
           <div className="mt-2 lg:flex-1 lg:overflow-y-auto lg:min-h-0 lg:pr-1">
             <TabsContent value="meu-dia" className="space-y-2 mt-0">
               {meiasTarefas.length === 0 ? (
-                <ListaVazia msg="Nenhuma tarefa pendente para você" />
+                <ListaVazia msg="Nenhuma tarefa pendente para vocÃª" />
               ) : renderCards(meiasTarefas)}
             </TabsContent>
 
@@ -778,11 +778,11 @@ export default function TarefasPage() {
 
             <TabsContent value="concluidas" className="space-y-2 mt-0">
               {concluidas.length === 0 ? (
-                <ListaVazia msg="Nenhuma tarefa concluída ainda" />
+                <ListaVazia msg="Nenhuma tarefa concluÃ­da ainda" />
               ) : (
                 <>
                   <p className="text-xs text-muted-foreground pb-1">
-                    {concluidas.length} tarefa{concluidas.length !== 1 ? 's' : ''} concluída{concluidas.length !== 1 ? 's' : ''}
+                    {concluidas.length} tarefa{concluidas.length !== 1 ? 's' : ''} concluÃ­da{concluidas.length !== 1 ? 's' : ''}
                   </p>
                   <Separator />
                   {renderCards(concluidas)}
@@ -793,7 +793,7 @@ export default function TarefasPage() {
         </Tabs>
       </div>
 
-      {/* Painel direito: altura total do container, footer sempre visível */}
+      {/* Painel direito: altura total do container, footer sempre visÃ­vel */}
       {tarefaSelecionada && (
         <div className="hidden lg:flex lg:flex-col lg:w-2/5 shrink-0 lg:h-full rounded-lg overflow-hidden border border-primary/40 ring-2 ring-primary/20 shadow-lg shadow-primary/10">
           <TarefaDetalheConteudo
@@ -809,7 +809,7 @@ export default function TarefasPage() {
         </div>
       )}
 
-      {/* Dialog mobile — só abre quando não for desktop */}
+      {/* Dialog mobile â€” sÃ³ abre quando nÃ£o for desktop */}
       {tarefaSelecionada && !isDesktop && (
         <TarefaDetalheDialog
           key={tarefaSelecionada.id}
@@ -847,6 +847,8 @@ export default function TarefasPage() {
         open={!!ocorrenciaDetalhe}
         onOpenChange={(v) => { if (!v) setOcorrenciaDetalhe(null) }}
       />
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

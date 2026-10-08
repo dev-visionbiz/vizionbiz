@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react'
+﻿import { useState, Fragment } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
 import { format, differenceInDays, parseISO } from 'date-fns'
@@ -63,6 +63,7 @@ import {
   Calendar,
   HardDrive,
   Folder as FolderIcon,
+  MessageCircle,
 } from 'lucide-react'
 import type { Document, DocumentType, Folder, FolderType } from '@/domain/types'
 import { formatDate } from '@/lib/utils'
@@ -70,6 +71,8 @@ import { UploadModal } from './UploadModal'
 import { UploadEmMassaModal } from './UploadEmMassaModal'
 import { DocumentViewerModal } from '@/components/shared/DocumentViewerModal'
 import { DocumentThumbnail } from '@/components/shared/DocumentThumbnail'
+import { WhatsAppMessageDialog } from '@/components/whatsapp/WhatsAppMessageDialog'
+import { templateDocumento } from '@/lib/whatsapp/templates'
 
 function ValidadeBadge({ doc, docTypes }: { doc: Document; docTypes: DocumentType[] | undefined }) {
   const tipo = docTypes?.find((dt) => dt.id === doc.type_id)
@@ -96,7 +99,7 @@ function ValidadeBadge({ doc, docTypes }: { doc: Document; docTypes: DocumentTyp
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border">
-      <Clock className="h-3 w-3" /> Válido até {format(validade, 'dd/MM/yyyy')}
+      <Clock className="h-3 w-3" /> VÃ¡lido atÃ© {format(validade, 'dd/MM/yyyy')}
     </span>
   )
 }
@@ -104,8 +107,8 @@ function ValidadeBadge({ doc, docTypes }: { doc: Document; docTypes: DocumentTyp
 const folderTypeLabels: Record<FolderType, string> = {
   fiscal: 'Fiscal',
   dp: 'Dep. Pessoal',
-  contabil: 'Contábil',
-  societario: 'Societário',
+  contabil: 'ContÃ¡bil',
+  societario: 'SocietÃ¡rio',
   outros: 'Outros',
 }
 
@@ -121,7 +124,7 @@ function HistoricoDialog({ doc, open, onClose }: { doc: Document; open: boolean;
   const eventLabels: Record<string, string> = {
     upload: 'Upload',
     download: 'Download',
-    view: 'Visualização',
+    view: 'VisualizaÃ§Ã£o',
     share: 'Compartilhamento',
   }
 
@@ -129,7 +132,7 @@ function HistoricoDialog({ doc, open, onClose }: { doc: Document; open: boolean;
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Histórico — {doc.nome}</DialogTitle>
+          <DialogTitle>HistÃ³rico â€” {doc.nome}</DialogTitle>
         </DialogHeader>
         <div className="max-h-80 overflow-y-auto space-y-2">
           {!events?.length ? (
@@ -187,7 +190,7 @@ function ShareDialog({ doc, open, onClose, tenantId }: { doc: Document; open: bo
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Compartilhar — {doc.nome}</DialogTitle>
+          <DialogTitle>Compartilhar â€” {doc.nome}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex items-end gap-2">
@@ -353,7 +356,7 @@ function EditDocumentDialog({
         if (tipoVinculo === 'nova') {
           const valor = parseFloat(novaValor.replace(',', '.'))
           if (!valor || isNaN(valor)) {
-            toast({ title: 'Informe um valor válido para a cobrança.', variant: 'destructive' })
+            toast({ title: 'Informe um valor vÃ¡lido para a cobranÃ§a.', variant: 'destructive' })
             return
           }
           const newInvId = uuidv4()
@@ -426,7 +429,7 @@ function EditDocumentDialog({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Competência</Label>
+              <Label className="text-xs">CompetÃªncia</Label>
               <Input
                 value={competencia}
                 onChange={(e) => setCompetencia(e.target.value)}
@@ -435,7 +438,7 @@ function EditDocumentDialog({
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Versão</Label>
+              <Label className="text-xs">VersÃ£o</Label>
               <Input
                 type="number"
                 min="1"
@@ -470,12 +473,12 @@ function EditDocumentDialog({
             </div>
           )}
 
-          {/* Seção de cobrança vinculada */}
+          {/* SeÃ§Ã£o de cobranÃ§a vinculada */}
           <div className="border rounded-md p-3 space-y-3 bg-muted/30">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                <Label className="text-xs font-medium">Vincular cobrança extra</Label>
+                <Label className="text-xs font-medium">Vincular cobranÃ§a extra</Label>
               </div>
               <Switch
                 checked={vincularCobranca}
@@ -498,7 +501,7 @@ function EditDocumentDialog({
                     className={`px-3 py-1 text-xs rounded transition-colors ${tipoVinculo === 'nova' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     onClick={() => setTipoVinculo('nova')}
                   >
-                    Nova cobrança
+                    Nova cobranÃ§a
                   </button>
                 </div>
 
@@ -515,7 +518,7 @@ function EditDocumentDialog({
                         <SelectContent>
                           {openInvoices.map((inv) => (
                             <SelectItem key={inv.id} value={inv.id}>
-                              {inv.competencia} — {inv.valor_original.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({inv.status})
+                              {inv.competencia} â€” {inv.valor_original.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({inv.status})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -525,7 +528,7 @@ function EditDocumentDialog({
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">Descrição (competência)</Label>
+                      <Label className="text-xs">DescriÃ§Ã£o (competÃªncia)</Label>
                       <Input value={novaDesc} onChange={(e) => setNovaDesc(e.target.value)} placeholder="AAAA-MM" className="h-8 text-sm" />
                     </div>
                     <div className="space-y-1">
@@ -540,7 +543,7 @@ function EditDocumentDialog({
                 )}
 
                 <div className="flex items-center justify-between pt-1 border-t">
-                  <Label className="text-xs text-muted-foreground">Liberar download somente após pagamento</Label>
+                  <Label className="text-xs text-muted-foreground">Liberar download somente apÃ³s pagamento</Label>
                   <Switch checked={downloadAposPagamento} onCheckedChange={setDownloadAposPagamento} />
                 </div>
               </>
@@ -569,6 +572,7 @@ function DocActions({
   onView,
   onEdit,
   onDelete,
+  onWhatsApp,
 }: {
   doc: Document
   userId: string
@@ -578,6 +582,7 @@ function DocActions({
   onView: () => void
   onEdit: () => void
   onDelete: () => void
+  onWhatsApp?: () => void
 }) {
   const createEvent = useCreateDocumentEvent()
   const updateDoc = useUpdateDocument()
@@ -592,10 +597,10 @@ function DocActions({
     } catch (err) {
       if (String(err).includes('arquivo_ausente')) {
         await updateDoc.mutateAsync({ id: doc.id, data: { storage_status: 'arquivo_ausente' } })
-        toast({ title: 'Arquivo não encontrado no armazenamento.', variant: 'destructive' })
+        toast({ title: 'Arquivo nÃ£o encontrado no armazenamento.', variant: 'destructive' })
       } else {
         toast({
-          title: 'Arquivo de exemplo — faça upload de um arquivo real para testar o download.',
+          title: 'Arquivo de exemplo â€” faÃ§a upload de um arquivo real para testar o download.',
           variant: 'destructive',
         })
       }
@@ -640,8 +645,13 @@ function DocActions({
             <DropdownMenuItem onClick={onShare}>
               <Share2 className="mr-2 h-4 w-4" /> Compartilhar
             </DropdownMenuItem>
+            {onWhatsApp && (
+              <DropdownMenuItem onClick={onWhatsApp}>
+                <MessageCircle className="mr-2 h-4 w-4 text-green-600" /> Notificar via WhatsApp
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onHistorico}>
-              <History className="mr-2 h-4 w-4" /> Histórico
+              <History className="mr-2 h-4 w-4" /> HistÃ³rico
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
@@ -651,7 +661,7 @@ function DocActions({
         </DropdownMenu>
       </div>
 
-      {/* Desktop: 6 botões de ícone */}
+      {/* Desktop: 6 botÃµes de Ã­cone */}
       <div className="hidden sm:flex items-center gap-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" title="Download" onClick={handleDownload}>
           <Download className="h-3.5 w-3.5" />
@@ -665,9 +675,14 @@ function DocActions({
         <Button variant="ghost" size="icon" className="h-7 w-7" title="Compartilhar" onClick={onShare}>
           <Share2 className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" title="Histórico" onClick={onHistorico}>
+        <Button variant="ghost" size="icon" className="h-7 w-7" title="HistÃ³rico" onClick={onHistorico}>
           <History className="h-3.5 w-3.5" />
         </Button>
+        {onWhatsApp && (
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700" title="Notificar via WhatsApp" onClick={onWhatsApp}>
+            <MessageCircle className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
@@ -684,7 +699,7 @@ function DocActions({
 
 // ---- Main Page ----
 export default function DocumentosPage() {
-  const { currentUser } = useAuth()
+  const { currentUser, currentTenant } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const [searchParams] = useSearchParams()
 
@@ -726,6 +741,14 @@ export default function DocumentosPage() {
   const [editDoc, setEditDoc] = useState<Document | null>(null)
   const [viewerDoc, setViewerDoc] = useState<Document | null>(null)
   const [viewerUrl, setViewerUrl] = useState<string | null>(null)
+  const [whatsappDoc, setWhatsappDoc] = useState<Document | null>(null)
+  const [whatsappThumbnail, setWhatsappThumbnail] = useState<string | null>(null)
+
+  async function abrirWhatsApp(doc: Document) {
+    const thumb = await storageService.obterThumbnail(doc.storage_key)
+    setWhatsappThumbnail(thumb)
+    setWhatsappDoc(doc)
+  }
 
   const activeClients = clients?.filter((c) => c.status === 'ativo') ?? []
 
@@ -747,9 +770,9 @@ export default function DocumentosPage() {
     } catch (err) {
       if (String(err).includes('arquivo_ausente')) {
         await updateDoc.mutateAsync({ id: doc.id, data: { storage_status: 'arquivo_ausente' } })
-        toast({ title: 'Arquivo não encontrado no armazenamento.', variant: 'destructive' })
+        toast({ title: 'Arquivo nÃ£o encontrado no armazenamento.', variant: 'destructive' })
       }
-      // arquivo de seed sem conteúdo real — abre viewer sem URL
+      // arquivo de seed sem conteÃºdo real â€” abre viewer sem URL
     }
     setViewerDoc(doc)
     setViewerUrl(url)
@@ -836,7 +859,7 @@ export default function DocumentosPage() {
       await provedor.excluir(fileId)
       await storageService.excluirThumbnail(fileId)
       await deleteDoc.mutateAsync(doc.id)
-      toast({ title: 'Documento excluído.' })
+      toast({ title: 'Documento excluÃ­do.' })
     } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     }
@@ -846,10 +869,10 @@ export default function DocumentosPage() {
 
   return (
     <div className="flex flex-col md:h-[calc(100vh-5rem)]">
-      {/* ── Top bar ── */}
+      {/* â”€â”€ Top bar â”€â”€ */}
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30 shrink-0 gap-2">
         <div className="flex items-center gap-2">
-          {/* Panel toggle — desktop only */}
+          {/* Panel toggle â€” desktop only */}
           <Button
             variant="ghost"
             size="sm"
@@ -888,7 +911,7 @@ export default function DocumentosPage() {
         </Button>
       </div>
 
-      {/* ── Mobile context selectors (hidden on md+) ── */}
+      {/* â”€â”€ Mobile context selectors (hidden on md+) â”€â”€ */}
       {viewMode === 'cliente' && folderPath.length === 0 && (
         <div className="md:hidden p-3 border-b shrink-0 bg-background">
           <Select value={selectedClientId} onValueChange={handleClientChange}>
@@ -924,10 +947,10 @@ export default function DocumentosPage() {
         </div>
       )}
 
-      {/* ── Main content: side-by-side on desktop, stacked on mobile ── */}
+      {/* â”€â”€ Main content: side-by-side on desktop, stacked on mobile â”€â”€ */}
       <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden">
 
-        {/* ====== LEFT PANEL — desktop only ====== */}
+        {/* ====== LEFT PANEL â€” desktop only ====== */}
         {leftPanelOpen && (viewMode === 'cliente' ? (
           <div className="hidden md:flex flex-col gap-3 p-3 overflow-y-auto w-56 shrink-0 border-r">
             <div className="space-y-1">
@@ -982,7 +1005,7 @@ export default function DocumentosPage() {
                               </span>
                             )}
                             {folder.sistema && (
-                              <Lock className="h-3 w-3 shrink-0 opacity-40" aria-label="Pasta padrão" />
+                              <Lock className="h-3 w-3 shrink-0 opacity-40" aria-label="Pasta padrÃ£o" />
                             )}
                           </button>
                         </li>
@@ -1045,7 +1068,7 @@ export default function DocumentosPage() {
               </div>
             ) : (
               <div className="flex flex-col md:flex-1 md:overflow-hidden">
-                {/* ── Breadcrumb ── */}
+                {/* â”€â”€ Breadcrumb â”€â”€ */}
                 <div className="px-3 py-2 border-b flex items-center gap-1 min-w-0 shrink-0">
                   <button
                     onClick={() => setFolderPath([])}
@@ -1080,7 +1103,7 @@ export default function DocumentosPage() {
                 </div>
 
                 <div className="overflow-auto md:flex-1">
-                  {/* ── Pastas neste nível ── */}
+                  {/* â”€â”€ Pastas neste nÃ­vel â”€â”€ */}
                   {currentLevelFolders.length > 0 && (
                     <div className={currentFolderId ? 'border-b' : ''}>
                       {currentLevelFolders.map((folder) => (
@@ -1100,7 +1123,7 @@ export default function DocumentosPage() {
                             <p className="text-xs text-muted-foreground">
                               {folderTypeLabels[folder.tipo_padrao]}
                               {(folderDocCounts[folder.id] ?? 0) > 0 && (
-                                <span className="ml-1">· {folderDocCounts[folder.id]} {folderDocCounts[folder.id] === 1 ? 'arquivo' : 'arquivos'}</span>
+                                <span className="ml-1">Â· {folderDocCounts[folder.id]} {folderDocCounts[folder.id] === 1 ? 'arquivo' : 'arquivos'}</span>
                               )}
                             </p>
                           </div>
@@ -1118,7 +1141,7 @@ export default function DocumentosPage() {
                     </div>
                   )}
 
-                  {/* ── Documentos (somente dentro de uma pasta) ── */}
+                  {/* â”€â”€ Documentos (somente dentro de uma pasta) â”€â”€ */}
                   {currentFolderId ? (
                     <>
                       <div className="p-3 border-b space-y-2">
@@ -1132,7 +1155,7 @@ export default function DocumentosPage() {
                         </div>
                         <Input placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 text-sm" />
                         <div className="flex gap-2">
-                          <Input placeholder="Competência" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm flex-1" />
+                          <Input placeholder="CompetÃªncia" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm flex-1" />
                           <Select value={filterDocType} onValueChange={setFilterDocType}>
                             <SelectTrigger className="h-8 text-sm flex-1"><SelectValue placeholder="Tipo" /></SelectTrigger>
                             <SelectContent>
@@ -1149,7 +1172,7 @@ export default function DocumentosPage() {
                           <EmptyState
                             icon={FileText}
                             title="Nenhum documento"
-                            description="Faça upload de documentos para esta pasta."
+                            description="FaÃ§a upload de documentos para esta pasta."
                             action={<Button size="sm" onClick={() => setUploadOpen(true)}><Upload className="mr-1.5 h-3.5 w-3.5" /> Upload</Button>}
                           />
                         ) : (
@@ -1165,7 +1188,7 @@ export default function DocumentosPage() {
                                   </div>
                                 </div>
                                 <div className="hidden sm:block shrink-0">
-                                  <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
+                                  <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} onWhatsApp={() => abrirWhatsApp(doc)} />
                                 </div>
                               </div>
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
@@ -1175,7 +1198,7 @@ export default function DocumentosPage() {
                                 <span className="opacity-60">v{doc.versao}</span>
                               </div>
                               <div className="sm:hidden mt-2">
-                                <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
+                                <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} onWhatsApp={() => abrirWhatsApp(doc)} />
                               </div>
                             </div>
                           ))
@@ -1199,6 +1222,8 @@ export default function DocumentosPage() {
                     )
                   )}
                 </div>
+
+                <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20 mx-3 mb-3" />
               </div>
             )
           ) : (
@@ -1232,7 +1257,7 @@ export default function DocumentosPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Input placeholder="Competência (ex: 2025-07)" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm" />
+                  <Input placeholder="CompetÃªncia (ex: 2025-07)" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm" />
                 </div>
               </div>
               {/* Documents */}
@@ -1240,7 +1265,7 @@ export default function DocumentosPage() {
                 {loadingAllDocs ? (
                   <PageLoader />
                 ) : !tipoModeDocs?.length ? (
-                  <EmptyState icon={FileText} title="Nenhum documento encontrado" description="Ajuste os filtros ou faça upload via Upload em Massa." />
+                  <EmptyState icon={FileText} title="Nenhum documento encontrado" description="Ajuste os filtros ou faÃ§a upload via Upload em Massa." />
                 ) : (
                   <div className="flex flex-col gap-2">
                     {tipoModeDocs.map((doc) => (
@@ -1256,7 +1281,7 @@ export default function DocumentosPage() {
                             </div>
                           </div>
                           <div className="hidden sm:block shrink-0">
-                            <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
+                            <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} onWhatsApp={() => abrirWhatsApp(doc)} />
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
@@ -1266,12 +1291,14 @@ export default function DocumentosPage() {
                           <span className="flex items-center gap-1"><Clock className="h-3 w-3 shrink-0" />{formatDate(doc.criado_em.split('T')[0])}</span>
                         </div>
                         <div className="sm:hidden mt-2">
-                          <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} />
+                          <DocActions doc={doc} userId={currentUser?.id ?? ''} tenantId={tenantId} onHistorico={() => setHistoricoDoc(doc)} onShare={() => setShareDoc(doc)} onView={() => handleOpenViewer(doc)} onEdit={() => setEditDoc(doc)} onDelete={() => handleDelete(doc)} onWhatsApp={() => abrirWhatsApp(doc)} />
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
+
+                <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
               </div>
             </>
           )}
@@ -1344,6 +1371,23 @@ export default function DocumentosPage() {
           a.click()
         }}
       />
+
+      {whatsappDoc && (
+        <WhatsAppMessageDialog
+          open={!!whatsappDoc}
+          onClose={() => { setWhatsappDoc(null); setWhatsappThumbnail(null) }}
+          escritorioId={currentTenant?.id ?? ''}
+          titulo={`WhatsApp â€” ${whatsappDoc.nome}`}
+          telefoneInicial={clients?.find((c) => c.id === whatsappDoc.client_id)?.telefone ?? ''}
+          mensagemInicial={templateDocumento(
+            whatsappDoc.nome,
+            clients?.find((c) => c.id === whatsappDoc.client_id)?.razao_social ?? '',
+          )}
+          thumbnail={whatsappThumbnail}
+        />
+      )}
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

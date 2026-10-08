@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import {
@@ -18,6 +18,7 @@ import {
   LayoutList,
   HardDrive,
   Network,
+  MessageCircle,
 } from 'lucide-react'
 import DadosEscritorio from './DadosEscritorio'
 import PoliticaCobranca from './PoliticaCobranca'
@@ -28,70 +29,78 @@ import Servicos from './Servicos'
 import Planos from './Planos'
 import Armazenamento from './Armazenamento'
 import GruposLista from '../Grupos/GruposLista'
+import WhatsAppPage from './WhatsAppPage'
 
 const sections = [
   {
     value: 'escritorio',
     icon: Building2,
-    title: 'Escritório',
-    description: 'Identificação, contato, endereço e contador responsável',
+    title: 'EscritÃ³rio',
+    description: 'IdentificaÃ§Ã£o, contato, endereÃ§o e contador responsÃ¡vel',
     content: <DadosEscritorio />,
   },
   {
     value: 'politica',
     icon: CreditCard,
-    title: 'Cobrança',
-    description: 'Encargos por atraso, renegociação e controle de acesso',
+    title: 'CobranÃ§a',
+    description: 'Encargos por atraso, renegociaÃ§Ã£o e controle de acesso',
     content: <PoliticaCobranca />,
   },
   {
     value: 'branding',
     icon: Palette,
     title: 'Branding',
-    description: 'Logo, cor primária e identidade visual do portal',
+    description: 'Logo, cor primÃ¡ria e identidade visual do portal',
     content: <Branding />,
   },
   {
     value: 'tipos',
     icon: FileText,
     title: 'Tipos de Documento',
-    description: 'Categorias e configurações dos documentos aceitos',
+    description: 'Categorias e configuraÃ§Ãµes dos documentos aceitos',
     content: <TiposDocumento />,
   },
   {
     value: 'usuarios',
     icon: Users,
-    title: 'Usuários',
+    title: 'UsuÃ¡rios',
     description: 'Colaboradores e acessos ao sistema',
     content: <Usuarios />,
   },
   {
     value: 'servicos',
     icon: Briefcase,
-    title: 'Serviços',
-    description: 'Catálogo de serviços oferecidos pelo escritório',
+    title: 'ServiÃ§os',
+    description: 'CatÃ¡logo de serviÃ§os oferecidos pelo escritÃ³rio',
     content: <Servicos />,
   },
   {
     value: 'planos',
     icon: LayoutList,
     title: 'Planos',
-    description: 'Pacotes de serviços para contratos',
+    description: 'Pacotes de serviÃ§os para contratos',
     content: <Planos />,
   },
   {
     value: 'armazenamento',
     icon: HardDrive,
     title: 'Armazenamento',
-    description: 'Provedor de arquivos: VizionBiz Padrão, Google Drive e outros',
+    description: 'Provedor de arquivos: VizionBiz PadrÃ£o, Google Drive e outros',
     content: <Armazenamento />,
   },
   {
     value: 'grupos',
     icon: Network,
     title: 'Grupos',
-    description: 'Grupos econômicos, carteiras, segmentos e tags para classificar clientes',
+    description: 'Grupos econÃ´micos, carteiras, segmentos e tags para classificar clientes',
     content: <GruposLista />,
+  },
+  {
+    value: 'whatsapp',
+    icon: MessageCircle,
+    title: 'WhatsApp',
+    description: 'ConexÃ£o do WhatsApp do escritÃ³rio para envio de mensagens aos clientes',
+    content: <WhatsAppPage />,
   },
 ]
 
@@ -119,8 +128,8 @@ export default function Configuracoes() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground text-sm">Gerencie as configurações do escritório.</p>
+        <h1 className="text-2xl font-bold">ConfiguraÃ§Ãµes</h1>
+        <p className="text-muted-foreground text-sm">Gerencie as configuraÃ§Ãµes do escritÃ³rio.</p>
       </div>
 
       <Accordion type="single" collapsible value={openValue} onValueChange={handleValueChange} className="space-y-3">
@@ -143,6 +152,8 @@ export default function Configuracoes() {
           </div>
         ))}
       </Accordion>
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

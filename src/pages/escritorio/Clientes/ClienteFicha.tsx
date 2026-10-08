@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { useAuth } from '@/auth/AuthProvider'
@@ -78,13 +78,13 @@ const logAcaoConfig: Record<LogAtividadeAcao, { icon: React.ElementType; cor: st
   contrato_suspenso:   { icon: Activity,      cor: 'text-amber-500',  label: 'Contrato suspenso' },
   contrato_encerrado:  { icon: XCircle,       cor: 'text-red-500',    label: 'Contrato encerrado' },
   documento_enviado:   { icon: FileText,      cor: 'text-indigo-500', label: 'Documento enviado' },
-  ficha_rapida_alterada: { icon: Pencil,      cor: 'text-cyan-500',   label: 'Ficha rápida' },
-  tarefa_concluida:    { icon: CheckCircle2,  cor: 'text-green-500',  label: 'Tarefa concluída' },
+  ficha_rapida_alterada: { icon: Pencil,      cor: 'text-cyan-500',   label: 'Ficha rÃ¡pida' },
+  tarefa_concluida:    { icon: CheckCircle2,  cor: 'text-green-500',  label: 'Tarefa concluÃ­da' },
   tarefa_atualizada:   { icon: Activity,      cor: 'text-orange-500', label: 'Tarefa atualizada' },
-  vinculo_adicionado:      { icon: CheckCircle2, cor: 'text-teal-500',   label: 'Vínculo adicionado' },
-  vinculo_removido:        { icon: XCircle,      cor: 'text-slate-500',  label: 'Vínculo removido' },
+  vinculo_adicionado:      { icon: CheckCircle2, cor: 'text-teal-500',   label: 'VÃ­nculo adicionado' },
+  vinculo_removido:        { icon: XCircle,      cor: 'text-slate-500',  label: 'VÃ­nculo removido' },
   demanda_criada:          { icon: FileText,     cor: 'text-violet-500', label: 'Demanda criada' },
-  demanda_concluida:       { icon: CheckCircle2, cor: 'text-green-500',  label: 'Demanda concluída' },
+  demanda_concluida:       { icon: CheckCircle2, cor: 'text-green-500',  label: 'Demanda concluÃ­da' },
   etapa_demanda_atualizada: { icon: Activity,    cor: 'text-orange-500', label: 'Etapa de demanda' },
 }
 
@@ -101,7 +101,7 @@ function LogEntrada({ entrada }: { entrada: LogAtividadeCliente }) {
       <div className="flex-1 min-w-0 pt-1">
         <p className="text-sm font-medium leading-tight">{entrada.descricao}</p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {cfg.label} · {formatDate(datePart)}{hora && ` às ${hora}`} · {entrada.usuario_nome}
+          {cfg.label} Â· {formatDate(datePart)}{hora && ` Ã s ${hora}`} Â· {entrada.usuario_nome}
         </p>
       </div>
     </div>
@@ -248,7 +248,7 @@ export default function ClienteFicha() {
 
   const confirmarAlteracaoStatus = async () => {
     if (!client || !statusForm.motivo.trim()) {
-      toast({ title: 'Informe o motivo da alteração', variant: 'destructive' })
+      toast({ title: 'Informe o motivo da alteraÃ§Ã£o', variant: 'destructive' })
       return
     }
     try {
@@ -281,7 +281,7 @@ export default function ClienteFicha() {
     }
     try {
       await createInvoice.mutateAsync(nova)
-      log('fatura_criada', `Fatura avulsa criada — competência ${invoiceForm.competencia}, venc. ${invoiceForm.vencimento}`)
+      log('fatura_criada', `Fatura avulsa criada â€” competÃªncia ${invoiceForm.competencia}, venc. ${invoiceForm.vencimento}`)
       toast({ title: 'Fatura avulsa criada' })
       setInvoiceDialog(false)
       setInvoiceForm({ competencia: '', vencimento: '', valor_original: '' })
@@ -300,7 +300,7 @@ export default function ClienteFicha() {
     if (!payTarget) return
     try {
       await updateInvoice.mutateAsync({ id: payTarget.id, data: { status: 'paga' } })
-      log('fatura_baixada', `Fatura baixada como paga — competência ${payTarget.competencia}`)
+      log('fatura_baixada', `Fatura baixada como paga â€” competÃªncia ${payTarget.competencia}`)
       toast({ title: 'Fatura baixada como paga' })
       setPayDialog(false)
     } catch {
@@ -312,7 +312,7 @@ export default function ClienteFicha() {
     if (!confirm('Cancelar esta fatura?')) return
     try {
       await updateInvoice.mutateAsync({ id: inv.id, data: { status: 'cancelada' } })
-      log('fatura_cancelada', `Fatura cancelada — competência ${inv.competencia}`)
+      log('fatura_cancelada', `Fatura cancelada â€” competÃªncia ${inv.competencia}`)
       toast({ title: 'Fatura cancelada' })
     } catch {
       toast({ title: 'Erro', variant: 'destructive' })
@@ -327,7 +327,7 @@ export default function ClienteFicha() {
 
   if (loadingClient) return <PageLoader />
   if (!client) return (
-    <EmptyState title="Cliente não encontrado" description="Volte para a lista de clientes." />
+    <EmptyState title="Cliente nÃ£o encontrado" description="Volte para a lista de clientes." />
   )
 
   const carteiraAtual = carteiras?.find((c) => c.id === client.carteira_id)
@@ -381,8 +381,8 @@ export default function ClienteFicha() {
             <SelectItem value="dados">Dados</SelectItem>
             <SelectItem value="contrato">Contrato</SelectItem>
             <SelectItem value="faturas">Faturas</SelectItem>
-            <SelectItem value="historico">Histórico</SelectItem>
-            <SelectItem value="ficha">Ficha Rápida</SelectItem>
+            <SelectItem value="historico">HistÃ³rico</SelectItem>
+            <SelectItem value="ficha">Ficha RÃ¡pida</SelectItem>
           </SelectContent>
         </Select>
 
@@ -391,8 +391,8 @@ export default function ClienteFicha() {
           <TabsTrigger value="dados">Dados</TabsTrigger>
           <TabsTrigger value="contrato">Contrato</TabsTrigger>
           <TabsTrigger value="faturas">Faturas</TabsTrigger>
-          <TabsTrigger value="historico">Histórico</TabsTrigger>
-          <TabsTrigger value="ficha">Ficha Rápida</TabsTrigger>
+          <TabsTrigger value="historico">HistÃ³rico</TabsTrigger>
+          <TabsTrigger value="ficha">Ficha RÃ¡pida</TabsTrigger>
         </TabsList>
 
         {/* ABA DADOS */}
@@ -411,7 +411,7 @@ export default function ClienteFicha() {
                   <Button asChild variant="ghost" size="sm">
                     <Link to={`/escritorio/obrigacoes?tab=consulta&cliente=${clientId}`}>
                       <ListChecks className="h-4 w-4 mr-1" />
-                      Obrigações
+                      ObrigaÃ§Ãµes
                     </Link>
                   </Button>
                   {!editData && <Button variant="outline" size="sm" onClick={startEdit}>Editar</Button>}
@@ -422,7 +422,7 @@ export default function ClienteFicha() {
               {editData ? (
                 <div className="space-y-4 max-w-md">
                   <div className="space-y-1">
-                    <Label>{client.tipo === 'fisica' ? 'Nome' : 'Razão Social'}</Label>
+                    <Label>{client.tipo === 'fisica' ? 'Nome' : 'RazÃ£o Social'}</Label>
                     <Input value={editData.razao_social} onChange={(e) => setEditData((d) => d && ({ ...d, razao_social: e.target.value }))} />
                   </div>
                   {(client.tipo === 'juridica' || !client.tipo) ? (
@@ -459,7 +459,7 @@ export default function ClienteFicha() {
                         <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
                         <SelectItem value="Lucro Real">Lucro Real</SelectItem>
                         <SelectItem value="MEI">MEI</SelectItem>
-                        <SelectItem value="Autônomo">Autônomo / Liberal</SelectItem>
+                        <SelectItem value="AutÃ´nomo">AutÃ´nomo / Liberal</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -485,7 +485,7 @@ export default function ClienteFicha() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">{client.tipo === 'fisica' ? 'Nome' : 'Razão Social'}:</span> <span className="font-medium wrap-break-word">{client.razao_social}</span></div>
+                  <div><span className="text-muted-foreground">{client.tipo === 'fisica' ? 'Nome' : 'RazÃ£o Social'}:</span> <span className="font-medium wrap-break-word">{client.razao_social}</span></div>
                   {(client.tipo === 'juridica' || !client.tipo) && client.cnpj && (
                     <div><span className="text-muted-foreground">CNPJ:</span> <span className="font-mono">{formatCNPJ(client.cnpj)}</span></div>
                   )}
@@ -517,18 +517,18 @@ export default function ClienteFicha() {
                   {carteiraAtual ? (
                     <div><span className="text-muted-foreground">Carteira:</span> <Badge variant="outline" className="ml-1">{carteiraAtual.nome}</Badge></div>
                   ) : (
-                    <div><span className="text-muted-foreground">Carteira:</span> <span className="text-muted-foreground italic">Não definida</span></div>
+                    <div><span className="text-muted-foreground">Carteira:</span> <span className="text-muted-foreground italic">NÃ£o definida</span></div>
                   )}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Histórico de Status */}
+          {/* HistÃ³rico de Status */}
           {(historicoStatus?.length ?? 0) > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm text-muted-foreground">Histórico de Status</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">HistÃ³rico de Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -551,7 +551,7 @@ export default function ClienteFicha() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Usuários do Portal</CardTitle>
+                <CardTitle>UsuÃ¡rios do Portal</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -565,14 +565,14 @@ export default function ClienteFicha() {
             </CardHeader>
             <CardContent>
               {clientUsers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum usuário vinculado a este cliente.</p>
+                <p className="text-sm text-muted-foreground">Nenhum usuÃ¡rio vinculado a este cliente.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {clientUsers.map((u) => (
                     <div key={u.id} className={`flex items-center gap-3 text-sm ${!u.ativo ? 'opacity-50' : ''}`}>
                       <span className="flex-1 font-medium truncate">{u.nome}</span>
                       <Badge variant="outline" className="text-xs shrink-0">
-                        {u.papel_portal === 'membro' ? 'Membro' : 'Responsável'}
+                        {u.papel_portal === 'membro' ? 'Membro' : 'ResponsÃ¡vel'}
                       </Badge>
                       {!u.ativo && <Badge variant="secondary" className="text-xs shrink-0">Inativo</Badge>}
                     </div>
@@ -619,7 +619,7 @@ export default function ClienteFicha() {
                 </SelectContent>
               </Select>
               <Input
-                placeholder="Competência (ex: 2025-07)"
+                placeholder="CompetÃªncia (ex: 2025-07)"
                 value={filterComp}
                 onChange={(e) => setFilterComp(e.target.value)}
                 className="flex-1 min-w-36"
@@ -631,7 +631,7 @@ export default function ClienteFicha() {
           </div>
 
           {!filteredInvoices?.length ? (
-            <EmptyState title="Nenhuma fatura" description="Não há faturas com os filtros selecionados." />
+            <EmptyState title="Nenhuma fatura" description="NÃ£o hÃ¡ faturas com os filtros selecionados." />
           ) : (
             <div className="flex flex-col gap-2">
               {filteredInvoices.map((inv) => {
@@ -640,7 +640,7 @@ export default function ClienteFicha() {
                 return (
                   <div key={inv.id} className="rounded-lg border bg-card p-4 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-sm">Competência {inv.competencia}</p>
+                      <p className="font-semibold text-sm">CompetÃªncia {inv.competencia}</p>
                       <InvoiceStatusBadge status={inv.status} />
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -668,7 +668,7 @@ export default function ClienteFicha() {
           )}
         </TabsContent>
 
-        {/* ABA HISTÓRICO */}
+        {/* ABA HISTÃ“RICO */}
         <TabsContent value="historico" className="mt-4">
           {!logAtividades?.length ? (
             <EmptyState icon={History} title="Sem registros" description="Nenhuma atividade registrada para este cliente." />
@@ -682,7 +682,7 @@ export default function ClienteFicha() {
           )}
         </TabsContent>
 
-        {/* ABA FICHA RÁPIDA */}
+        {/* ABA FICHA RÃPIDA */}
         <TabsContent value="ficha" className="mt-4">
           <FichaRapidaTab tenantId={tenantId} clientId={clientId ?? ''} />
         </TabsContent>
@@ -713,7 +713,7 @@ export default function ClienteFicha() {
               <Textarea
                 id="st-motivo"
                 rows={3}
-                placeholder="Descreva o motivo da alteração..."
+                placeholder="Descreva o motivo da alteraÃ§Ã£o..."
                 value={statusForm.motivo}
                 onChange={(e) => setStatusForm((f) => ({ ...f, motivo: e.target.value }))}
               />
@@ -739,7 +739,7 @@ export default function ClienteFicha() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1">
-              <Label htmlFor="inv-comp">Competência (AAAA-MM)</Label>
+              <Label htmlFor="inv-comp">CompetÃªncia (AAAA-MM)</Label>
               <Input id="inv-comp" placeholder="2025-07" value={invoiceForm.competencia} onChange={(e) => setInvoiceForm((f) => ({ ...f, competencia: e.target.value }))} />
             </div>
             <div className="space-y-1">
@@ -767,7 +767,7 @@ export default function ClienteFicha() {
           <div className="space-y-3 py-2">
             {payTarget && (
               <p className="text-sm text-muted-foreground">
-                Fatura: {payTarget.competencia} — {formatCurrency(payTarget.valor_original)}
+                Fatura: {payTarget.competencia} â€” {formatCurrency(payTarget.valor_original)}
               </p>
             )}
             <div className="space-y-1">
@@ -781,6 +781,8 @@ export default function ClienteFicha() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

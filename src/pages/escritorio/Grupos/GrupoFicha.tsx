@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { v4 as uuidv4 } from 'uuid'
@@ -25,7 +25,7 @@ import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { formatCNPJ, formatCPF } from '@/lib/utils'
 
 const TIPO_LABELS: Record<TipoGrupo, string> = {
-  grupo_economico: 'Grupo Econômico',
+  grupo_economico: 'Grupo EconÃ´mico',
   carteira: 'Carteira',
   segmento: 'Segmento',
   tag: 'Tag',
@@ -143,7 +143,7 @@ export default function GrupoFicha() {
   if (isLoading) return <PageLoader />
   if (!grupo) return (
     <div className="p-6">
-      <p className="text-muted-foreground">Grupo não encontrado.</p>
+      <p className="text-muted-foreground">Grupo nÃ£o encontrado.</p>
       <Button variant="link" onClick={goBack}>Voltar</Button>
     </div>
   )
@@ -153,16 +153,16 @@ export default function GrupoFicha() {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" className="gap-1.5 shrink-0" onClick={goBack}>
           <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Configurações</span>
+          <span className="hidden sm:inline">ConfiguraÃ§Ãµes</span>
         </Button>
         <h1 className="text-2xl font-bold truncate">{grupo.nome}</h1>
       </div>
 
-      {/* Card informações do grupo */}
+      {/* Card informaÃ§Ãµes do grupo */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Informações</CardTitle>
+            <CardTitle className="text-base">InformaÃ§Ãµes</CardTitle>
             <Button variant="outline" size="sm" onClick={openEdit}>
               <Pencil className="h-3 w-3 mr-1" /> Editar
             </Button>
@@ -280,7 +280,7 @@ export default function GrupoFicha() {
               </div>
             </div>
             <div className="space-y-1">
-              <Label>Observação</Label>
+              <Label>ObservaÃ§Ã£o</Label>
               <Input
                 value={editForm.observacao}
                 onChange={(e) => setEditForm((f) => ({ ...f, observacao: e.target.value }))}
@@ -304,7 +304,7 @@ export default function GrupoFicha() {
           </DialogHeader>
           <div className="space-y-2 max-h-64 overflow-y-auto py-1">
             {clientesDisponiveis.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum cliente disponível.</p>
+              <p className="text-sm text-muted-foreground">Nenhum cliente disponÃ­vel.</p>
             ) : (
               clientesDisponiveis.map((c) => (
                 <label
@@ -341,6 +341,8 @@ export default function GrupoFicha() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

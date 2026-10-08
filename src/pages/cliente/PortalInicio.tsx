@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+﻿import { useNavigate } from 'react-router-dom'
 import { differenceInDays, format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useAuth } from '@/auth/AuthProvider'
@@ -35,7 +35,7 @@ export default function PortalInicio() {
   const allInvoices = invoices ?? []
   const allDocs = documents ?? []
 
-  // Vencidas fora da carência
+  // Vencidas fora da carÃªncia
   const vencidas = allInvoices.filter(
     (inv) =>
       inv.status === 'vencida' &&
@@ -43,7 +43,7 @@ export default function PortalInicio() {
       differenceInDays(today, parseISO(inv.vencimento)) > policy.carencia_dias
   )
 
-  // Abertas (não vencidas)
+  // Abertas (nÃ£o vencidas)
   const abertas = allInvoices.filter((inv) => inv.status === 'aberta' || inv.status === 'vencida')
 
   // Total em aberto
@@ -54,7 +54,7 @@ export default function PortalInicio() {
     return s + inv.valor_original
   }, 0)
 
-  // Próximo vencimento (faturas abertas)
+  // PrÃ³ximo vencimento (faturas abertas)
   const abertasOrdenadas = allInvoices
     .filter((inv) => inv.status === 'aberta')
     .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
@@ -63,7 +63,7 @@ export default function PortalInicio() {
     ? differenceInDays(parseISO(proximaFatura.vencimento), today)
     : null
 
-  // Últimos 3 documentos
+  // Ãšltimos 3 documentos
   const recentDocs = [...allDocs]
     .sort((a, b) => b.criado_em.localeCompare(a.criado_em))
     .slice(0, 3)
@@ -78,7 +78,7 @@ export default function PortalInicio() {
     <div className="space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold">Olá, {clientName}!</h1>
+        <h1 className="text-2xl font-bold">OlÃ¡, {clientName}!</h1>
         <p className="text-muted-foreground">Bem-vindo ao portal da {razaoSocial}</p>
       </div>
 
@@ -86,9 +86,9 @@ export default function PortalInicio() {
       {vencidas.length > 0 && (
         <Alert variant={policy?.modo_acesso === 'total' ? 'destructive' : 'warning'}>
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Pendência financeira</AlertTitle>
+          <AlertTitle>PendÃªncia financeira</AlertTitle>
           <AlertDescription>
-            Você possui {vencidas.length} fatura(s) vencida(s). Regularize para manter acesso completo aos documentos.{' '}
+            VocÃª possui {vencidas.length} fatura(s) vencida(s). Regularize para manter acesso completo aos documentos.{' '}
             <Button variant="link" className="h-auto p-0 text-sm" onClick={() => navigate('/portal/financeiro')}>
               Ver faturas
             </Button>
@@ -108,14 +108,14 @@ export default function PortalInicio() {
           </CardHeader>
           <CardContent>
             {!recentDocs.length ? (
-              <p className="text-sm text-muted-foreground">Nenhum documento disponível.</p>
+              <p className="text-sm text-muted-foreground">Nenhum documento disponÃ­vel.</p>
             ) : (
               <ul className="space-y-2">
                 {recentDocs.map((doc) => (
                   <li key={doc.id} className="text-sm">
                     <p className="font-medium truncate">{doc.nome}</p>
                     <p className="text-xs text-muted-foreground">
-                      {folderName(doc.folder_id)} — {formatDate(doc.criado_em.split('T')[0])}
+                      {folderName(doc.folder_id)} â€” {formatDate(doc.criado_em.split('T')[0])}
                     </p>
                   </li>
                 ))}
@@ -161,12 +161,12 @@ export default function PortalInicio() {
           </CardContent>
         </Card>
 
-        {/* Próximo Vencimento */}
+        {/* PrÃ³ximo Vencimento */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4 text-orange-600" />
-              Próximo Vencimento
+              PrÃ³ximo Vencimento
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -200,7 +200,7 @@ export default function PortalInicio() {
               return (
                 <div key={inv.id} className="rounded-lg border bg-card p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-sm">Competência {inv.competencia}</p>
+                    <p className="font-semibold text-sm">CompetÃªncia {inv.competencia}</p>
                     <Badge className="bg-red-100 text-red-800 border-transparent text-xs shrink-0">{calc.dias_atraso}d atraso</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -218,6 +218,8 @@ export default function PortalInicio() {
           </div>
         </div>
       )}
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

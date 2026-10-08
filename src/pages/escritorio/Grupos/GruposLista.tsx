@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react'
@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const TIPO_LABELS: Record<TipoGrupo, string> = {
-  grupo_economico: 'Grupo Econômico',
+  grupo_economico: 'Grupo EconÃ´mico',
   carteira: 'Carteira',
   segmento: 'Segmento',
   tag: 'Tag',
@@ -105,7 +105,7 @@ export default function GruposLista() {
     if (!deleteTarget) return
     try {
       await deleteGrupo.mutateAsync({ id: deleteTarget, tenantId })
-      toast({ title: 'Grupo excluído' })
+      toast({ title: 'Grupo excluÃ­do' })
     } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     } finally {
@@ -223,7 +223,7 @@ export default function GruposLista() {
               </div>
             </div>
             <div className="space-y-1">
-              <Label>Observação</Label>
+              <Label>ObservaÃ§Ã£o</Label>
               <Input
                 value={form.observacao}
                 onChange={(e) => setForm((f) => ({ ...f, observacao: e.target.value }))}
@@ -239,14 +239,14 @@ export default function GruposLista() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog confirmar exclusão */}
+      {/* Dialog confirmar exclusÃ£o */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogTitle>Confirmar exclusÃ£o</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Deseja realmente excluir este grupo? Esta ação não pode ser desfeita.
+            Deseja realmente excluir este grupo? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
@@ -256,6 +256,8 @@ export default function GruposLista() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

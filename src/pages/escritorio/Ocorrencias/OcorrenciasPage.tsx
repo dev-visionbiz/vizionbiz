@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { Plus, Building2, FileText, Users, Calculator, Inbox, Layers } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,17 +17,17 @@ import { formatDate } from '@/lib/utils'
 import type { Ocorrencia, OcorrenciaStatus, CategoriaDemanda, Fluxo } from '@/domain/types'
 
 const categoriaConfig: Record<CategoriaDemanda, { label: string; icon: React.ElementType; color: string }> = {
-  societario: { label: 'Societário',   icon: Building2,  color: 'text-purple-600' },
+  societario: { label: 'SocietÃ¡rio',   icon: Building2,  color: 'text-purple-600' },
   fiscal:     { label: 'Fiscal',       icon: Calculator, color: 'text-blue-600' },
   dp:         { label: 'Dep. Pessoal', icon: Users,      color: 'text-green-600' },
-  contabil:   { label: 'Contábil',     icon: FileText,   color: 'text-orange-600' },
+  contabil:   { label: 'ContÃ¡bil',     icon: FileText,   color: 'text-orange-600' },
   outros:     { label: 'Outros',       icon: FileText,   color: 'text-gray-600' },
 }
 
 const ocorrenciaStatusConfig: Record<OcorrenciaStatus, { label: string; className: string }> = {
   pendente:     { label: 'Pendente',     className: 'bg-blue-100 text-blue-800 border-transparent' },
   em_andamento: { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent' },
-  concluida:    { label: 'Concluída',    className: 'bg-green-100 text-green-800 border-transparent' },
+  concluida:    { label: 'ConcluÃ­da',    className: 'bg-green-100 text-green-800 border-transparent' },
   cancelada:    { label: 'Cancelada',    className: 'bg-gray-100 text-gray-500 border-transparent' },
 }
 
@@ -41,7 +41,7 @@ function OcorrenciaProgressoBadge({ tenantId, ocorrenciaId }: { tenantId: string
   )
 }
 
-// ─── Aba: Lista de Ocorrências ────────────────────────────────────────────────
+// â”€â”€â”€ Aba: Lista de OcorrÃªncias â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ListaOcorrencias({
   tenantId,
@@ -65,7 +65,7 @@ function ListaOcorrencias({
   const clienteMap = useMemo(() => Object.fromEntries(clientes.map(c => [c.id, c.razao_social])), [clientes])
   const userMap    = useMemo(() => Object.fromEntries(users.map(u => [u.id, u.nome])), [users])
 
-  // Agrupa ocorrências por lote_id para o filtro
+  // Agrupa ocorrÃªncias por lote_id para o filtro
   const loteGrupos = useMemo(() => {
     const map = new Map<string, Ocorrencia[]>()
     for (const o of ocorrencias) {
@@ -132,7 +132,7 @@ function ListaOcorrencias({
           </Select>
         </div>
         <div>
-          <Label className="text-xs">Responsável</Label>
+          <Label className="text-xs">ResponsÃ¡vel</Label>
           <Select value={filtroResp} onValueChange={setFiltroResp}>
             <SelectTrigger className="h-8 w-36 text-sm"><SelectValue placeholder="Todos" /></SelectTrigger>
             <SelectContent>
@@ -171,9 +171,9 @@ function ListaOcorrencias({
         {filtradas.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Inbox className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Nenhuma ocorrência encontrada</p>
+            <p className="text-sm">Nenhuma ocorrÃªncia encontrada</p>
             <Button size="sm" variant="outline" className="mt-4" onClick={() => onNova(filtroClienteId || undefined)}>
-              <Plus className="h-4 w-4 mr-1" /> Nova Ocorrência
+              <Plus className="h-4 w-4 mr-1" /> Nova OcorrÃªncia
             </Button>
           </div>
         ) : (
@@ -181,8 +181,8 @@ function ListaOcorrencias({
             const stConfig  = ocorrenciaStatusConfig[o.status]
             const catConfig = o.categoria ? categoriaConfig[o.categoria] : null
             const CatIcon   = catConfig?.icon
-            const clienteNome = clienteMap[o.cliente_id ?? ''] ?? '—'
-            const respNome    = o.responsavel_id ? (userMap[o.responsavel_id] ?? '—') : null
+            const clienteNome = clienteMap[o.cliente_id ?? ''] ?? 'â€”'
+            const respNome    = o.responsavel_id ? (userMap[o.responsavel_id] ?? 'â€”') : null
 
             return (
               <button
@@ -223,7 +223,7 @@ function ListaOcorrencias({
   )
 }
 
-// ─── Aba: Gerenciar Fluxos ────────────────────────────────────────────────────
+// â”€â”€â”€ Aba: Gerenciar Fluxos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function GerenciarFluxos({ tenantId }: { tenantId: string }) {
   const { data: fluxos = [] } = useFluxos(tenantId)
@@ -234,7 +234,7 @@ function GerenciarFluxos({ tenantId }: { tenantId: string }) {
       <div className="text-center py-12 text-muted-foreground">
         <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
         <p className="text-sm">Nenhum fluxo cadastrado</p>
-        <p className="text-xs mt-1">Fluxos são templates reutilizáveis para criar ocorrências</p>
+        <p className="text-xs mt-1">Fluxos sÃ£o templates reutilizÃ¡veis para criar ocorrÃªncias</p>
       </div>
     )
   }
@@ -250,8 +250,8 @@ function GerenciarFluxos({ tenantId }: { tenantId: string }) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{f.nome}</p>
               <p className="text-xs text-muted-foreground">
-                {cfg?.label ?? 'Outros'} · {f.prazo_dias_padrao} dias
-                {f.valor_sugerido ? ` · ${f.valor_sugerido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : ''}
+                {cfg?.label ?? 'Outros'} Â· {f.prazo_dias_padrao} dias
+                {f.valor_sugerido ? ` Â· ${f.valor_sugerido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : ''}
               </p>
             </div>
             <Badge variant="outline" className="text-xs">{f.ativo ? 'Ativo' : 'Inativo'}</Badge>
@@ -262,7 +262,7 @@ function GerenciarFluxos({ tenantId }: { tenantId: string }) {
   )
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
+// â”€â”€â”€ PÃ¡gina principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function OcorrenciasPage() {
   const { currentUser } = useAuth()
@@ -287,11 +287,11 @@ export default function OcorrenciasPage() {
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Ocorrências</h1>
-          <p className="text-muted-foreground text-sm">Processos e solicitações de clientes</p>
+          <h1 className="text-xl font-bold tracking-tight">OcorrÃªncias</h1>
+          <p className="text-muted-foreground text-sm">Processos e solicitaÃ§Ãµes de clientes</p>
         </div>
         <Button onClick={() => handleNova()}>
-          <Plus className="h-4 w-4 mr-1.5" /> Nova Ocorrência
+          <Plus className="h-4 w-4 mr-1.5" /> Nova OcorrÃªncia
         </Button>
       </div>
 
@@ -312,6 +312,8 @@ export default function OcorrenciasPage() {
         open={detalheOpen}
         onOpenChange={setDetalheOpen}
       />
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

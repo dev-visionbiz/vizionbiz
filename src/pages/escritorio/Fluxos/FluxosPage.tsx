@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { v4 as uuid } from 'uuid'
 import {
   Plus, Trash2, X, ArrowUp, ArrowDown, ListChecks, Check,
@@ -28,7 +28,7 @@ import {
 } from '@/data/hooks/useFluxos'
 import type { Fluxo, CategoriaDemanda, OcorrenciaDocumentoConfig, OcorrenciaDocumentoTipo } from '@/domain/types'
 
-// ─── Tipos locais ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tipos locais â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface FluxoFormData {
   nome: string
@@ -63,13 +63,13 @@ interface EtapaFormData {
   documentos_config: OcorrenciaDocumentoConfig[]
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const categoriaLabel: Record<CategoriaDemanda, string> = {
-  societario: 'Societário',
+  societario: 'SocietÃ¡rio',
   fiscal: 'Fiscal',
   dp: 'Dep. Pessoal',
-  contabil: 'Contábil',
+  contabil: 'ContÃ¡bil',
   outros: 'Outros',
 }
 
@@ -96,7 +96,7 @@ function prazoLabel(dias: string) {
   return n > 0 ? `+${n}d` : `${n}d`
 }
 
-// ─── CadastroFluxos ───────────────────────────────────────────────────────────
+// â”€â”€â”€ CadastroFluxos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CadastroFluxos({ tenantId }: { tenantId: string }) {
   const { toast } = useToast()
@@ -122,7 +122,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
   const etapasQuery = useFluxoTarefas(tenantId, editFluxo?.id ?? '')
   const escritorioUsers = users.filter((u) => u.papel !== 'cliente' && u.ativo)
 
-  // Popula etapas quando abre o dialog de edição (dados vêm do cache do React Query)
+  // Popula etapas quando abre o dialog de ediÃ§Ã£o (dados vÃªm do cache do React Query)
   useEffect(() => {
     if (!dialogOpen || !editFluxo || !etapasQuery.data) return
     setEtapas(
@@ -139,7 +139,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     )
   }, [dialogOpen, editFluxo?.id, etapasQuery.data])
 
-  // ── Abrir dialog ─────────────────────────────────────────────────────────
+  // â”€â”€ Abrir dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function openCreate() {
     setEditFluxo(null)
@@ -163,7 +163,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     setDialogOpen(true)
   }
 
-  // ── Etapas (lista) ────────────────────────────────────────────────────────
+  // â”€â”€ Etapas (lista) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function removeEtapa(key: string) {
     setEtapas((prev) => prev.filter((e) => e._key !== key))
@@ -180,7 +180,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     })
   }
 
-  // ── Sub-modal de etapa ────────────────────────────────────────────────────
+  // â”€â”€ Sub-modal de etapa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function openEtapaCreate() {
     setEtapaEditKey(null)
@@ -235,7 +235,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     setEtapaForm((prev) => ({ ...prev, checklist: prev.checklist.map((c) => c.id === itemId ? { ...c, nome } : c) }))
   }
 
-  // ── Salvar ────────────────────────────────────────────────────────────────
+  // â”€â”€ Salvar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function buildEtapaData(e: EtapaForm, ordem: number) {
     return {
@@ -306,10 +306,10 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
   }
 
   function handleDelete(id: string) {
-    deleteFluxo.mutate(id, { onSuccess: () => toast({ title: 'Fluxo excluído' }) })
+    deleteFluxo.mutate(id, { onSuccess: () => toast({ title: 'Fluxo excluÃ­do' }) })
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   return (
     <div className="space-y-4">
@@ -336,14 +336,14 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
         ))}
       </div>
 
-      {/* ── Dialog com stepper ── */}
+      {/* â”€â”€ Dialog com stepper â”€â”€ */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden">
 
-          {/* Cabeçalho */}
+          {/* CabeÃ§alho */}
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
             <DialogTitle className="text-base">
-              {editFluxo ? `Editar Fluxo — ${editFluxo.nome}` : 'Novo Fluxo'}
+              {editFluxo ? `Editar Fluxo â€” ${editFluxo.nome}` : 'Novo Fluxo'}
             </DialogTitle>
 
             {/* Stepper */}
@@ -387,10 +387,10 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
             </div>
           </DialogHeader>
 
-          {/* Conteúdo do passo atual */}
+          {/* ConteÃºdo do passo atual */}
           <div className="flex-1 overflow-y-auto">
 
-            {/* Passo 1 — Dados */}
+            {/* Passo 1 â€” Dados */}
             {step === 0 && (
               <div className="px-6 py-5 space-y-4">
                 <div className="space-y-1.5">
@@ -419,7 +419,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Prazo padrão (dias)</Label>
+                    <Label>Prazo padrÃ£o (dias)</Label>
                     <Input
                       type="number"
                       min={0}
@@ -431,11 +431,11 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>Descrição</Label>
+                  <Label>DescriÃ§Ã£o</Label>
                   <Textarea
                     value={form.descricao}
                     onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                    placeholder="Descreva o propósito deste fluxo…"
+                    placeholder="Descreva o propÃ³sito deste fluxoâ€¦"
                     className="resize-none text-sm"
                     rows={3}
                   />
@@ -452,7 +452,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
               </div>
             )}
 
-            {/* Passo 2 — Etapas */}
+            {/* Passo 2 â€” Etapas */}
             {step === 1 && (
               <div className="px-6 py-5 space-y-3">
                 <div className="flex items-center justify-between">
@@ -469,7 +469,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 {etapas.length === 0 ? (
                   <div className="border-2 border-dashed rounded-lg py-10 text-center text-sm text-muted-foreground">
                     Clique em "Nova Etapa" para adicionar etapas ao fluxo de trabalho.
-                    <br /><span className="text-xs opacity-70">Opcional — você pode salvar sem etapas.</span>
+                    <br /><span className="text-xs opacity-70">Opcional â€” vocÃª pode salvar sem etapas.</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -480,7 +480,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                         responsavelNome,
                         e.checklist.length > 0 ? `${e.checklist.length} ${e.checklist.length === 1 ? 'item' : 'itens'}` : '',
                         e.documentos_config.length > 0 ? `${e.documentos_config.length} doc${e.documentos_config.length > 1 ? 's' : ''}` : '',
-                      ].filter(Boolean).join(' · ')
+                      ].filter(Boolean).join(' Â· ')
 
                       return (
                         <div
@@ -515,14 +515,14 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
             )}
           </div>
 
-          {/* Footer de navegação */}
+          {/* Footer de navegaÃ§Ã£o */}
           <div className="px-6 py-4 border-t shrink-0 flex items-center gap-2">
             <Button variant="ghost" className="mr-auto text-muted-foreground" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
             {step > 0 && (
               <Button variant="outline" onClick={() => setStep((s) => s - 1)}>
-                ← Voltar
+                â† Voltar
               </Button>
             )}
             {step < 1 ? (
@@ -530,28 +530,28 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 onClick={() => { if (form.nome.trim()) setStep((s) => s + 1) }}
                 disabled={!form.nome.trim()}
               >
-                Próximo →
+                PrÃ³ximo â†’
               </Button>
             ) : (
               <Button onClick={handleSalvar} disabled={isSaving}>
-                {editFluxo ? 'Salvar alterações' : 'Criar fluxo'}
+                {editFluxo ? 'Salvar alteraÃ§Ãµes' : 'Criar fluxo'}
               </Button>
             )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ── Sub-modal: criar / editar etapa ── */}
+      {/* â”€â”€ Sub-modal: criar / editar etapa â”€â”€ */}
       <Dialog open={etapaDialogOpen} onOpenChange={setEtapaDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
             <DialogTitle>{etapaEditKey ? 'Editar Etapa' : 'Nova Etapa'}</DialogTitle>
           </DialogHeader>
 
-          {/* Dois painéis em desktop */}
+          {/* Dois painÃ©is em desktop */}
           <div className="flex-1 overflow-hidden flex flex-col sm:flex-row min-h-0">
 
-            {/* Painel esquerdo — campos principais */}
+            {/* Painel esquerdo â€” campos principais */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               <div className="space-y-1.5">
                 <Label>Nome *</Label>
@@ -576,7 +576,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                   <p className="text-xs text-muted-foreground">Negativo = antes do vencimento</p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Responsável padrão</Label>
+                  <Label>ResponsÃ¡vel padrÃ£o</Label>
                   <Select
                     value={etapaForm.responsavel_padrao || '__none__'}
                     onValueChange={(v) => setEtapaForm({ ...etapaForm, responsavel_padrao: v === '__none__' ? '' : v })}
@@ -591,18 +591,18 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Descrição</Label>
+                <Label>DescriÃ§Ã£o</Label>
                 <Textarea
                   value={etapaForm.descricao}
                   onChange={(e) => setEtapaForm({ ...etapaForm, descricao: e.target.value })}
-                  placeholder="Instruções ou observações para esta etapa…"
+                  placeholder="InstruÃ§Ãµes ou observaÃ§Ãµes para esta etapaâ€¦"
                   className="resize-none text-sm"
                   rows={4}
                 />
               </div>
             </div>
 
-            {/* Painel direito — checklist + documentos */}
+            {/* Painel direito â€” checklist + documentos */}
             <div className="sm:w-80 shrink-0 overflow-y-auto border-t sm:border-t-0 sm:border-l px-6 py-5 space-y-5 bg-muted/20">
 
               {/* Checklist */}
@@ -631,7 +631,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                         <Input
                           value={item.nome}
                           onChange={(e) => patchEtapaFormItem(item.id, e.target.value)}
-                          placeholder="Descrição do item"
+                          placeholder="DescriÃ§Ã£o do item"
                           className="flex-1 text-sm h-8"
                         />
                         <Button
@@ -696,8 +696,8 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="entrada" className="text-xs">Entrada</SelectItem>
-                              <SelectItem value="saida" className="text-xs">Saída</SelectItem>
-                              <SelectItem value="referencia" className="text-xs">Referência</SelectItem>
+                              <SelectItem value="saida" className="text-xs">SaÃ­da</SelectItem>
+                              <SelectItem value="referencia" className="text-xs">ReferÃªncia</SelectItem>
                             </SelectContent>
                           </Select>
                           <label className="flex items-center gap-1.5 text-xs whitespace-nowrap cursor-pointer">
@@ -706,10 +706,10 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                               onCheckedChange={(v) => patchEtapaDocSlot(d.id, { obrigatorio: !!v })}
                               className="h-3.5 w-3.5"
                             />
-                            Obrigatório
+                            ObrigatÃ³rio
                           </label>
                         </div>
-                        <p className="text-xs text-muted-foreground">Pasta padrão definida na criação da ocorrência</p>
+                        <p className="text-xs text-muted-foreground">Pasta padrÃ£o definida na criaÃ§Ã£o da ocorrÃªncia</p>
                       </div>
                     ))}
                   </div>
@@ -731,7 +731,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
   )
 }
 
-// ─── FluxoRow ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ FluxoRow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const catConfig: Record<CategoriaDemanda, {
   gradient: string
@@ -768,7 +768,7 @@ function FluxoRow({
       <div className={`absolute left-0 top-0 bottom-0 w-0.75 ${cfg.bar}`} />
 
       <div className="pl-4 pr-3 py-3.5 flex flex-col gap-2">
-        {/* ícone + badge */}
+        {/* Ã­cone + badge */}
         <div className="flex items-start justify-between gap-1.5">
           <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
             <Icon className={`h-4 w-4 ${cfg.iconColor}`} />
@@ -787,10 +787,10 @@ function FluxoRow({
         {/* categoria */}
         <span className="text-[11px] text-muted-foreground truncate">
           {categoriaLabel[fluxo.categoria]}
-          {fluxo.descricao ? ` · ${fluxo.descricao}` : ''}
+          {fluxo.descricao ? ` Â· ${fluxo.descricao}` : ''}
         </span>
 
-        {/* rodapé: etapas + lixeira */}
+        {/* rodapÃ©: etapas + lixeira */}
         <div className="flex items-center justify-between pt-0.5">
           <span className="text-[11px] text-muted-foreground">
             <ListChecks className="inline h-3 w-3 mr-1 opacity-60" />
@@ -811,7 +811,7 @@ function FluxoRow({
   )
 }
 
-// ─── Página Principal ─────────────────────────────────────────────────────────
+// â”€â”€â”€ PÃ¡gina Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function FluxosPage() {
   const { currentUser } = useAuth()
@@ -824,6 +824,8 @@ export default function FluxosPage() {
         <p className="text-muted-foreground text-sm">Templates de fluxo de trabalho e suas etapas</p>
       </div>
       <CadastroFluxos tenantId={tenantId} />
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { differenceInDays, format, formatDistanceToNow, parseISO, subMonths } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -38,7 +38,7 @@ const eventIcons: Record<string, React.ElementType> = {
 const eventLabels: Record<string, string> = {
   upload: 'Upload',
   download: 'Download',
-  view: 'Visualização',
+  view: 'VisualizaÃ§Ã£o',
   share: 'Compartilhamento',
 }
 
@@ -82,7 +82,7 @@ function BaixaManualDialog({
         {invoice && (
           <div className="space-y-3 py-2">
             <div className="rounded-md bg-muted p-3 text-sm space-y-1">
-              <p>Competência: {invoice.competencia}</p>
+              <p>CompetÃªncia: {invoice.competencia}</p>
               <p>Valor: {formatCurrency(invoice.valor_original)}</p>
             </div>
             <div className="space-y-1">
@@ -136,7 +136,7 @@ export default function Dashboard() {
   const allDocs = documents ?? []
   const allClients = clients ?? []
 
-  // A Receber: faturas abertas com vencimento no mês atual
+  // A Receber: faturas abertas com vencimento no mÃªs atual
   const aReceber = allInvoices
     .filter((i) => i.status === 'aberta' && i.vencimento.startsWith(currentMonth))
     .reduce((s, i) => s + i.valor_original, 0)
@@ -148,7 +148,7 @@ export default function Dashboard() {
     return s + calcularEncargos(inv, policy, today).total
   }, 0)
 
-  // Clientes inadimplentes (fora da carência)
+  // Clientes inadimplentes (fora da carÃªncia)
   const clientesInadimplentes = new Set(
     vencidas
       .filter(
@@ -159,7 +159,7 @@ export default function Dashboard() {
       .map((inv) => inv.client_id)
   ).size
 
-  // Docs enviados mês atual
+  // Docs enviados mÃªs atual
   const docsEnviadosMes = allDocs.filter(
     (d) => d.criado_em.startsWith(currentMonth)
   ).length
@@ -179,7 +179,7 @@ export default function Dashboard() {
   })
   const maxChartValue = Math.max(...chartMonths.map((m) => m.value), 1)
 
-  // Vencidos ação rápida (max 10, sorted oldest first)
+  // Vencidos aÃ§Ã£o rÃ¡pida (max 10, sorted oldest first)
   const vencidasSorted = [...vencidas]
     .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
     .slice(0, 10)
@@ -199,7 +199,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Visão geral do escritório</p>
+        <p className="text-sm text-muted-foreground">VisÃ£o geral do escritÃ³rio</p>
       </div>
 
       {/* Summary cards */}
@@ -213,7 +213,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-blue-600">{formatCurrency(aReceber)}</p>
-            <p className="text-xs text-muted-foreground">faturas abertas — {currentMonth}</p>
+            <p className="text-xs text-muted-foreground">faturas abertas â€” {currentMonth}</p>
           </CardContent>
         </Card>
 
@@ -239,7 +239,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-orange-500">{clientesInadimplentes}</p>
-            <p className="text-xs text-muted-foreground">clientes fora da carência</p>
+            <p className="text-xs text-muted-foreground">clientes fora da carÃªncia</p>
           </CardContent>
         </Card>
 
@@ -252,17 +252,17 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">{docsEnviadosMes}</p>
-            <p className="text-xs text-muted-foreground">documentos — {currentMonth}</p>
+            <p className="text-xs text-muted-foreground">documentos â€” {currentMonth}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Chart + Overdue list */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Inadimplência chart */}
+        {/* InadimplÃªncia chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Inadimplência — últimos 6 meses</CardTitle>
+            <CardTitle className="text-sm font-medium">InadimplÃªncia â€” Ãºltimos 6 meses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -276,7 +276,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <span className="text-xs font-medium w-20 text-right shrink-0">
-                    {m.value > 0 ? formatCurrency(m.value) : '—'}
+                    {m.value > 0 ? formatCurrency(m.value) : 'â€”'}
                   </span>
                 </div>
               ))}
@@ -287,7 +287,7 @@ export default function Dashboard() {
         {/* Latest activities */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Últimas Atividades</CardTitle>
+            <CardTitle className="text-sm font-medium">Ãšltimas Atividades</CardTitle>
           </CardHeader>
           <CardContent>
             {!sortedEvents.length ? (
@@ -317,10 +317,10 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Vencidos - Ação Rápida */}
+      {/* Vencidos - AÃ§Ã£o RÃ¡pida */}
       {vencidasSorted.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-base font-semibold">Vencidos — Ação Rápida</h2>
+          <h2 className="text-base font-semibold">Vencidos â€” AÃ§Ã£o RÃ¡pida</h2>
           <div className="flex flex-col gap-2">
             {vencidasSorted.map((inv) => {
               const dias = differenceInDays(today, parseISO(inv.vencimento))
@@ -332,7 +332,7 @@ export default function Dashboard() {
                     <DaysAtraso days={dias} />
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                    <span className="text-muted-foreground">Competência</span>
+                    <span className="text-muted-foreground">CompetÃªncia</span>
                     <span className="text-right">{inv.competencia}</span>
                     <span className="text-muted-foreground">Vencimento</span>
                     <span className="text-right font-medium">{formatDate(inv.vencimento)}</span>
@@ -362,6 +362,8 @@ export default function Dashboard() {
           setBaixaTarget(null)
         }}
       />
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

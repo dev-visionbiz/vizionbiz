@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import { useClients, useCreateClient } from '@/data/hooks/useClients'
@@ -93,7 +93,7 @@ export default function ClientesLista() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  // empresa_id -> nomes de pessoas vinculadas (sócios/contatos do cadastro de pessoas)
+  // empresa_id -> nomes de pessoas vinculadas (sÃ³cios/contatos do cadastro de pessoas)
   const pessoasByEmpresa = useMemo(() => {
     const map = new Map<string, string[]>()
     if (!todasEmpPessoas || !todasPessoas) return map
@@ -109,7 +109,7 @@ export default function ClientesLista() {
     return map
   }, [todasEmpPessoas, todasPessoas])
 
-  // client_pj_id -> nomes dos clientes PF vinculados (sócios cadastrados como clientes)
+  // client_pj_id -> nomes dos clientes PF vinculados (sÃ³cios cadastrados como clientes)
   const pfNomesByPJ = useMemo(() => {
     const map = new Map<string, string[]>()
     if (!todosVinculos || !clients) return map
@@ -247,12 +247,12 @@ export default function ClientesLista() {
 
   return (
     <div className="space-y-4">
-      {/* Cabeçalho */}
+      {/* CabeÃ§alho */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Clientes</h1>
           <p className="text-sm text-muted-foreground">
-            {clients?.length ?? 0} cadastro(s) —{' '}
+            {clients?.length ?? 0} cadastro(s) â€”{' '}
             {clients?.filter(c => (c.tipo ?? 'juridica') === 'juridica').length ?? 0} PJ,{' '}
             {clients?.filter(c => c.tipo === 'fisica').length ?? 0} PF
           </p>
@@ -268,7 +268,7 @@ export default function ClientesLista() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Buscar por nome, sócio, CPF, CNPJ..."
+            placeholder="Buscar por nome, sÃ³cio, CPF, CNPJ..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -278,8 +278,8 @@ export default function ClientesLista() {
             <SelectTrigger className="flex-1 min-w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os tipos</SelectItem>
-              <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
-              <SelectItem value="fisica">Pessoa Física</SelectItem>
+              <SelectItem value="juridica">Pessoa JurÃ­dica</SelectItem>
+              <SelectItem value="fisica">Pessoa FÃ­sica</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filtroStatus} onValueChange={v => setFiltroStatus(v as FiltroStatus)}>
@@ -315,19 +315,19 @@ export default function ClientesLista() {
         <EmptyState
           icon={Users}
           title={hasFilters ? 'Nenhum resultado' : 'Nenhum cliente cadastrado'}
-          description={hasFilters ? 'Tente outro termo ou filtro.' : 'Clique em "Novo Cliente" para começar.'}
+          description={hasFilters ? 'Tente outro termo ou filtro.' : 'Clique em "Novo Cliente" para comeÃ§ar.'}
           action={!hasFilters ? <Button onClick={openDialog}>Novo Cliente</Button> : undefined}
         />
       ) : (
         <div className="rounded-lg border overflow-hidden">
-          {/* Cabeçalho das colunas — só em telas ≥ sm */}
+          {/* CabeÃ§alho das colunas â€” sÃ³ em telas â‰¥ sm */}
           <div className="hidden sm:grid grid-cols-[2.5rem_1fr_9rem_9rem_6rem_8rem_3.5rem] gap-x-3 px-4 py-2 bg-muted/40 border-b">
             <span className="text-xs font-medium text-muted-foreground">Tipo</span>
-            <SortBtn col="nome" label="Nome / Razão Social" {...sortProps} />
+            <SortBtn col="nome" label="Nome / RazÃ£o Social" {...sortProps} />
             <SortBtn col="doc" label="Documento" {...sortProps} />
             <SortBtn col="regime" label="Regime" {...sortProps} />
             <SortBtn col="status" label="Status" {...sortProps} />
-            <SortBtn col="pendencias" label="Pendências" {...sortProps} />
+            <SortBtn col="pendencias" label="PendÃªncias" {...sortProps} />
             <span />
           </div>
 
@@ -337,8 +337,8 @@ export default function ClientesLista() {
               const tipo = client.tipo ?? 'juridica'
               const vencidas = overdueMap.get(client.id) ?? 0
               const doc = tipo === 'juridica'
-                ? (client.cnpj ? formatCNPJ(client.cnpj) : '—')
-                : (client.cpf ?? '—')
+                ? (client.cnpj ? formatCNPJ(client.cnpj) : 'â€”')
+                : (client.cpf ?? 'â€”')
               const tipoBadgeClass = tipo === 'fisica' ? 'border-blue-400 text-blue-600' : 'border-purple-400 text-purple-600'
               return (
                 <div
@@ -368,7 +368,7 @@ export default function ClientesLista() {
                     </div>
                     {vencidas > 0
                       ? <Badge variant="destructive" className="w-fit">{vencidas} vencida(s)</Badge>
-                      : <span className="text-xs text-muted-foreground">Sem pendências</span>
+                      : <span className="text-xs text-muted-foreground">Sem pendÃªncias</span>
                     }
                   </div>
 
@@ -388,7 +388,7 @@ export default function ClientesLista() {
                     </Badge>
                     {vencidas > 0
                       ? <Badge variant="destructive" className="shrink-0 w-fit">{vencidas} vencida(s)</Badge>
-                      : <span className="text-xs text-muted-foreground whitespace-nowrap">Sem pendências</span>
+                      : <span className="text-xs text-muted-foreground whitespace-nowrap">Sem pendÃªncias</span>
                     }
                     <Button
                       variant="ghost"
@@ -414,14 +414,14 @@ export default function ClientesLista() {
           </DialogHeader>
           <Tabs value={dialogTipo} onValueChange={v => setDialogTipo(v as TipoPessoa)}>
             <TabsList className="w-full mb-4">
-              <TabsTrigger value="juridica" className="flex-1">Pessoa Jurídica</TabsTrigger>
-              <TabsTrigger value="fisica" className="flex-1">Pessoa Física</TabsTrigger>
+              <TabsTrigger value="juridica" className="flex-1">Pessoa JurÃ­dica</TabsTrigger>
+              <TabsTrigger value="fisica" className="flex-1">Pessoa FÃ­sica</TabsTrigger>
             </TabsList>
 
             <TabsContent value="juridica" className="space-y-3">
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label>Razão Social *</Label>
+                  <Label>RazÃ£o Social *</Label>
                   <Input autoFocus value={formPJ.razao_social} onChange={e => setFormPJ(f => ({ ...f, razao_social: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
@@ -434,7 +434,7 @@ export default function ClientesLista() {
                     <Input placeholder="00.000.000/0000-00" value={formPJ.cnpj} onChange={e => setFormPJ(f => ({ ...f, cnpj: e.target.value }))} />
                   </div>
                   <div className="space-y-1">
-                    <Label>Regime Tributário</Label>
+                    <Label>Regime TributÃ¡rio</Label>
                     <Select value={formPJ.regime} onValueChange={v => setFormPJ(f => ({ ...f, regime: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -468,14 +468,14 @@ export default function ClientesLista() {
                     <Input placeholder="000.000.000-00" value={formPF.cpf} onChange={e => setFormPF(f => ({ ...f, cpf: e.target.value }))} />
                   </div>
                   <div className="space-y-1">
-                    <Label>Regime Tributário</Label>
+                    <Label>Regime TributÃ¡rio</Label>
                     <Select value={formPF.regime} onValueChange={v => setFormPF(f => ({ ...f, regime: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="MEI">MEI</SelectItem>
                         <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                         <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
-                        <SelectItem value="Autônomo">Autônomo / Liberal</SelectItem>
+                        <SelectItem value="AutÃ´nomo">AutÃ´nomo / Liberal</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -500,6 +500,8 @@ export default function ClientesLista() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

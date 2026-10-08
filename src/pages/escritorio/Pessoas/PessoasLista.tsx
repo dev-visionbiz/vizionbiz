@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useAuth } from '@/auth/AuthProvider'
@@ -49,7 +49,7 @@ export default function PessoasLista() {
   const [pfForm, setPfForm] = useState(EMPTY_PF)
   const [pjForm, setPjForm] = useState(EMPTY_PJ)
 
-  // Dialog confirmar exclusão
+  // Dialog confirmar exclusÃ£o
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   const vinculoCount = (pessoaId: string) =>
@@ -148,8 +148,8 @@ export default function PessoasLista() {
     const count = vinculoCount(id)
     if (count > 0) {
       toast({
-        title: 'Não é possível excluir',
-        description: `Esta pessoa possui ${count} vínculo(s) com empresas.`,
+        title: 'NÃ£o Ã© possÃ­vel excluir',
+        description: `Esta pessoa possui ${count} vÃ­nculo(s) com empresas.`,
         variant: 'destructive',
       })
       return
@@ -161,7 +161,7 @@ export default function PessoasLista() {
     if (!deleteTarget) return
     try {
       await deletePessoa.mutateAsync({ id: deleteTarget, tenantId })
-      toast({ title: 'Pessoa excluída' })
+      toast({ title: 'Pessoa excluÃ­da' })
     } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     } finally {
@@ -194,8 +194,8 @@ export default function PessoasLista() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="fisica">Pessoa Física</SelectItem>
-            <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+            <SelectItem value="fisica">Pessoa FÃ­sica</SelectItem>
+            <SelectItem value="juridica">Pessoa JurÃ­dica</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -260,8 +260,8 @@ export default function PessoasLista() {
           </DialogHeader>
           <Tabs value={formTab} onValueChange={(v) => setFormTab(v as TipoPessoa)}>
             <TabsList className="mb-4 w-full">
-              <TabsTrigger value="fisica" className="flex-1" disabled={!!editId}>Pessoa Física</TabsTrigger>
-              <TabsTrigger value="juridica" className="flex-1" disabled={!!editId}>Pessoa Jurídica</TabsTrigger>
+              <TabsTrigger value="fisica" className="flex-1" disabled={!!editId}>Pessoa FÃ­sica</TabsTrigger>
+              <TabsTrigger value="juridica" className="flex-1" disabled={!!editId}>Pessoa JurÃ­dica</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fisica" className="space-y-3">
@@ -319,7 +319,7 @@ export default function PessoasLista() {
             <TabsContent value="juridica" className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
-                  <Label>Razão Social *</Label>
+                  <Label>RazÃ£o Social *</Label>
                   <Input
                     autoFocus
                     value={pjForm.nome}
@@ -372,14 +372,14 @@ export default function PessoasLista() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog confirmar exclusão */}
+      {/* Dialog confirmar exclusÃ£o */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogTitle>Confirmar exclusÃ£o</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Deseja realmente excluir esta pessoa? Esta ação não pode ser desfeita.
+            Deseja realmente excluir esta pessoa? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
@@ -389,6 +389,8 @@ export default function PessoasLista() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

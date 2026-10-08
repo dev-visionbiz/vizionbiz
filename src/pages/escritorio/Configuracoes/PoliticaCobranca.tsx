@@ -144,7 +144,7 @@ export default function PoliticaCobranca() {
           </div>
 
           {Number(multaPct) > 2 && (
-            <div className="flex items-start gap-2 rounded-md border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800">
+            <div className="alert-warning flex items-start gap-2 rounded-md border p-3 text-sm">
               <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
               <span>
                 Atenção: multa acima de 2% pode violar o CDC art. 52 §1º em relações de consumo.
