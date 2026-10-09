@@ -66,10 +66,10 @@ interface EtapaFormData {
 // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const categoriaLabel: Record<CategoriaDemanda, string> = {
-  societario: 'SocietÃ¡rio',
+  societario: 'Societário',
   fiscal: 'Fiscal',
   dp: 'Dep. Pessoal',
-  contabil: 'ContÃ¡bil',
+  contabil: 'Contábil',
   outros: 'Outros',
 }
 
@@ -122,7 +122,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
   const etapasQuery = useFluxoTarefas(tenantId, editFluxo?.id ?? '')
   const escritorioUsers = users.filter((u) => u.papel !== 'cliente' && u.ativo)
 
-  // Popula etapas quando abre o dialog de ediÃ§Ã£o (dados vÃªm do cache do React Query)
+  // Popula etapas quando abre o dialog de edição (dados vêm do cache do React Query)
   useEffect(() => {
     if (!dialogOpen || !editFluxo || !etapasQuery.data) return
     setEtapas(
@@ -306,7 +306,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
   }
 
   function handleDelete(id: string) {
-    deleteFluxo.mutate(id, { onSuccess: () => toast({ title: 'Fluxo excluÃ­do' }) })
+    deleteFluxo.mutate(id, { onSuccess: () => toast({ title: 'Fluxo excluído' }) })
   }
 
   // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -340,7 +340,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden">
 
-          {/* CabeÃ§alho */}
+          {/* Cabeçalho */}
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
             <DialogTitle className="text-base">
               {editFluxo ? `Editar Fluxo â€” ${editFluxo.nome}` : 'Novo Fluxo'}
@@ -387,7 +387,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
             </div>
           </DialogHeader>
 
-          {/* ConteÃºdo do passo atual */}
+          {/* Conteúdo do passo atual */}
           <div className="flex-1 overflow-y-auto">
 
             {/* Passo 1 â€” Dados */}
@@ -419,7 +419,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Prazo padrÃ£o (dias)</Label>
+                    <Label>Prazo padrão (dias)</Label>
                     <Input
                       type="number"
                       min={0}
@@ -431,11 +431,11 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label>DescriÃ§Ã£o</Label>
+                  <Label>Descrição</Label>
                   <Textarea
                     value={form.descricao}
                     onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                    placeholder="Descreva o propÃ³sito deste fluxoâ€¦"
+                    placeholder="Descreva o propósito deste fluxoâ€¦"
                     className="resize-none text-sm"
                     rows={3}
                   />
@@ -469,7 +469,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 {etapas.length === 0 ? (
                   <div className="border-2 border-dashed rounded-lg py-10 text-center text-sm text-muted-foreground">
                     Clique em "Nova Etapa" para adicionar etapas ao fluxo de trabalho.
-                    <br /><span className="text-xs opacity-70">Opcional â€” vocÃª pode salvar sem etapas.</span>
+                    <br /><span className="text-xs opacity-70">Opcional â€” você pode salvar sem etapas.</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -480,7 +480,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                         responsavelNome,
                         e.checklist.length > 0 ? `${e.checklist.length} ${e.checklist.length === 1 ? 'item' : 'itens'}` : '',
                         e.documentos_config.length > 0 ? `${e.documentos_config.length} doc${e.documentos_config.length > 1 ? 's' : ''}` : '',
-                      ].filter(Boolean).join(' Â· ')
+                      ].filter(Boolean).join(' · ')
 
                       return (
                         <div
@@ -515,7 +515,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
             )}
           </div>
 
-          {/* Footer de navegaÃ§Ã£o */}
+          {/* Footer de navegação */}
           <div className="px-6 py-4 border-t shrink-0 flex items-center gap-2">
             <Button variant="ghost" className="mr-auto text-muted-foreground" onClick={() => setDialogOpen(false)}>
               Cancelar
@@ -530,11 +530,11 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 onClick={() => { if (form.nome.trim()) setStep((s) => s + 1) }}
                 disabled={!form.nome.trim()}
               >
-                PrÃ³ximo â†’
+                Próximo â†’
               </Button>
             ) : (
               <Button onClick={handleSalvar} disabled={isSaving}>
-                {editFluxo ? 'Salvar alteraÃ§Ãµes' : 'Criar fluxo'}
+                {editFluxo ? 'Salvar alterações' : 'Criar fluxo'}
               </Button>
             )}
           </div>
@@ -548,7 +548,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
             <DialogTitle>{etapaEditKey ? 'Editar Etapa' : 'Nova Etapa'}</DialogTitle>
           </DialogHeader>
 
-          {/* Dois painÃ©is em desktop */}
+          {/* Dois painéis em desktop */}
           <div className="flex-1 overflow-hidden flex flex-col sm:flex-row min-h-0">
 
             {/* Painel esquerdo â€” campos principais */}
@@ -576,7 +576,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                   <p className="text-xs text-muted-foreground">Negativo = antes do vencimento</p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>ResponsÃ¡vel padrÃ£o</Label>
+                  <Label>Responsável padrão</Label>
                   <Select
                     value={etapaForm.responsavel_padrao || '__none__'}
                     onValueChange={(v) => setEtapaForm({ ...etapaForm, responsavel_padrao: v === '__none__' ? '' : v })}
@@ -591,11 +591,11 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <Label>DescriÃ§Ã£o</Label>
+                <Label>Descrição</Label>
                 <Textarea
                   value={etapaForm.descricao}
                   onChange={(e) => setEtapaForm({ ...etapaForm, descricao: e.target.value })}
-                  placeholder="InstruÃ§Ãµes ou observaÃ§Ãµes para esta etapaâ€¦"
+                  placeholder="Instruções ou observações para esta etapaâ€¦"
                   className="resize-none text-sm"
                   rows={4}
                 />
@@ -631,7 +631,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                         <Input
                           value={item.nome}
                           onChange={(e) => patchEtapaFormItem(item.id, e.target.value)}
-                          placeholder="DescriÃ§Ã£o do item"
+                          placeholder="Descrição do item"
                           className="flex-1 text-sm h-8"
                         />
                         <Button
@@ -696,8 +696,8 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="entrada" className="text-xs">Entrada</SelectItem>
-                              <SelectItem value="saida" className="text-xs">SaÃ­da</SelectItem>
-                              <SelectItem value="referencia" className="text-xs">ReferÃªncia</SelectItem>
+                              <SelectItem value="saida" className="text-xs">Saída</SelectItem>
+                              <SelectItem value="referencia" className="text-xs">Referência</SelectItem>
                             </SelectContent>
                           </Select>
                           <label className="flex items-center gap-1.5 text-xs whitespace-nowrap cursor-pointer">
@@ -706,10 +706,10 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                               onCheckedChange={(v) => patchEtapaDocSlot(d.id, { obrigatorio: !!v })}
                               className="h-3.5 w-3.5"
                             />
-                            ObrigatÃ³rio
+                            Obrigatório
                           </label>
                         </div>
-                        <p className="text-xs text-muted-foreground">Pasta padrÃ£o definida na criaÃ§Ã£o da ocorrÃªncia</p>
+                        <p className="text-xs text-muted-foreground">Pasta padrão definida na criação da ocorrência</p>
                       </div>
                     ))}
                   </div>
@@ -768,7 +768,7 @@ function FluxoRow({
       <div className={`absolute left-0 top-0 bottom-0 w-0.75 ${cfg.bar}`} />
 
       <div className="pl-4 pr-3 py-3.5 flex flex-col gap-2">
-        {/* Ã­cone + badge */}
+        {/* ícone + badge */}
         <div className="flex items-start justify-between gap-1.5">
           <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.iconBg}`}>
             <Icon className={`h-4 w-4 ${cfg.iconColor}`} />
@@ -787,10 +787,10 @@ function FluxoRow({
         {/* categoria */}
         <span className="text-[11px] text-muted-foreground truncate">
           {categoriaLabel[fluxo.categoria]}
-          {fluxo.descricao ? ` Â· ${fluxo.descricao}` : ''}
+          {fluxo.descricao ? ` · ${fluxo.descricao}` : ''}
         </span>
 
-        {/* rodapÃ©: etapas + lixeira */}
+        {/* rodapé: etapas + lixeira */}
         <div className="flex items-center justify-between pt-0.5">
           <span className="text-[11px] text-muted-foreground">
             <ListChecks className="inline h-3 w-3 mr-1 opacity-60" />
@@ -811,7 +811,7 @@ function FluxoRow({
   )
 }
 
-// â”€â”€â”€ PÃ¡gina Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Página Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function FluxosPage() {
   const { currentUser } = useAuth()

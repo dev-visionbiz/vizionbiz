@@ -72,7 +72,9 @@ import { UploadEmMassaModal } from './UploadEmMassaModal'
 import { DocumentViewerModal } from '@/components/shared/DocumentViewerModal'
 import { DocumentThumbnail } from '@/components/shared/DocumentThumbnail'
 import { WhatsAppMessageDialog } from '@/components/whatsapp/WhatsAppMessageDialog'
+import type { ContatoDisponivel } from '@/components/whatsapp/WhatsAppMessageDialog'
 import { templateDocumento } from '@/lib/whatsapp/templates'
+import { useClienteContatos } from '@/data/hooks/useClienteContatos'
 
 function ValidadeBadge({ doc, docTypes }: { doc: Document; docTypes: DocumentType[] | undefined }) {
   const tipo = docTypes?.find((dt) => dt.id === doc.type_id)
@@ -99,7 +101,7 @@ function ValidadeBadge({ doc, docTypes }: { doc: Document; docTypes: DocumentTyp
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border">
-      <Clock className="h-3 w-3" /> VÃ¡lido atÃ© {format(validade, 'dd/MM/yyyy')}
+      <Clock className="h-3 w-3" /> Válido até {format(validade, 'dd/MM/yyyy')}
     </span>
   )
 }
@@ -107,8 +109,8 @@ function ValidadeBadge({ doc, docTypes }: { doc: Document; docTypes: DocumentTyp
 const folderTypeLabels: Record<FolderType, string> = {
   fiscal: 'Fiscal',
   dp: 'Dep. Pessoal',
-  contabil: 'ContÃ¡bil',
-  societario: 'SocietÃ¡rio',
+  contabil: 'Contábil',
+  societario: 'Societário',
   outros: 'Outros',
 }
 
@@ -124,7 +126,7 @@ function HistoricoDialog({ doc, open, onClose }: { doc: Document; open: boolean;
   const eventLabels: Record<string, string> = {
     upload: 'Upload',
     download: 'Download',
-    view: 'VisualizaÃ§Ã£o',
+    view: 'Visualização',
     share: 'Compartilhamento',
   }
 
@@ -132,7 +134,7 @@ function HistoricoDialog({ doc, open, onClose }: { doc: Document; open: boolean;
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>HistÃ³rico â€” {doc.nome}</DialogTitle>
+          <DialogTitle>Histórico â€” {doc.nome}</DialogTitle>
         </DialogHeader>
         <div className="max-h-80 overflow-y-auto space-y-2">
           {!events?.length ? (
@@ -356,7 +358,7 @@ function EditDocumentDialog({
         if (tipoVinculo === 'nova') {
           const valor = parseFloat(novaValor.replace(',', '.'))
           if (!valor || isNaN(valor)) {
-            toast({ title: 'Informe um valor vÃ¡lido para a cobranÃ§a.', variant: 'destructive' })
+            toast({ title: 'Informe um valor válido para a cobrança.', variant: 'destructive' })
             return
           }
           const newInvId = uuidv4()
@@ -429,7 +431,7 @@ function EditDocumentDialog({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">CompetÃªncia</Label>
+              <Label className="text-xs">Competência</Label>
               <Input
                 value={competencia}
                 onChange={(e) => setCompetencia(e.target.value)}
@@ -438,7 +440,7 @@ function EditDocumentDialog({
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">VersÃ£o</Label>
+              <Label className="text-xs">Versão</Label>
               <Input
                 type="number"
                 min="1"
@@ -473,12 +475,12 @@ function EditDocumentDialog({
             </div>
           )}
 
-          {/* SeÃ§Ã£o de cobranÃ§a vinculada */}
+          {/* Seção de cobrança vinculada */}
           <div className="border rounded-md p-3 space-y-3 bg-muted/30">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                <Label className="text-xs font-medium">Vincular cobranÃ§a extra</Label>
+                <Label className="text-xs font-medium">Vincular cobrança extra</Label>
               </div>
               <Switch
                 checked={vincularCobranca}
@@ -501,7 +503,7 @@ function EditDocumentDialog({
                     className={`px-3 py-1 text-xs rounded transition-colors ${tipoVinculo === 'nova' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     onClick={() => setTipoVinculo('nova')}
                   >
-                    Nova cobranÃ§a
+                    Nova cobrança
                   </button>
                 </div>
 
@@ -528,7 +530,7 @@ function EditDocumentDialog({
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">DescriÃ§Ã£o (competÃªncia)</Label>
+                      <Label className="text-xs">Descrição (competência)</Label>
                       <Input value={novaDesc} onChange={(e) => setNovaDesc(e.target.value)} placeholder="AAAA-MM" className="h-8 text-sm" />
                     </div>
                     <div className="space-y-1">
@@ -543,7 +545,7 @@ function EditDocumentDialog({
                 )}
 
                 <div className="flex items-center justify-between pt-1 border-t">
-                  <Label className="text-xs text-muted-foreground">Liberar download somente apÃ³s pagamento</Label>
+                  <Label className="text-xs text-muted-foreground">Liberar download somente após pagamento</Label>
                   <Switch checked={downloadAposPagamento} onCheckedChange={setDownloadAposPagamento} />
                 </div>
               </>
@@ -597,10 +599,10 @@ function DocActions({
     } catch (err) {
       if (String(err).includes('arquivo_ausente')) {
         await updateDoc.mutateAsync({ id: doc.id, data: { storage_status: 'arquivo_ausente' } })
-        toast({ title: 'Arquivo nÃ£o encontrado no armazenamento.', variant: 'destructive' })
+        toast({ title: 'Arquivo não encontrado no armazenamento.', variant: 'destructive' })
       } else {
         toast({
-          title: 'Arquivo de exemplo â€” faÃ§a upload de um arquivo real para testar o download.',
+          title: 'Arquivo de exemplo â€” faça upload de um arquivo real para testar o download.',
           variant: 'destructive',
         })
       }
@@ -651,7 +653,7 @@ function DocActions({
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={onHistorico}>
-              <History className="mr-2 h-4 w-4" /> HistÃ³rico
+              <History className="mr-2 h-4 w-4" /> Histórico
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
@@ -661,7 +663,7 @@ function DocActions({
         </DropdownMenu>
       </div>
 
-      {/* Desktop: 6 botÃµes de Ã­cone */}
+      {/* Desktop: 6 botões de ícone */}
       <div className="hidden sm:flex items-center gap-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" title="Download" onClick={handleDownload}>
           <Download className="h-3.5 w-3.5" />
@@ -675,7 +677,7 @@ function DocActions({
         <Button variant="ghost" size="icon" className="h-7 w-7" title="Compartilhar" onClick={onShare}>
           <Share2 className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" title="HistÃ³rico" onClick={onHistorico}>
+        <Button variant="ghost" size="icon" className="h-7 w-7" title="Histórico" onClick={onHistorico}>
           <History className="h-3.5 w-3.5" />
         </Button>
         {onWhatsApp && (
@@ -743,6 +745,10 @@ export default function DocumentosPage() {
   const [viewerUrl, setViewerUrl] = useState<string | null>(null)
   const [whatsappDoc, setWhatsappDoc] = useState<Document | null>(null)
   const [whatsappThumbnail, setWhatsappThumbnail] = useState<string | null>(null)
+  const { data: contatosDoc } = useClienteContatos(tenantId, whatsappDoc?.client_id ?? '')
+  const contatosDisponiveisDoc: ContatoDisponivel[] = (contatosDoc ?? [])
+    .filter((c) => c.telefone)
+    .map((c) => ({ id: c.id, nome: c.nome, telefone: c.telefone!, setor: c.setor, principal: c.principal }))
 
   async function abrirWhatsApp(doc: Document) {
     const thumb = await storageService.obterThumbnail(doc.storage_key)
@@ -770,9 +776,9 @@ export default function DocumentosPage() {
     } catch (err) {
       if (String(err).includes('arquivo_ausente')) {
         await updateDoc.mutateAsync({ id: doc.id, data: { storage_status: 'arquivo_ausente' } })
-        toast({ title: 'Arquivo nÃ£o encontrado no armazenamento.', variant: 'destructive' })
+        toast({ title: 'Arquivo não encontrado no armazenamento.', variant: 'destructive' })
       }
-      // arquivo de seed sem conteÃºdo real â€” abre viewer sem URL
+      // arquivo de seed sem conteúdo real â€” abre viewer sem URL
     }
     setViewerDoc(doc)
     setViewerUrl(url)
@@ -859,7 +865,7 @@ export default function DocumentosPage() {
       await provedor.excluir(fileId)
       await storageService.excluirThumbnail(fileId)
       await deleteDoc.mutateAsync(doc.id)
-      toast({ title: 'Documento excluÃ­do.' })
+      toast({ title: 'Documento excluído.' })
     } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     }
@@ -1005,7 +1011,7 @@ export default function DocumentosPage() {
                               </span>
                             )}
                             {folder.sistema && (
-                              <Lock className="h-3 w-3 shrink-0 opacity-40" aria-label="Pasta padrÃ£o" />
+                              <Lock className="h-3 w-3 shrink-0 opacity-40" aria-label="Pasta padrão" />
                             )}
                           </button>
                         </li>
@@ -1103,7 +1109,7 @@ export default function DocumentosPage() {
                 </div>
 
                 <div className="overflow-auto md:flex-1">
-                  {/* â”€â”€ Pastas neste nÃ­vel â”€â”€ */}
+                  {/* â”€â”€ Pastas neste nível â”€â”€ */}
                   {currentLevelFolders.length > 0 && (
                     <div className={currentFolderId ? 'border-b' : ''}>
                       {currentLevelFolders.map((folder) => (
@@ -1123,7 +1129,7 @@ export default function DocumentosPage() {
                             <p className="text-xs text-muted-foreground">
                               {folderTypeLabels[folder.tipo_padrao]}
                               {(folderDocCounts[folder.id] ?? 0) > 0 && (
-                                <span className="ml-1">Â· {folderDocCounts[folder.id]} {folderDocCounts[folder.id] === 1 ? 'arquivo' : 'arquivos'}</span>
+                                <span className="ml-1">· {folderDocCounts[folder.id]} {folderDocCounts[folder.id] === 1 ? 'arquivo' : 'arquivos'}</span>
                               )}
                             </p>
                           </div>
@@ -1155,7 +1161,7 @@ export default function DocumentosPage() {
                         </div>
                         <Input placeholder="Buscar por nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 text-sm" />
                         <div className="flex gap-2">
-                          <Input placeholder="CompetÃªncia" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm flex-1" />
+                          <Input placeholder="Competência" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm flex-1" />
                           <Select value={filterDocType} onValueChange={setFilterDocType}>
                             <SelectTrigger className="h-8 text-sm flex-1"><SelectValue placeholder="Tipo" /></SelectTrigger>
                             <SelectContent>
@@ -1172,7 +1178,7 @@ export default function DocumentosPage() {
                           <EmptyState
                             icon={FileText}
                             title="Nenhum documento"
-                            description="FaÃ§a upload de documentos para esta pasta."
+                            description="Faça upload de documentos para esta pasta."
                             action={<Button size="sm" onClick={() => setUploadOpen(true)}><Upload className="mr-1.5 h-3.5 w-3.5" /> Upload</Button>}
                           />
                         ) : (
@@ -1257,7 +1263,7 @@ export default function DocumentosPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Input placeholder="CompetÃªncia (ex: 2025-07)" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm" />
+                  <Input placeholder="Competência (ex: 2025-07)" value={filterComp} onChange={(e) => setFilterComp(e.target.value)} className="h-8 text-sm" />
                 </div>
               </div>
               {/* Documents */}
@@ -1265,7 +1271,7 @@ export default function DocumentosPage() {
                 {loadingAllDocs ? (
                   <PageLoader />
                 ) : !tipoModeDocs?.length ? (
-                  <EmptyState icon={FileText} title="Nenhum documento encontrado" description="Ajuste os filtros ou faÃ§a upload via Upload em Massa." />
+                  <EmptyState icon={FileText} title="Nenhum documento encontrado" description="Ajuste os filtros ou faça upload via Upload em Massa." />
                 ) : (
                   <div className="flex flex-col gap-2">
                     {tipoModeDocs.map((doc) => (
@@ -1377,13 +1383,15 @@ export default function DocumentosPage() {
           open={!!whatsappDoc}
           onClose={() => { setWhatsappDoc(null); setWhatsappThumbnail(null) }}
           escritorioId={currentTenant?.id ?? ''}
-          titulo={`WhatsApp â€” ${whatsappDoc.nome}`}
+          titulo={`WhatsApp – ${whatsappDoc.nome}`}
           telefoneInicial={clients?.find((c) => c.id === whatsappDoc.client_id)?.telefone ?? ''}
           mensagemInicial={templateDocumento(
             whatsappDoc.nome,
             clients?.find((c) => c.id === whatsappDoc.client_id)?.razao_social ?? '',
+            currentTenant?.template_whatsapp_documento,
           )}
           thumbnail={whatsappThumbnail}
+          contatosDisponiveis={contatosDisponiveisDoc.length > 0 ? contatosDisponiveisDoc : undefined}
         />
       )}
 

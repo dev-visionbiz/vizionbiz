@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Menu,
-  Home, FolderOpen, Receipt, UserCog, FileText,
+  Home, FolderOpen, Receipt, UserCog, FileText, Building2,
   Layers, Workflow, ClipboardList, CheckSquare, X, GitBranch, FileBarChart2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -33,11 +33,11 @@ const escritorioItems: { label: string; href: string; icon: React.ElementType; m
 ]
 
 const portalItemsBase: { label: string; href: string; icon: React.ElementType; somenteResponsavel?: boolean }[] = [
-  { label: 'Início',     href: '/portal/inicio',     icon: Home },
-  { label: 'Documentos', href: '/portal/documentos', icon: FolderOpen },
+  { label: 'Início',    href: '/portal/inicio',     icon: Home },
+  { label: 'Cadastro',  href: '/portal/cadastro',   icon: Building2 },
+  { label: 'Docs',      href: '/portal/documentos', icon: FolderOpen },
   { label: 'Financeiro', href: '/portal/financeiro', icon: Receipt },
-  { label: 'Guias',      href: '/portal/guias',      icon: FileText },
-  { label: 'Equipe',     href: '/portal/equipe',     icon: UserCog, somenteResponsavel: true },
+  { label: 'Equipe',    href: '/portal/equipe',     icon: UserCog, somenteResponsavel: true },
 ]
 
 export function BottomNav({ onOpenMenu }: BottomNavProps) {

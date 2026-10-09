@@ -41,7 +41,7 @@ function EncargosAccordion({ invoice, policy }: { invoice: Invoice; policy: any 
         onClick={() => setOpen((v) => !v)}
       >
         {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-        MemÃ³ria de cÃ¡lculo
+        Memória de cálculo
       </button>
       {open && (
         <div className="mt-1 pl-3 space-y-0.5 border-l">
@@ -97,12 +97,12 @@ export default function PortalFinanceiro() {
           <p className="text-sm text-muted-foreground">Suas faturas</p>
         </div>
         <Button variant="outline" className="sm:shrink-0" onClick={() => setShowRenegociacao(true)}>
-          Renegociar dÃ­vidas
+          Renegociar dívidas
         </Button>
       </div>
 
       {!sorted.length ? (
-        <EmptyState icon={Receipt} title="Nenhuma fatura" description="VocÃª nÃ£o possui faturas." />
+        <EmptyState icon={Receipt} title="Nenhuma fatura" description="Você não possui faturas." />
       ) : (
         <div className="flex flex-col gap-2">
           {sorted.map((inv) => {
@@ -111,7 +111,7 @@ export default function PortalFinanceiro() {
             return (
               <div key={inv.id} className="rounded-lg border bg-card p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-semibold text-sm">CompetÃªncia {inv.competencia}</p>
+                  <p className="font-semibold text-sm">Competência {inv.competencia}</p>
                   <InvBadge status={inv.status} />
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">

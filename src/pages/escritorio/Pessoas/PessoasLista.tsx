@@ -1,7 +1,8 @@
 ﻿import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Bookmark, BookmarkCheck } from 'lucide-react'
 import { useAuth } from '@/auth/AuthProvider'
+import { useFiltroPadrao } from '@/data/hooks/useFiltroPadrao'
 import type { TipoPessoa } from '@/domain/types'
 import {
   usePessoas,
@@ -39,8 +40,12 @@ export default function PessoasLista() {
   const updatePessoa = useUpdatePessoa()
   const deletePessoa = useDeletePessoa()
 
+  const { inicial: filtrosIniciais, salvarPadrao, limparPadrao, temPadrao } = useFiltroPadrao('pessoas', {
+    filtroTipo: 'todos' as 'todos' | TipoPessoa,
+  })
+
   const [search, setSearch] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState<'todos' | TipoPessoa>('todos')
+  const [filtroTipo, setFiltroTipo] = useState<'todos' | TipoPessoa>(filtrosIniciais.filtroTipo)
 
   // Dialog criar/editar
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -49,7 +54,7 @@ export default function PessoasLista() {
   const [pfForm, setPfForm] = useState(EMPTY_PF)
   const [pjForm, setPjForm] = useState(EMPTY_PJ)
 
-  // Dialog confirmar exclusÃ£o
+  // Dialog confirmar exclusão
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   const vinculoCount = (pessoaId: string) =>
@@ -148,8 +153,8 @@ export default function PessoasLista() {
     const count = vinculoCount(id)
     if (count > 0) {
       toast({
-        title: 'NÃ£o Ã© possÃ­vel excluir',
-        description: `Esta pessoa possui ${count} vÃ­nculo(s) com empresas.`,
+        title: 'Não é possível excluir',
+        description: `Esta pessoa possui ${count} vínculo(s) com empresas.`,
         variant: 'destructive',
       })
       return
@@ -161,7 +166,7 @@ export default function PessoasLista() {
     if (!deleteTarget) return
     try {
       await deletePessoa.mutateAsync({ id: deleteTarget, tenantId })
-      toast({ title: 'Pessoa excluÃ­da' })
+      toast({ title: 'Pessoa excluída' })
     } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     } finally {
@@ -181,7 +186,7 @@ export default function PessoasLista() {
         </Button>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 items-center">
         <Input
           placeholder="Buscar por nome, CPF ou CNPJ..."
           value={search}
@@ -194,10 +199,30 @@ export default function PessoasLista() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="fisica">Pessoa FÃ­sica</SelectItem>
-            <SelectItem value="juridica">Pessoa JurÃ­dica</SelectItem>
+            <SelectItem value="fisica">Pessoa Física</SelectItem>
+            <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-9 w-9 shrink-0 ${temPadrao ? 'text-primary' : 'text-muted-foreground'}`}
+          title={temPadrao ? 'Filtro padrão salvo — clique para remover' : 'Salvar filtros atuais como padrão'}
+          onClick={() => {
+            if (temPadrao) {
+              limparPadrao()
+              toast({ title: 'Filtro padrão removido' })
+            } else {
+              salvarPadrao({ filtroTipo })
+              toast({ title: 'Filtro padrão salvo', description: 'Será aplicado automaticamente ao abrir esta página.' })
+            }
+          }}
+        >
+          {temPadrao
+            ? <BookmarkCheck className="h-4 w-4" />
+            : <Bookmark className="h-4 w-4" />
+          }
+        </Button>
       </div>
 
       <Card>
@@ -260,8 +285,8 @@ export default function PessoasLista() {
           </DialogHeader>
           <Tabs value={formTab} onValueChange={(v) => setFormTab(v as TipoPessoa)}>
             <TabsList className="mb-4 w-full">
-              <TabsTrigger value="fisica" className="flex-1" disabled={!!editId}>Pessoa FÃ­sica</TabsTrigger>
-              <TabsTrigger value="juridica" className="flex-1" disabled={!!editId}>Pessoa JurÃ­dica</TabsTrigger>
+              <TabsTrigger value="fisica" className="flex-1" disabled={!!editId}>Pessoa Física</TabsTrigger>
+              <TabsTrigger value="juridica" className="flex-1" disabled={!!editId}>Pessoa Jurídica</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fisica" className="space-y-3">
@@ -319,7 +344,7 @@ export default function PessoasLista() {
             <TabsContent value="juridica" className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 space-y-1">
-                  <Label>RazÃ£o Social *</Label>
+                  <Label>Razão Social *</Label>
                   <Input
                     autoFocus
                     value={pjForm.nome}
@@ -372,14 +397,14 @@ export default function PessoasLista() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog confirmar exclusÃ£o */}
+      {/* Dialog confirmar exclusão */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirmar exclusÃ£o</DialogTitle>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Deseja realmente excluir esta pessoa? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+            Deseja realmente excluir esta pessoa? Esta ação não pode ser desfeita.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>

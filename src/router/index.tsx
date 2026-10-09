@@ -25,6 +25,8 @@ const PortalFinanceiro = React.lazy(() => import('@/pages/cliente/PortalFinancei
 const PortalEquipe = React.lazy(() => import('@/pages/cliente/PortalEquipe'))
 const PortalGuias = React.lazy(() => import('@/pages/cliente/PortalGuias'))
 const ShareDocumentoPage = React.lazy(() => import('@/pages/share/ShareDocumentoPage'))
+const FormularioAbertura = React.lazy(() => import('@/pages/public/FormularioAbertura'))
+const PortalCadastro = React.lazy(() => import('@/pages/cliente/PortalCadastro'))
 
 function Lazy({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -42,6 +44,10 @@ export const router = createBrowserRouter([
   {
     path: '/share/:token',
     element: <Lazy><ShareDocumentoPage /></Lazy>,
+  },
+  {
+    path: '/formulario/:token',
+    element: <Lazy><FormularioAbertura /></Lazy>,
   },
   {
     path: '/escritorio',
@@ -109,6 +115,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="inicio" replace /> },
           { path: 'inicio', element: <Lazy><PortalInicio /></Lazy> },
+          { path: 'cadastro', element: <Lazy><PortalCadastro /></Lazy> },
           { path: 'documentos', element: <Lazy><PortalDocumentos /></Lazy> },
           { path: 'financeiro', element: <Lazy><PortalFinanceiro /></Lazy> },
           { path: 'equipe', element: <Lazy><PortalEquipe /></Lazy> },

@@ -12,6 +12,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/api/receitaws': {
+        target: 'https://www.receitaws.com.br',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/receitaws/, ''),
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

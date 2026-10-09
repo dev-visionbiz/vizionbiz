@@ -50,7 +50,7 @@ export default function PortalEquipe() {
       </div>
 
       {membros.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum outro usuÃ¡rio vinculado Ã  sua empresa.</p>
+        <p className="text-sm text-muted-foreground">Nenhum outro usuário vinculado à sua empresa.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {membros.map((u) => {
@@ -61,14 +61,14 @@ export default function PortalEquipe() {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm flex-1 truncate">{u.nome}</span>
                   <Badge variant={isMembro ? 'secondary' : 'outline'} className="text-xs shrink-0">
-                    {isMembro ? 'Membro' : 'ResponsÃ¡vel'}
+                    {isMembro ? 'Membro' : 'Responsável'}
                   </Badge>
                   {!u.ativo && <Badge variant="secondary" className="text-xs shrink-0">Inativo</Badge>}
                 </div>
                 <p className="text-xs text-muted-foreground">{u.email}</p>
                 {isMembro && (
                   <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">SeÃ§Ãµes liberadas</p>
+                    <p className="text-xs font-medium text-muted-foreground">Seções liberadas</p>
                     <div className="flex gap-4">
                       {SECOES.map(({ secao, label }) => (
                         <div key={secao} className="flex items-center gap-1.5">
@@ -91,7 +91,7 @@ export default function PortalEquipe() {
                       ))}
                     </div>
                     {secoesAtuais.length === 0 && (
-                      <p className="text-xs text-muted-foreground">Acesso a todas as seÃ§Ãµes.</p>
+                      <p className="text-xs text-muted-foreground">Acesso a todas as seções.</p>
                     )}
                   </div>
                 )}

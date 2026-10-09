@@ -6,6 +6,9 @@ import { useInvoices } from '@/data/hooks/useInvoices'
 import { usePessoas, useAllEmpresaPessoas } from '@/data/hooks/usePessoas'
 import { useGrupos, useAllGrupoEmpresas } from '@/data/hooks/useGrupos'
 import { useAllClientVinculos } from '@/data/hooks/useClientVinculos'
+import { useCreateClienteEndereco } from '@/data/hooks/useClienteEnderecos'
+import { useCreateClienteCnae } from '@/data/hooks/useClienteCnaes'
+import { useCreateProcessoAbertura } from '@/data/hooks/useProcessoAbertura'
 import { useToast } from '@/components/ui/use-toast'
 import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -14,20 +17,31 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Users, Search, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react'
-import type { Client, TipoPessoa } from '@/domain/types'
+import { Plus, Users, Search, ArrowUpDown, ChevronUp, ChevronDown, Loader2, Building2, Bookmark, BookmarkCheck } from 'lucide-react'
+import { useFiltroPadrao } from '@/data/hooks/useFiltroPadrao'
+import type { Client, TipoPessoa, ProcessoAberturaStatus } from '@/domain/types'
 import { formatCNPJ } from '@/lib/utils'
 import { v4 as uuidv4 } from 'uuid'
+import { consultarCNPJ, formatarCEP } from '@/lib/brasilApi'
+import type { DadosCNPJ } from '@/lib/brasilApi'
 
 type FiltroTipo = 'todos' | 'juridica' | 'fisica'
-type FiltroStatus = 'todos' | 'ativo' | 'inativo'
+type FiltroStatus = 'todos' | 'ativo' | 'inativo' | 'em_abertura'
 type ColunaOrdem = 'nome' | 'doc' | 'regime' | 'status' | 'pendencias'
+
+interface FormAbertura {
+  nome_provisorio: string
+  tipo_empresa: string
+  regime: string
+  email: string
+  telefone: string
+}
 
 interface FormPJ {
   razao_social: string; fantasia: string; cnpj: string
@@ -40,6 +54,7 @@ interface FormPF {
 
 const defaultPJ: FormPJ = { razao_social: '', fantasia: '', cnpj: '', regime: 'Simples Nacional', email: '', telefone: '' }
 const defaultPF: FormPF = { nome: '', cpf: '', regime: 'MEI', email: '', telefone: '' }
+const defaultAbertura: FormAbertura = { nome_provisorio: '', tipo_empresa: 'LTDA', regime: 'Simples Nacional', email: '', telefone: '' }
 
 function SortBtn({
   col, label, ordem, onToggle,
@@ -79,28 +94,67 @@ export default function ClientesLista() {
   const { data: grupos } = useGrupos(tenantId)
   const { data: todosGrupoEmpresas } = useAllGrupoEmpresas(tenantId)
   const createClient = useCreateClient()
+  const createEndereco = useCreateClienteEndereco()
+  const createCnae = useCreateClienteCnae()
+  const createProcessoAbertura = useCreateProcessoAbertura()
   const { toast } = useToast()
 
+  const { inicial: filtrosIniciais, salvarPadrao, limparPadrao, temPadrao } = useFiltroPadrao('clientes', {
+    filtroTipo: 'todos' as FiltroTipo,
+    filtroStatus: 'todos' as FiltroStatus,
+    filtroGrupo: 'todos',
+  })
+
   const [search, setSearch] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>('todos')
-  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('todos')
-  const [filtroGrupo, setFiltroGrupo] = useState('todos')
+  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>(filtrosIniciais.filtroTipo)
+  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>(filtrosIniciais.filtroStatus)
+  const [filtroGrupo, setFiltroGrupo] = useState(filtrosIniciais.filtroGrupo)
   const [ordem, setOrdem] = useState<{ col: ColunaOrdem; dir: 'asc' | 'desc' }>({ col: 'nome', dir: 'asc' })
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogTipo, setDialogTipo] = useState<TipoPessoa>('juridica')
   const [formPJ, setFormPJ] = useState<FormPJ>(defaultPJ)
   const [formPF, setFormPF] = useState<FormPF>(defaultPF)
 
+  const [cnpjStatus, setCnpjStatus] = useState<'idle' | 'buscando' | 'ok' | 'erro'>('idle')
+  const [cnpjErro, setCnpjErro] = useState('')
+  const [dadosCNPJ, setDadosCNPJ] = useState<DadosCNPJ | null>(null)
+
+  const [aberturaDialogOpen, setAberturaDialogOpen] = useState(false)
+  const [formAbertura, setFormAbertura] = useState<FormAbertura>(defaultAbertura)
+
+  const consultarCNPJNovo = async () => {
+    const digits = formPJ.cnpj.replace(/\D/g, '')
+    if (digits.length !== 14) return
+    setCnpjStatus('buscando')
+    setCnpjErro('')
+    try {
+      const dados = await consultarCNPJ(digits)
+      setDadosCNPJ(dados)
+      setFormPJ((f) => ({
+        ...f,
+        razao_social: dados.razao_social || f.razao_social,
+        fantasia: dados.nome_fantasia || f.fantasia,
+        email: dados.email?.toLowerCase() || f.email,
+        telefone: dados.ddd_telefone_1?.replace(/\s+/g, ' ').trim() || f.telefone,
+      }))
+      setCnpjStatus('ok')
+    } catch (e) {
+      setCnpjErro(e instanceof Error ? e.message : 'Erro ao consultar CNPJ')
+      setDadosCNPJ(null)
+      setCnpjStatus('erro')
+    }
+  }
+
   const today = new Date().toISOString().split('T')[0]
 
-  // empresa_id -> nomes de pessoas vinculadas (sÃ³cios/contatos do cadastro de pessoas)
+  // empresa_id -> nomes de pessoas vinculadas (sócios/contatos do cadastro de pessoas)
   const pessoasByEmpresa = useMemo(() => {
     const map = new Map<string, string[]>()
     if (!todasEmpPessoas || !todasPessoas) return map
     const pessoaMap = new Map(todasPessoas.map(p => [p.id, p]))
     for (const ep of todasEmpPessoas) {
       const p = pessoaMap.get(ep.pessoa_id)
-      if (p) {
+      if (p?.nome) {
         const arr = map.get(ep.empresa_id) ?? []
         arr.push(p.nome.toLowerCase())
         map.set(ep.empresa_id, arr)
@@ -109,14 +163,14 @@ export default function ClientesLista() {
     return map
   }, [todasEmpPessoas, todasPessoas])
 
-  // client_pj_id -> nomes dos clientes PF vinculados (sÃ³cios cadastrados como clientes)
+  // client_pj_id -> nomes dos clientes PF vinculados (sócios cadastrados como clientes)
   const pfNomesByPJ = useMemo(() => {
     const map = new Map<string, string[]>()
     if (!todosVinculos || !clients) return map
     const clientMap = new Map(clients.map(c => [c.id, c]))
     for (const v of todosVinculos) {
       const pf = clientMap.get(v.client_pf_id)
-      if (pf) {
+      if (pf?.razao_social) {
         const arr = map.get(v.client_pj_id) ?? []
         arr.push(pf.razao_social.toLowerCase())
         map.set(v.client_pj_id, arr)
@@ -170,7 +224,7 @@ export default function ClientesLista() {
       const q = search.toLowerCase()
       const qD = q.replace(/\D/g, '')
       result = result.filter(c => {
-        if (c.razao_social.toLowerCase().includes(q)) return true
+        if (c.razao_social?.toLowerCase().includes(q)) return true
         if (c.fantasia?.toLowerCase().includes(q)) return true
         const doc = (c.cnpj ?? c.cpf ?? '').replace(/\D/g, '')
         if (qD && doc.includes(qD)) return true
@@ -199,15 +253,57 @@ export default function ClientesLista() {
     setFormPJ(defaultPJ)
     setFormPF(defaultPF)
     setDialogTipo('juridica')
+    setCnpjStatus('idle')
+    setCnpjErro('')
+    setDadosCNPJ(null)
     setDialogOpen(true)
+  }
+
+  const openAberturaDialog = () => {
+    setFormAbertura(defaultAbertura)
+    setAberturaDialogOpen(true)
+  }
+
+  const handleCreateAbertura = async () => {
+    if (!formAbertura.nome_provisorio.trim()) return
+    try {
+      const clientId = uuidv4()
+      const novo: Client = {
+        id: clientId,
+        tenant_id: tenantId,
+        tipo: 'juridica',
+        razao_social: formAbertura.nome_provisorio.trim(),
+        regime: formAbertura.regime,
+        status: 'em_abertura',
+        email: formAbertura.email.trim() || undefined,
+        telefone: formAbertura.telefone.trim() || undefined,
+      }
+      await createClient.mutateAsync({ client: novo, modulos: currentTenant?.modulos })
+      await createProcessoAbertura.mutateAsync({
+        id: uuidv4(),
+        tenant_id: tenantId,
+        client_id: clientId,
+        status: 'coleta_dados' as ProcessoAberturaStatus,
+        tipo_empresa: formAbertura.tipo_empresa || undefined,
+        formulario_status: 'nao_enviado',
+        criado_por: currentUser?.id ?? 'desconhecido',
+        criado_em: new Date().toISOString(),
+      })
+      toast({ title: 'Pedido de abertura criado', description: novo.razao_social })
+      setAberturaDialogOpen(false)
+      navigate(`/escritorio/clientes/${clientId}`)
+    } catch {
+      toast({ title: 'Erro ao criar abertura', variant: 'destructive' })
+    }
   }
 
   const handleCreate = async () => {
     try {
       if (dialogTipo === 'juridica') {
         if (!formPJ.razao_social.trim() || !formPJ.cnpj.trim()) return
+        const clientId = uuidv4()
         const novo: Client = {
-          id: uuidv4(), tenant_id: tenantId, tipo: 'juridica',
+          id: clientId, tenant_id: tenantId, tipo: 'juridica',
           razao_social: formPJ.razao_social.trim(),
           fantasia: formPJ.fantasia.trim() || undefined,
           cnpj: formPJ.cnpj.replace(/\D/g, ''),
@@ -216,6 +312,39 @@ export default function ClientesLista() {
           telefone: formPJ.telefone.trim() || undefined,
         }
         await createClient.mutateAsync({ client: novo, modulos: currentTenant?.modulos })
+
+        // Importar endereço fiscal e CNAEs da Receita Federal se disponíveis
+        if (dadosCNPJ) {
+          const temEndereco = dadosCNPJ.logradouro || dadosCNPJ.municipio
+          if (temEndereco) {
+            createEndereco.mutate({
+              id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
+              tipo: 'fiscal', principal: true,
+              cep: formatarCEP(dadosCNPJ.cep),
+              logradouro: dadosCNPJ.logradouro || '',
+              numero: dadosCNPJ.numero || 'S/N',
+              complemento: dadosCNPJ.complemento || undefined,
+              bairro: dadosCNPJ.bairro || '',
+              cidade: dadosCNPJ.municipio || '',
+              estado: dadosCNPJ.uf || '',
+            })
+          }
+          if (dadosCNPJ.cnae_fiscal) {
+            const codigo = String(dadosCNPJ.cnae_fiscal)
+            createCnae.mutate({
+              id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
+              codigo, descricao: dadosCNPJ.cnae_fiscal_descricao || codigo,
+              principal: true,
+            })
+          }
+          dadosCNPJ.cnaes_secundarios?.slice(0, 5).forEach((c) => {
+            createCnae.mutate({
+              id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
+              codigo: String(c.codigo), descricao: c.descricao, principal: false,
+            })
+          })
+        }
+
         toast({ title: 'Cliente PJ criado', description: novo.razao_social })
       } else {
         if (!formPF.nome.trim()) return
@@ -247,7 +376,7 @@ export default function ClientesLista() {
 
   return (
     <div className="space-y-4">
-      {/* CabeÃ§alho */}
+      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Clientes</h1>
@@ -257,9 +386,14 @@ export default function ClientesLista() {
             {clients?.filter(c => c.tipo === 'fisica').length ?? 0} PF
           </p>
         </div>
-        <Button onClick={openDialog} className="sm:shrink-0">
-          <Plus className="mr-2 h-4 w-4" /> Novo Cliente
-        </Button>
+        <div className="flex gap-2 sm:shrink-0">
+          <Button variant="outline" onClick={openAberturaDialog}>
+            <Building2 className="mr-2 h-4 w-4" /> Nova Abertura
+          </Button>
+          <Button onClick={openDialog}>
+            <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -268,18 +402,18 @@ export default function ClientesLista() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Buscar por nome, sÃ³cio, CPF, CNPJ..."
+            placeholder="Buscar por nome, sócio, CPF, CNPJ..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
           <Select value={filtroTipo} onValueChange={v => setFiltroTipo(v as FiltroTipo)}>
             <SelectTrigger className="flex-1 min-w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os tipos</SelectItem>
-              <SelectItem value="juridica">Pessoa JurÃ­dica</SelectItem>
-              <SelectItem value="fisica">Pessoa FÃ­sica</SelectItem>
+              <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+              <SelectItem value="fisica">Pessoa Física</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filtroStatus} onValueChange={v => setFiltroStatus(v as FiltroStatus)}>
@@ -288,6 +422,7 @@ export default function ClientesLista() {
               <SelectItem value="todos">Todos status</SelectItem>
               <SelectItem value="ativo">Ativo</SelectItem>
               <SelectItem value="inativo">Inativo</SelectItem>
+              <SelectItem value="em_abertura">Em abertura</SelectItem>
             </SelectContent>
           </Select>
           {(grupos?.length ?? 0) > 0 && (
@@ -301,6 +436,26 @@ export default function ClientesLista() {
               </SelectContent>
             </Select>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-9 w-9 shrink-0 ${temPadrao ? 'text-primary' : 'text-muted-foreground'}`}
+            title={temPadrao ? 'Filtro padrão salvo — clique para remover' : 'Salvar filtros atuais como padrão'}
+            onClick={() => {
+              if (temPadrao) {
+                limparPadrao()
+                toast({ title: 'Filtro padrão removido' })
+              } else {
+                salvarPadrao({ filtroTipo, filtroStatus, filtroGrupo })
+                toast({ title: 'Filtro padrão salvo', description: 'Será aplicado automaticamente ao abrir esta página.' })
+              }
+            }}
+          >
+            {temPadrao
+              ? <BookmarkCheck className="h-4 w-4" />
+              : <Bookmark className="h-4 w-4" />
+            }
+          </Button>
         </div>
       </div>
 
@@ -315,19 +470,19 @@ export default function ClientesLista() {
         <EmptyState
           icon={Users}
           title={hasFilters ? 'Nenhum resultado' : 'Nenhum cliente cadastrado'}
-          description={hasFilters ? 'Tente outro termo ou filtro.' : 'Clique em "Novo Cliente" para comeÃ§ar.'}
+          description={hasFilters ? 'Tente outro termo ou filtro.' : 'Clique em "Novo Cliente" para começar.'}
           action={!hasFilters ? <Button onClick={openDialog}>Novo Cliente</Button> : undefined}
         />
       ) : (
         <div className="rounded-lg border overflow-hidden">
-          {/* CabeÃ§alho das colunas â€” sÃ³ em telas â‰¥ sm */}
+          {/* Cabeçalho das colunas â€” só em telas â‰¥ sm */}
           <div className="hidden sm:grid grid-cols-[2.5rem_1fr_9rem_9rem_6rem_8rem_3.5rem] gap-x-3 px-4 py-2 bg-muted/40 border-b">
             <span className="text-xs font-medium text-muted-foreground">Tipo</span>
-            <SortBtn col="nome" label="Nome / RazÃ£o Social" {...sortProps} />
+            <SortBtn col="nome" label="Nome / Razão Social" {...sortProps} />
             <SortBtn col="doc" label="Documento" {...sortProps} />
             <SortBtn col="regime" label="Regime" {...sortProps} />
             <SortBtn col="status" label="Status" {...sortProps} />
-            <SortBtn col="pendencias" label="PendÃªncias" {...sortProps} />
+            <SortBtn col="pendencias" label="Pendências" {...sortProps} />
             <span />
           </div>
 
@@ -336,9 +491,10 @@ export default function ClientesLista() {
             {filtered.map(client => {
               const tipo = client.tipo ?? 'juridica'
               const vencidas = overdueMap.get(client.id) ?? 0
+              const isEmAbertura = client.status === 'em_abertura'
               const doc = tipo === 'juridica'
-                ? (client.cnpj ? formatCNPJ(client.cnpj) : 'â€”')
-                : (client.cpf ?? 'â€”')
+                ? (client.cnpj ? formatCNPJ(client.cnpj) : isEmAbertura ? 'sem CNPJ' : '—')
+                : (client.cpf ?? '—')
               const tipoBadgeClass = tipo === 'fisica' ? 'border-blue-400 text-blue-600' : 'border-purple-400 text-purple-600'
               return (
                 <div
@@ -358,9 +514,12 @@ export default function ClientesLista() {
                           {client.fantasia && <p className="text-xs text-muted-foreground truncate">{client.fantasia}</p>}
                         </div>
                       </div>
-                      <Badge variant={client.status === 'ativo' ? 'success' : 'secondary'} className="shrink-0">
-                        {client.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                      </Badge>
+                      {isEmAbertura
+                        ? <Badge className="bg-amber-100 text-amber-800 border-transparent shrink-0">Em Abertura</Badge>
+                        : <Badge variant={client.status === 'ativo' ? 'success' : 'secondary'} className="shrink-0">
+                            {client.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                      }
                     </div>
                     <div className="flex items-center justify-between text-xs gap-4">
                       <span className="text-muted-foreground font-mono">{doc}</span>
@@ -368,7 +527,7 @@ export default function ClientesLista() {
                     </div>
                     {vencidas > 0
                       ? <Badge variant="destructive" className="w-fit">{vencidas} vencida(s)</Badge>
-                      : <span className="text-xs text-muted-foreground">Sem pendÃªncias</span>
+                      : <span className="text-xs text-muted-foreground">Sem pendências</span>
                     }
                   </div>
 
@@ -381,14 +540,17 @@ export default function ClientesLista() {
                       <p className="font-semibold text-sm truncate">{client.razao_social}</p>
                       {client.fantasia && <p className="text-xs text-muted-foreground truncate">{client.fantasia}</p>}
                     </div>
-                    <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">{doc}</span>
+                    <span className={`text-xs font-mono whitespace-nowrap ${isEmAbertura ? 'text-amber-600 italic' : 'text-muted-foreground'}`}>{doc}</span>
                     <span className="text-xs text-muted-foreground whitespace-nowrap truncate">{client.regime}</span>
-                    <Badge variant={client.status === 'ativo' ? 'success' : 'secondary'} className="shrink-0 w-fit">
-                      {client.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                    </Badge>
+                    {isEmAbertura
+                      ? <Badge className="bg-amber-100 text-amber-800 border-transparent shrink-0 w-fit">Em Abertura</Badge>
+                      : <Badge variant={client.status === 'ativo' ? 'success' : 'secondary'} className="shrink-0 w-fit">
+                          {client.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                    }
                     {vencidas > 0
                       ? <Badge variant="destructive" className="shrink-0 w-fit">{vencidas} vencida(s)</Badge>
-                      : <span className="text-xs text-muted-foreground whitespace-nowrap">Sem pendÃªncias</span>
+                      : <span className="text-xs text-muted-foreground whitespace-nowrap">Sem pendências</span>
                     }
                     <Button
                       variant="ghost"
@@ -406,6 +568,89 @@ export default function ClientesLista() {
         </div>
       )}
 
+      {/* Modal Nova Abertura */}
+      <Dialog open={aberturaDialogOpen} onOpenChange={setAberturaDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Abertura de Empresa</DialogTitle>
+            <DialogDescription>
+              Cadastre o pedido de abertura. O CNPJ será informado após a conclusão do processo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>Nome provisório / Razão Social *</Label>
+              <Input
+                autoFocus
+                placeholder="Ex: Restaurante do João"
+                value={formAbertura.nome_provisorio}
+                onChange={e => setFormAbertura(f => ({ ...f, nome_provisorio: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">Pode ser alterado após a abertura.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Tipo de Empresa</Label>
+                <Select value={formAbertura.tipo_empresa} onValueChange={v => setFormAbertura(f => ({ ...f, tipo_empresa: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MEI">MEI</SelectItem>
+                    <SelectItem value="LTDA">LTDA</SelectItem>
+                    <SelectItem value="SLU">SLU (Unipessoal)</SelectItem>
+                    <SelectItem value="SA">S.A.</SelectItem>
+                    <SelectItem value="EIRELI">EIRELI</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label>Regime Pretendido</Label>
+                <Select value={formAbertura.regime} onValueChange={v => setFormAbertura(f => ({ ...f, regime: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
+                    <SelectItem value="MEI">MEI</SelectItem>
+                    <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
+                    <SelectItem value="Lucro Real">Lucro Real</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Email de contato</Label>
+                <Input
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={formAbertura.email}
+                  onChange={e => setFormAbertura(f => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Telefone / WhatsApp</Label>
+                <Input
+                  placeholder="(11) 99999-0000"
+                  value={formAbertura.telefone}
+                  onChange={e => setFormAbertura(f => ({ ...f, telefone: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAberturaDialogOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={handleCreateAbertura}
+              disabled={!formAbertura.nome_provisorio.trim() || createClient.isPending || createProcessoAbertura.isPending}
+            >
+              {(createClient.isPending || createProcessoAbertura.isPending) && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Iniciar Abertura
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal novo cliente */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
@@ -414,15 +659,51 @@ export default function ClientesLista() {
           </DialogHeader>
           <Tabs value={dialogTipo} onValueChange={v => setDialogTipo(v as TipoPessoa)}>
             <TabsList className="w-full mb-4">
-              <TabsTrigger value="juridica" className="flex-1">Pessoa JurÃ­dica</TabsTrigger>
-              <TabsTrigger value="fisica" className="flex-1">Pessoa FÃ­sica</TabsTrigger>
+              <TabsTrigger value="juridica" className="flex-1">Pessoa Jurídica</TabsTrigger>
+              <TabsTrigger value="fisica" className="flex-1">Pessoa Física</TabsTrigger>
             </TabsList>
 
             <TabsContent value="juridica" className="space-y-3">
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label>RazÃ£o Social *</Label>
-                  <Input autoFocus value={formPJ.razao_social} onChange={e => setFormPJ(f => ({ ...f, razao_social: e.target.value }))} />
+                  <Label>CNPJ *</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      autoFocus
+                      placeholder="00.000.000/0000-00"
+                      value={formPJ.cnpj}
+                      onChange={e => { setFormPJ(f => ({ ...f, cnpj: e.target.value })); setCnpjStatus('idle') }}
+                      className={cnpjStatus === 'erro' ? 'border-destructive' : ''}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      disabled={cnpjStatus === 'buscando' || formPJ.cnpj.replace(/\D/g, '').length !== 14}
+                      onClick={consultarCNPJNovo}
+                    >
+                      {cnpjStatus === 'buscando'
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : 'Receita'}
+                    </Button>
+                  </div>
+                  {cnpjStatus === 'ok' && dadosCNPJ && (
+                    <p className="text-xs text-green-700">
+                      Dados importados da Receita Federal
+                      {dadosCNPJ.situacao_cadastral !== 2 && (
+                        <span className="ml-1 text-amber-600">· Situação: {dadosCNPJ.descricao_situacao_cadastral}</span>
+                      )}
+                    </p>
+                  )}
+                  {cnpjStatus === 'erro' && (
+                    <p className="text-xs text-destructive">{cnpjErro}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Razão Social *</Label>
+                  <Input value={formPJ.razao_social} onChange={e => setFormPJ(f => ({ ...f, razao_social: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
                   <Label>Nome Fantasia</Label>
@@ -430,17 +711,14 @@ export default function ClientesLista() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label>CNPJ *</Label>
-                    <Input placeholder="00.000.000/0000-00" value={formPJ.cnpj} onChange={e => setFormPJ(f => ({ ...f, cnpj: e.target.value }))} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Regime TributÃ¡rio</Label>
+                    <Label>Regime Tributário</Label>
                     <Select value={formPJ.regime} onValueChange={v => setFormPJ(f => ({ ...f, regime: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                         <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
                         <SelectItem value="Lucro Real">Lucro Real</SelectItem>
+                        <SelectItem value="MEI">MEI</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -468,14 +746,14 @@ export default function ClientesLista() {
                     <Input placeholder="000.000.000-00" value={formPF.cpf} onChange={e => setFormPF(f => ({ ...f, cpf: e.target.value }))} />
                   </div>
                   <div className="space-y-1">
-                    <Label>Regime TributÃ¡rio</Label>
+                    <Label>Regime Tributário</Label>
                     <Select value={formPF.regime} onValueChange={v => setFormPF(f => ({ ...f, regime: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="MEI">MEI</SelectItem>
                         <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                         <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
-                        <SelectItem value="AutÃ´nomo">AutÃ´nomo / Liberal</SelectItem>
+                        <SelectItem value="Autônomo">Autônomo / Liberal</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

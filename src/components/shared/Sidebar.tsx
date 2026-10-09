@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, DollarSign, Settings,
   Home, FolderOpen, Receipt, ChevronLeft, ChevronRight, Pin, PinOff,
   UserCog, ClipboardList, CheckSquare, Layers, Workflow, ChevronDown, GitBranch,
-  FileBarChart2, FileText,
+  FileBarChart2, FileText, Building2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
@@ -56,6 +56,7 @@ const escritorioNavBase: NavEntry[] = [
 
 const clienteNavBase: { label: string; href: string; icon: React.ElementType; somenteResponsavel?: boolean }[] = [
   { label: 'Início',              href: '/portal/inicio',      icon: Home },
+  { label: 'Dados Cadastrais',    href: '/portal/cadastro',    icon: Building2 },
   { label: 'Documentos',          href: '/portal/documentos',  icon: FolderOpen },
   { label: 'Financeiro',          href: '/portal/financeiro',  icon: Receipt },
   { label: 'Guias e Recolhimentos', href: '/portal/guias',     icon: FileText },

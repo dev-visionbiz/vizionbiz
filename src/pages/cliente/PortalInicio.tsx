@@ -1,20 +1,31 @@
-﻿import { useNavigate } from 'react-router-dom'
-import { differenceInDays, format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { differenceInDays, parseISO } from 'date-fns'
 import { useAuth } from '@/auth/AuthProvider'
 import { useClientInvoices } from '@/data/hooks/useInvoices'
 import { useClientDocuments } from '@/data/hooks/useDocuments'
 import { useClientFolders } from '@/data/hooks/useFolders'
 import { useBillingPolicy } from '@/data/hooks/useBillingPolicy'
+import { useProcessosAlteracao } from '@/data/hooks/useProcessoAlteracao'
 import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-
-import { FileText, CreditCard, Calendar, AlertCircle, AlertTriangle } from 'lucide-react'
+import {
+  FileText, CreditCard, Calendar, AlertCircle, AlertTriangle,
+  ClipboardEdit, ExternalLink,
+} from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { calcularEncargos } from '@/domain/financeiro/calcularEncargos'
+import type { TipoAlteracao } from '@/domain/types'
+
+const TIPO_LABEL: Record<TipoAlteracao, string> = {
+  endereco:      'Mudança de Endereço',
+  socio:         'Alteração de Sócios',
+  dados_empresa: 'Dados da Empresa',
+  multiplos:     'Múltiplas Alterações',
+}
 
 export default function PortalInicio() {
   const { currentUser, currentTenant } = useAuth()
@@ -26,6 +37,7 @@ export default function PortalInicio() {
   const { data: documents, isLoading: loadingDocs } = useClientDocuments(tenantId, clientId)
   const { data: folders } = useClientFolders(tenantId, clientId)
   const { data: policy } = useBillingPolicy(tenantId)
+  const { data: processos } = useProcessosAlteracao(tenantId, clientId)
 
   if (loadingInv || loadingDocs) return <PageLoader />
 
@@ -35,7 +47,7 @@ export default function PortalInicio() {
   const allInvoices = invoices ?? []
   const allDocs = documents ?? []
 
-  // Vencidas fora da carÃªncia
+  // Vencidas fora da carência
   const vencidas = allInvoices.filter(
     (inv) =>
       inv.status === 'vencida' &&
@@ -43,7 +55,7 @@ export default function PortalInicio() {
       differenceInDays(today, parseISO(inv.vencimento)) > policy.carencia_dias
   )
 
-  // Abertas (nÃ£o vencidas)
+  // Abertas (não vencidas)
   const abertas = allInvoices.filter((inv) => inv.status === 'aberta' || inv.status === 'vencida')
 
   // Total em aberto
@@ -54,7 +66,7 @@ export default function PortalInicio() {
     return s + inv.valor_original
   }, 0)
 
-  // PrÃ³ximo vencimento (faturas abertas)
+  // Próximo vencimento (faturas abertas)
   const abertasOrdenadas = allInvoices
     .filter((inv) => inv.status === 'aberta')
     .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
@@ -63,7 +75,7 @@ export default function PortalInicio() {
     ? differenceInDays(parseISO(proximaFatura.vencimento), today)
     : null
 
-  // Ãšltimos 3 documentos
+  // Últimos 3 documentos
   const recentDocs = [...allDocs]
     .sort((a, b) => b.criado_em.localeCompare(a.criado_em))
     .slice(0, 3)
@@ -74,11 +86,15 @@ export default function PortalInicio() {
   const clientName = currentUser?.nome ?? 'Cliente'
   const razaoSocial = currentTenant?.nome ?? ''
 
+  const alteracoesPendentes = (processos ?? []).filter(
+    (p) => p.formulario_status === 'enviado' && p.status === 'formulario_enviado'
+  )
+
   return (
     <div className="space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold">OlÃ¡, {clientName}!</h1>
+        <h1 className="text-2xl font-bold">Olá, {clientName}!</h1>
         <p className="text-muted-foreground">Bem-vindo ao portal da {razaoSocial}</p>
       </div>
 
@@ -86,14 +102,46 @@ export default function PortalInicio() {
       {vencidas.length > 0 && (
         <Alert variant={policy?.modo_acesso === 'total' ? 'destructive' : 'warning'}>
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>PendÃªncia financeira</AlertTitle>
+          <AlertTitle>Pendência financeira</AlertTitle>
           <AlertDescription>
-            VocÃª possui {vencidas.length} fatura(s) vencida(s). Regularize para manter acesso completo aos documentos.{' '}
+            Você possui {vencidas.length} fatura(s) vencida(s). Regularize para manter acesso completo aos documentos.{' '}
             <Button variant="link" className="h-auto p-0 text-sm" onClick={() => navigate('/portal/financeiro')}>
               Ver faturas
             </Button>
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Formulários de alteração aguardando preenchimento */}
+      {alteracoesPendentes.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <ClipboardEdit className="h-4 w-4 text-blue-600" />
+            Formulários Aguardando Preenchimento
+          </h2>
+          <div className="flex flex-col gap-2">
+            {alteracoesPendentes.map((proc) => {
+              const linkUrl = `${window.location.origin}/formulario/${proc.formulario_token}`
+              return (
+                <div key={proc.id} className="rounded-lg border border-blue-200 bg-blue-50 p-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">{TIPO_LABEL[proc.tipo]}</p>
+                    <p className="text-xs text-blue-700">
+                      Solicitado em {formatDate(proc.criado_em.split('T')[0])}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                    onClick={() => window.open(linkUrl, '_blank')}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Preencher
+                  </Button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       )}
 
       {/* Summary cards */}
@@ -108,14 +156,14 @@ export default function PortalInicio() {
           </CardHeader>
           <CardContent>
             {!recentDocs.length ? (
-              <p className="text-sm text-muted-foreground">Nenhum documento disponÃ­vel.</p>
+              <p className="text-sm text-muted-foreground">Nenhum documento disponível.</p>
             ) : (
               <ul className="space-y-2">
                 {recentDocs.map((doc) => (
                   <li key={doc.id} className="text-sm">
                     <p className="font-medium truncate">{doc.nome}</p>
                     <p className="text-xs text-muted-foreground">
-                      {folderName(doc.folder_id)} â€” {formatDate(doc.criado_em.split('T')[0])}
+                      {folderName(doc.folder_id)} — {formatDate(doc.criado_em.split('T')[0])}
                     </p>
                   </li>
                 ))}
@@ -161,12 +209,12 @@ export default function PortalInicio() {
           </CardContent>
         </Card>
 
-        {/* PrÃ³ximo Vencimento */}
+        {/* Próximo Vencimento */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4 text-orange-600" />
-              PrÃ³ximo Vencimento
+              Próximo Vencimento
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -200,7 +248,7 @@ export default function PortalInicio() {
               return (
                 <div key={inv.id} className="rounded-lg border bg-card p-4 space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-sm">CompetÃªncia {inv.competencia}</p>
+                    <p className="font-semibold text-sm">Competência {inv.competencia}</p>
                     <Badge className="bg-red-100 text-red-800 border-transparent text-xs shrink-0">{calc.dias_atraso}d atraso</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -219,7 +267,6 @@ export default function PortalInicio() {
         </div>
       )}
 
-      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
     </div>
   )
 }

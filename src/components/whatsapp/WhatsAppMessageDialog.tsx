@@ -6,9 +6,20 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { useToast } from '@/components/ui/use-toast'
 import { whatsappService } from '@/lib/whatsapp/whatsappService'
 import { MessageCircle, AlertTriangle } from 'lucide-react'
+
+export interface ContatoDisponivel {
+  id: string
+  nome: string
+  telefone: string
+  setor?: string
+  principal: boolean
+}
 
 interface Props {
   open: boolean
@@ -18,6 +29,7 @@ interface Props {
   mensagemInicial?: string
   titulo?: string
   thumbnail?: string | null
+  contatosDisponiveis?: ContatoDisponivel[]
 }
 
 export function WhatsAppMessageDialog({
@@ -28,19 +40,40 @@ export function WhatsAppMessageDialog({
   mensagemInicial = '',
   titulo = 'Enviar via WhatsApp',
   thumbnail,
+  contatosDisponiveis,
 }: Props) {
   const { toast } = useToast()
   const [telefone, setTelefone] = useState(telefoneInicial)
   const [mensagem, setMensagem] = useState(mensagemInicial)
   const [enviando, setEnviando] = useState(false)
+  const [contatoSelecionado, setContatoSelecionado] = useState<string>('')
   const apiConfigurada = !!import.meta.env.VITE_WHATSAPP_API_URL
 
   useEffect(() => {
     if (open) {
-      setTelefone(telefoneInicial)
+      const telefoneDefault = (() => {
+        if (contatosDisponiveis?.length) {
+          const principal = contatosDisponiveis.find((c) => c.principal && c.telefone)
+          const qualquer = contatosDisponiveis.find((c) => c.telefone)
+          const ct = principal ?? qualquer
+          if (ct) {
+            setContatoSelecionado(ct.id)
+            return ct.telefone
+          }
+        }
+        setContatoSelecionado('')
+        return telefoneInicial
+      })()
+      setTelefone(telefoneDefault)
       setMensagem(mensagemInicial)
     }
-  }, [open, telefoneInicial, mensagemInicial])
+  }, [open, telefoneInicial, mensagemInicial, contatosDisponiveis])
+
+  const handleSelecionarContato = (id: string) => {
+    setContatoSelecionado(id)
+    const ct = contatosDisponiveis?.find((c) => c.id === id)
+    if (ct?.telefone) setTelefone(ct.telefone)
+  }
 
   async function handleEnviar() {
     if (!telefone.trim() || !mensagem.trim()) return
@@ -85,6 +118,24 @@ export function WhatsAppMessageDialog({
             <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-2">
               <img src={thumbnail} alt="Preview do documento" className="h-16 w-12 rounded border object-cover shrink-0" />
               <p className="text-xs text-muted-foreground">Miniatura do documento será enviada antes da mensagem.</p>
+            </div>
+          )}
+
+          {contatosDisponiveis && contatosDisponiveis.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Selecionar contato</Label>
+              <Select value={contatoSelecionado} onValueChange={handleSelecionarContato}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um contato..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {contatosDisponiveis.map((ct) => (
+                    <SelectItem key={ct.id} value={ct.id}>
+                      {ct.nome}{ct.setor ? ` · ${ct.setor}` : ''}{ct.principal ? ' ★' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

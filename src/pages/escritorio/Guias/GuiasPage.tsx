@@ -27,8 +27,10 @@ import { BaixaManualDialog } from './BaixaManualDialog'
 import { SegundaViaDialog } from './SegundaViaDialog'
 import { VisualizarGuiaPDFDialog } from './VisualizarGuiaPDFDialog'
 import { WhatsAppMessageDialog } from '@/components/whatsapp/WhatsAppMessageDialog'
+import type { ContatoDisponivel } from '@/components/whatsapp/WhatsAppMessageDialog'
 import { templateGuia } from '@/lib/whatsapp/templates'
 import { useToast } from '@/components/ui/use-toast'
+import { useClienteContatos } from '@/data/hooks/useClienteContatos'
 
 export default function GuiasPage() {
   const { currentUser, currentTenant } = useAuth()
@@ -50,6 +52,10 @@ export default function GuiasPage() {
   const [segundaViaGuia, setSegundaViaGuia] = useState<GuiaRecolhimento | null>(null)
   const [visualizarPDFGuia, setVisualizarPDFGuia] = useState<GuiaRecolhimento | null>(null)
   const [whatsappGuia, setWhatsappGuia] = useState<GuiaRecolhimento | null>(null)
+  const { data: contatosGuia } = useClienteContatos(tenantId, whatsappGuia?.cliente_id ?? '')
+  const contatosDisponiveisGuia: ContatoDisponivel[] = (contatosGuia ?? [])
+    .filter((c) => c.telefone)
+    .map((c) => ({ id: c.id, nome: c.nome, telefone: c.telefone!, setor: c.setor, principal: c.principal }))
 
   const { data: guias = [], isLoading } = useGuias(tenantId, {
     tipo: filtroTipo !== 'todos' ? filtroTipo : undefined,
@@ -105,7 +111,7 @@ export default function GuiasPage() {
       a.download = nomeArquivo
       a.click()
     } catch {
-      toast({ title: 'Arquivo nÃ£o encontrado', description: 'O arquivo pode ter sido removido.', variant: 'destructive' })
+      toast({ title: 'Arquivo não encontrado', description: 'O arquivo pode ter sido removido.', variant: 'destructive' })
     }
   }
 
@@ -117,7 +123,7 @@ export default function GuiasPage() {
           <div>
             <h1 className="text-xl font-semibold">Guias e Recolhimentos</h1>
             <p className="text-sm text-muted-foreground">
-              DARF, DAS, FGTS, boletos municipais e outras obrigaÃ§Ãµes
+              DARF, DAS, FGTS, boletos municipais e outras obrigações
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -153,14 +159,14 @@ export default function GuiasPage() {
               colorClass="border-red-200 bg-red-50/60"
             />
             <SummaryCard
-              label="Pagas no MÃªs"
+              label="Pagas no Mês"
               count={totalPagasMes.length}
               value={somaPagasMes}
               icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
               colorClass="border-green-200 bg-green-50/60"
             />
             <SummaryCard
-              label="Ag. EmissÃ£o"
+              label="Ag. Emissão"
               count={totalAgEmissao.length}
               value={totalAgEmissao.reduce((s, g) => s + g.valor, 0)}
               icon={<CreditCard className="h-5 w-5 text-zinc-500" />}
@@ -219,7 +225,7 @@ export default function GuiasPage() {
             </Select>
 
             <Input
-              placeholder="CompetÃªncia (AAAA-MM)"
+              placeholder="Competência (AAAA-MM)"
               value={filtroCompetencia}
               onChange={(e) => setFiltroCompetencia(e.target.value)}
               className="h-9 w-44"
@@ -273,7 +279,7 @@ export default function GuiasPage() {
                   >
                     <div className="p-3 sm:p-4">
                       <div className="flex items-start gap-3">
-                        {/* Ãcone tipo */}
+                        {/* Ícone tipo */}
                         <div className={cn(
                           'mt-0.5 shrink-0 h-8 w-8 rounded-md flex items-center justify-center',
                           tipoConfig.cor,
@@ -281,7 +287,7 @@ export default function GuiasPage() {
                           <TipoIcon className={cn('h-4 w-4', tipoConfig.corTexto)} />
                         </div>
 
-                        {/* ConteÃºdo principal */}
+                        {/* Conteúdo principal */}
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
                             <span className="font-medium text-sm truncate">{guia.descricao}</span>
@@ -327,7 +333,7 @@ export default function GuiasPage() {
                           </div>
                         </div>
 
-                        {/* Valor + aÃ§Ãµes */}
+                        {/* Valor + ações */}
                         <div className="shrink-0 flex flex-col items-end gap-2">
                           <div className="text-right">
                             <div className="font-semibold text-sm">{formatCurrency(guia.valor)}</div>
@@ -338,7 +344,7 @@ export default function GuiasPage() {
                             )}
                           </div>
 
-                          {/* AÃ§Ãµes inline + dropdown */}
+                          {/* Ações inline + dropdown */}
                           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                             {podeBaixar && (
                               <Button
@@ -423,7 +429,7 @@ export default function GuiasPage() {
                                         onClick={() => baixarArquivo(guia.segunda_via_arquivo_key!, `segunda-via-${guia.descricao}.pdf`)}
                                       >
                                         <Download className="h-3.5 w-3.5 mr-2" />
-                                        Baixar 2Âª via
+                                        Baixar 2ª via
                                       </DropdownMenuItem>
                                     )}
                                   </>
@@ -534,9 +540,10 @@ export default function GuiasPage() {
           open={!!whatsappGuia}
           onClose={() => setWhatsappGuia(null)}
           escritorioId={currentTenant?.id ?? ''}
-          titulo={`WhatsApp â€” ${whatsappGuia.descricao}`}
+          titulo={`WhatsApp – ${whatsappGuia.descricao}`}
           telefoneInicial={telefoneCliente(whatsappGuia.cliente_id)}
-          mensagemInicial={templateGuia(whatsappGuia, nomeCliente(whatsappGuia.cliente_id))}
+          mensagemInicial={templateGuia(whatsappGuia, nomeCliente(whatsappGuia.cliente_id), currentTenant?.template_whatsapp_guia)}
+          contatosDisponiveis={contatosDisponiveisGuia.length > 0 ? contatosDisponiveisGuia : undefined}
         />
       )}
 

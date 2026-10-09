@@ -21,6 +21,7 @@ const PAGE_TITLES: { test: (p: string) => boolean; title: string }[] = [
   { test: (p) => p.startsWith('/escritorio/demandas'), title: 'Demandas' },
   { test: (p) => p.startsWith('/escritorio/configuracoes'), title: 'Configurações' },
   { test: (p) => p.startsWith('/portal/inicio'), title: 'Início' },
+  { test: (p) => p.startsWith('/portal/cadastro'), title: 'Dados Cadastrais' },
   { test: (p) => p.startsWith('/portal/documentos'), title: 'Documentos' },
   { test: (p) => p.startsWith('/portal/financeiro'), title: 'Financeiro' },
   { test: (p) => p.startsWith('/portal/equipe'), title: 'Equipe' },

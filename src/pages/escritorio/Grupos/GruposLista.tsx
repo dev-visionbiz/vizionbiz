@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const TIPO_LABELS: Record<TipoGrupo, string> = {
-  grupo_economico: 'Grupo EconÃ´mico',
+  grupo_economico: 'Grupo Econômico',
   carteira: 'Carteira',
   segmento: 'Segmento',
   tag: 'Tag',
@@ -105,7 +105,7 @@ export default function GruposLista() {
     if (!deleteTarget) return
     try {
       await deleteGrupo.mutateAsync({ id: deleteTarget, tenantId })
-      toast({ title: 'Grupo excluÃ­do' })
+      toast({ title: 'Grupo excluído' })
     } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     } finally {
@@ -223,7 +223,7 @@ export default function GruposLista() {
               </div>
             </div>
             <div className="space-y-1">
-              <Label>ObservaÃ§Ã£o</Label>
+              <Label>Observação</Label>
               <Input
                 value={form.observacao}
                 onChange={(e) => setForm((f) => ({ ...f, observacao: e.target.value }))}
@@ -239,14 +239,14 @@ export default function GruposLista() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog confirmar exclusÃ£o */}
+      {/* Dialog confirmar exclusão */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirmar exclusÃ£o</DialogTitle>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Deseja realmente excluir este grupo? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+            Deseja realmente excluir este grupo? Esta ação não pode ser desfeita.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>

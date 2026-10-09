@@ -1,6 +1,6 @@
 export type UserRole = 'escritorio_admin' | 'escritorio_colaborador' | 'cliente'
 export type ContrataNatureza = 'principal' | 'avulso' | 'gestao_provisoria' | 'emissao'
-export type PortalSecao = 'inicio' | 'documentos' | 'financeiro' | 'guias'
+export type PortalSecao = 'inicio' | 'cadastro' | 'documentos' | 'financeiro' | 'guias'
 export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'tarefas'
 export type SubModuloTarefas = 'ocorrencias' | 'rotinas'
 export type PapelPortalCliente = 'responsavel' | 'membro'
@@ -14,7 +14,7 @@ export type ChargeType = 'fixo' | 'pct' | 'nenhum'
 export type ContractStatus = 'rascunho' | 'ativo' | 'suspenso' | 'encerrado'
 export type TipoCobrancaServico = 'mensal' | 'avulso'
 export type ContratoItemOrigem = 'plano' | 'servico' | 'manual'
-export type ClientStatus = 'ativo' | 'inativo'
+export type ClientStatus = 'ativo' | 'inativo' | 'em_abertura'
 export type RenegotiationStatus = 'pendente' | 'aceita' | 'cancelada'
 export type DocumentEventType = 'upload' | 'download' | 'view' | 'share'
 export type TipoPessoa = 'fisica' | 'juridica'
@@ -57,6 +57,8 @@ export interface Tenant {
   modulos?: ModuloSlug[]
   submodulos_tarefas?: SubModuloTarefas[]
   vocabulario?: Partial<Vocabulario>
+  template_whatsapp_guia?: string
+  template_whatsapp_documento?: string
 }
 
 export interface User {
@@ -154,6 +156,55 @@ export interface Client {
   email?: string
   telefone?: string
   carteira_id?: string
+  inscricao_estadual?: string
+  inscricao_municipal?: string
+  // PF — documentos pessoais
+  rg?: string
+  rg_orgao_expedidor?: string
+  data_nascimento?: string   // ISO date: YYYY-MM-DD
+  titulo_eleitor?: string
+  doc_profissional_tipo?: string  // CRM, OAB, CREA, CRC…
+  doc_profissional_numero?: string
+}
+
+export type TipoEndereco = 'fiscal' | 'correspondencia' | 'entrega' | 'cobranca' | 'outro'
+
+export interface ClienteEndereco {
+  id: string
+  tenant_id: string
+  cliente_id: string
+  tipo: TipoEndereco
+  descricao?: string
+  cep: string
+  logradouro: string
+  numero: string
+  complemento?: string
+  bairro: string
+  cidade: string
+  estado: string
+  principal: boolean
+}
+
+export interface ClienteContato {
+  id: string
+  tenant_id: string
+  cliente_id: string
+  nome: string
+  setor?: string
+  cargo?: string
+  telefone?: string
+  email?: string
+  principal: boolean
+  obs?: string
+}
+
+export interface ClienteCnae {
+  id: string
+  tenant_id: string
+  cliente_id: string
+  codigo: string
+  descricao: string
+  principal: boolean
 }
 
 export interface Folder {
@@ -435,6 +486,9 @@ export type LogAtividadeAcao =
   | 'demanda_criada'
   | 'demanda_concluida'
   | 'etapa_demanda_atualizada'
+  | 'abertura_iniciada'
+  | 'abertura_concluida'
+  | 'abertura_cancelada'
 
 export interface LogAtividadeCliente {
   id: string
@@ -739,4 +793,78 @@ export interface LoteImportacao {
   created_at: string
   concluido_em?: string
   deleted_at?: string
+}
+
+// ==================== PROCESSO DE ALTERAÇÃO DE CADASTRO ====================
+
+export type ProcessoAlteracaoStatus =
+  | 'aguardando_envio'
+  | 'formulario_enviado'
+  | 'preenchido'
+  | 'concluido'
+  | 'cancelado'
+
+export type TipoAlteracao =
+  | 'endereco'
+  | 'socio'
+  | 'dados_empresa'
+  | 'multiplos'
+
+export interface ProcessoAlteracao {
+  id: string
+  tenant_id: string
+  client_id: string
+  tipo: TipoAlteracao
+  descricao?: string
+  status: ProcessoAlteracaoStatus
+  solicitado_por: 'escritorio' | 'cliente'
+  responsavel_id?: string
+  formulario_token?: string
+  formulario_status?: FormularioColetaStatus
+  formulario_campos?: string[]
+  formulario_preenchido_em?: string
+  observacoes?: string
+  criado_por: string
+  criado_em: string
+  atualizado_em?: string
+  concluido_em?: string
+}
+
+// ==================== PROCESSO DE ABERTURA ====================
+
+export type ProcessoAberturaStatus =
+  | 'coleta_dados'
+  | 'documentos'
+  | 'submetido'
+  | 'aguardando_cnpj'
+  | 'concluido'
+  | 'cancelado'
+
+export type FormularioColetaStatus =
+  | 'nao_enviado'
+  | 'enviado'
+  | 'preenchido'
+  | 'expirado'
+
+export interface ProcessoAbertura {
+  id: string
+  tenant_id: string
+  client_id: string
+  status: ProcessoAberturaStatus
+  responsavel_id?: string
+  tipo_empresa?: string        // MEI | LTDA | SLU | SA | EIRELI | Outro
+  capital_social?: number
+  data_abertura_desejada?: string
+  cnpj_obtido?: string
+  checklist?: ChecklistItemProgresso[]
+  formulario_token?: string
+  formulario_status?: FormularioColetaStatus
+  formulario_campos?: string[]        // chaves dos campos a coletar, ex: 'socio.cpf'
+  formulario_expira_em?: string
+  formulario_preenchido_em?: string
+  observacoes?: string
+  criado_por: string
+  criado_em: string
+  atualizado_em?: string
+  concluido_em?: string
 }

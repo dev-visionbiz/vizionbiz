@@ -29,15 +29,15 @@ import { TIPO_GUIA_CONFIG, SEGUNDA_VIA_CONFIG } from '../escritorio/Guias/guiasC
 type FiltroTab = 'todas' | 'pendentes' | 'pagas'
 
 const STATUS_CONFIG: Record<GuiaStatus, { label: string; className: string; icon: React.ElementType }> = {
-  aguardando_emissao: { label: 'Ag. EmissÃ£o',   className: 'bg-zinc-100 text-zinc-600',     icon: Clock },
+  aguardando_emissao: { label: 'Ag. Emissão',   className: 'bg-zinc-100 text-zinc-600',     icon: Clock },
   emitida:            { label: 'Emitida',        className: 'bg-blue-100 text-blue-700',     icon: FileBarChart2 },
   paga:               { label: 'Paga',           className: 'bg-green-100 text-green-700',   icon: CheckCircle2 },
   vencida:            { label: 'Vencida',        className: 'bg-red-100 text-red-700',       icon: AlertCircle },
   cancelada:          { label: 'Cancelada',      className: 'bg-zinc-100 text-zinc-500',     icon: X },
-  em_retificacao:     { label: 'Em RetificaÃ§Ã£o', className: 'bg-orange-100 text-orange-700', icon: Clock },
+  em_retificacao:     { label: 'Em Retificação', className: 'bg-orange-100 text-orange-700', icon: Clock },
 }
 
-// â”€â”€â”€ PDF Viewer com aÃ§Ãµes integradas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ PDF Viewer com ações integradas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function GuiaPDFDialog({
   guia,
@@ -87,7 +87,7 @@ function GuiaPDFDialog({
       .then(async (url) => {
         const res = await fetch(url)
         const blob = await res.blob()
-        // Conta pÃ¡ginas antes de criar URL para definir parÃ¢metros do viewer
+        // Conta páginas antes de criar URL para definir parâmetros do viewer
         const n = await contarPaginasPDF(blob)
         setNumPaginas(n)
         objectUrl = URL.createObjectURL(blob)
@@ -121,7 +121,7 @@ function GuiaPDFDialog({
     try {
       const { key } = await storageService.salvar(file, { escritorioId: tenantId, clienteId })
       await enviarComprovante.mutateAsync({ id: guia.id, comprovante_storage_key: key })
-      toast({ title: 'Comprovante enviado!', description: 'O escritÃ³rio foi notificado.' })
+      toast({ title: 'Comprovante enviado!', description: 'O escritório foi notificado.' })
     } catch {
       toast({ title: 'Erro ao enviar comprovante', variant: 'destructive' })
     } finally {
@@ -132,18 +132,18 @@ function GuiaPDFDialog({
   async function handleSolicitarSegundaVia() {
     try {
       await solicitarSegundaVia.mutateAsync({ id: guia.id })
-      toast({ title: '2Âª via solicitada!', description: 'O escritÃ³rio irÃ¡ disponibilizar em breve.' })
+      toast({ title: '2ª via solicitada!', description: 'O escritório irá disponibilizar em breve.' })
     } catch {
-      toast({ title: 'Erro ao solicitar 2Âª via', variant: 'destructive' })
+      toast({ title: 'Erro ao solicitar 2ª via', variant: 'destructive' })
     }
   }
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      {/* [&>button.absolute]:hidden oculta o DialogClose padrÃ£o do shadcn/ui */}
+      {/* [&>button.absolute]:hidden oculta o DialogClose padrão do shadcn/ui */}
       <DialogContent className="max-w-4xl w-full h-[95dvh] flex flex-col gap-0 p-0 overflow-hidden [&>button.absolute]:hidden">
 
-        {/* Header â€” todos os botÃµes alinhados, sem sobreposiÃ§Ã£o */}
+        {/* Header â€” todos os botões alinhados, sem sobreposição */}
         <DialogHeader className="flex-row items-center shrink-0 px-3 py-2 border-b gap-1.5">
           <div className={cn('h-7 w-7 rounded shrink-0 flex items-center justify-center', cfg.cor)}>
             <cfg.icon className={cn('h-3.5 w-3.5', cfg.corTexto)} />
@@ -174,7 +174,7 @@ function GuiaPDFDialog({
           </DialogClose>
         </DialogHeader>
 
-        {/* PDF â€” sidebar oculta para 1 pÃ¡gina, zoom para largura */}
+        {/* PDF â€” sidebar oculta para 1 página, zoom para largura */}
         <div className="flex-1 min-h-0 bg-zinc-100 dark:bg-zinc-900">
           {carregando && (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -185,7 +185,7 @@ function GuiaPDFDialog({
           {erro && !carregando && (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
               <FileX className="h-12 w-12 opacity-40" />
-              <p className="text-sm">Arquivo nÃ£o encontrado.</p>
+              <p className="text-sm">Arquivo não encontrado.</p>
             </div>
           )}
           {blobUrl && !carregando && (
@@ -200,7 +200,7 @@ function GuiaPDFDialog({
         {/* Bottom action bar */}
         <div className="shrink-0 border-t bg-background">
 
-          {/* Detalhes (expansÃ­vel) */}
+          {/* Detalhes (expansível) */}
           {detalhesAbertos && (
             <div className="px-4 pt-3 pb-0 space-y-2.5 border-b">
               <div className="flex items-center justify-between -mt-0.5 mb-1">
@@ -215,7 +215,7 @@ function GuiaPDFDialog({
               </div>
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
-                  <p className="text-xs text-muted-foreground">CompetÃªncia</p>
+                  <p className="text-xs text-muted-foreground">Competência</p>
                   <p className="font-medium mt-0.5">{guia.competencia}</p>
                 </div>
                 <div>
@@ -234,11 +234,11 @@ function GuiaPDFDialog({
                 <div className="flex items-center gap-1.5 text-green-700 text-xs pb-1">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                   Pago em {formatDate(guia.pago_em)}
-                  {guia.pago_valor && ` Â· ${formatCurrency(guia.pago_valor)}`}
+                  {guia.pago_valor && ` · ${formatCurrency(guia.pago_valor)}`}
                 </div>
               )}
 
-              {/* CÃ³digos de pagamento â€” o que o cliente precisa para pagar */}
+              {/* Códigos de pagamento â€” o que o cliente precisa para pagar */}
               {(guia.pix_copia_cola || guia.linha_digitavel || guia.codigo_barras) && (
                 <div className="border-t pt-2 space-y-3 pb-1">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -268,17 +268,17 @@ function GuiaPDFDialog({
                       </span>
                       {guia.linha_digitavel && (
                         <CodigoPagamento
-                          label="Linha DigitÃ¡vel"
+                          label="Linha Digitável"
                           valor={guia.linha_digitavel}
-                          onCopiar={() => copiar(guia.linha_digitavel!, 'Linha digitÃ¡vel')}
+                          onCopiar={() => copiar(guia.linha_digitavel!, 'Linha digitável')}
                           mono
                         />
                       )}
                       {guia.codigo_barras && (
                         <CodigoPagamento
-                          label="CÃ³digo de Barras"
+                          label="Código de Barras"
                           valor={guia.codigo_barras}
-                          onCopiar={() => copiar(guia.codigo_barras!, 'CÃ³digo de barras')}
+                          onCopiar={() => copiar(guia.codigo_barras!, 'Código de barras')}
                           mono
                         />
                       )}
@@ -289,7 +289,7 @@ function GuiaPDFDialog({
 
               {guia.segunda_via_status !== 'nao_solicitada' && guia.segunda_via_arquivo_key && (
                 <div className="pb-1 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">2Âª via disponÃ­vel</p>
+                  <p className="text-xs text-muted-foreground">2ª via disponível</p>
                   <Button
                     variant="outline"
                     size="sm"
@@ -302,12 +302,12 @@ function GuiaPDFDialog({
                         a.download = `segunda-via-${guia.descricao}.pdf`
                         a.click()
                       } catch {
-                        toast({ title: 'Arquivo nÃ£o disponÃ­vel', variant: 'destructive' })
+                        toast({ title: 'Arquivo não disponível', variant: 'destructive' })
                       }
                     }}
                   >
                     <Download className="h-3 w-3" />
-                    Baixar 2Âª via
+                    Baixar 2ª via
                   </Button>
                 </div>
               )}
@@ -316,7 +316,7 @@ function GuiaPDFDialog({
             </div>
           )}
 
-          {/* BotÃµes de aÃ§Ã£o */}
+          {/* Botões de ação */}
           <div className="flex flex-wrap gap-2 px-4 py-3">
             {podeEnviarComprovante && (
               <>
@@ -329,7 +329,7 @@ function GuiaPDFDialog({
                     disabled={uploadando}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Comprovante enviado Â· Substituir
+                    Comprovante enviado · Substituir
                   </Button>
                 ) : (
                   <Button
@@ -351,7 +351,7 @@ function GuiaPDFDialog({
             {guia.segunda_via_status === 'solicitada' && (
               <Button variant="outline" size="sm" className="gap-1.5 text-xs text-amber-600 border-amber-300" disabled>
                 <Clock className="h-3.5 w-3.5" />
-                2Âª via solicitada
+                2ª via solicitada
               </Button>
             )}
 
@@ -367,7 +367,7 @@ function GuiaPDFDialog({
                   ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   : <FileText className="h-3.5 w-3.5" />
                 }
-                Solicitar 2Âª via
+                Solicitar 2ª via
               </Button>
             )}
           </div>
@@ -389,7 +389,7 @@ function GuiaPDFDialog({
   )
 }
 
-// â”€â”€â”€ Componente de cÃ³digo copiÃ¡vel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Componente de código copiável â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CodigoPagamento({
   label, valor, onCopiar, mono, destaque,
@@ -463,7 +463,7 @@ function GuiaInfoDialog({
     try {
       const { key } = await storageService.salvar(file, { escritorioId: tenantId, clienteId })
       await enviarComprovante.mutateAsync({ id: guia.id, comprovante_storage_key: key })
-      toast({ title: 'Comprovante enviado!', description: 'O escritÃ³rio foi notificado.' })
+      toast({ title: 'Comprovante enviado!', description: 'O escritório foi notificado.' })
     } catch {
       toast({ title: 'Erro ao enviar comprovante', variant: 'destructive' })
     } finally {
@@ -474,9 +474,9 @@ function GuiaInfoDialog({
   async function handleSolicitarSegundaVia() {
     try {
       await solicitarSegundaVia.mutateAsync({ id: guia.id })
-      toast({ title: '2Âª via solicitada!', description: 'O escritÃ³rio irÃ¡ disponibilizar em breve.' })
+      toast({ title: '2ª via solicitada!', description: 'O escritório irá disponibilizar em breve.' })
     } catch {
-      toast({ title: 'Erro ao solicitar 2Âª via', variant: 'destructive' })
+      toast({ title: 'Erro ao solicitar 2ª via', variant: 'destructive' })
     }
   }
 
@@ -502,7 +502,7 @@ function GuiaInfoDialog({
 
         <div className="grid grid-cols-3 gap-3 rounded-lg border bg-muted/20 p-3 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">CompetÃªncia</p>
+            <p className="text-xs text-muted-foreground">Competência</p>
             <p className="font-medium mt-0.5">{guia.competencia}</p>
           </div>
           <div>
@@ -530,7 +530,7 @@ function GuiaInfoDialog({
         <div className="rounded-lg border p-4 flex flex-col items-center gap-2 text-center">
           <FileText className="h-8 w-8 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">
-            Documento ainda nÃ£o disponÃ­vel.<br />Aguarde o escritÃ³rio.
+            Documento ainda não disponível.<br />Aguarde o escritório.
           </p>
         </div>
 
@@ -552,7 +552,7 @@ function GuiaInfoDialog({
           {guia.segunda_via_status === 'solicitada' && (
             <Button variant="outline" className="w-full gap-2 text-amber-600 border-amber-300" disabled>
               <Clock className="h-4 w-4" />
-              2Âª via solicitada â€” aguardando
+              2ª via solicitada â€” aguardando
             </Button>
           )}
 
@@ -568,12 +568,12 @@ function GuiaInfoDialog({
                   a.download = `segunda-via-${guia.descricao}.pdf`
                   a.click()
                 } catch {
-                  toast({ title: 'Arquivo nÃ£o disponÃ­vel', variant: 'destructive' })
+                  toast({ title: 'Arquivo não disponível', variant: 'destructive' })
                 }
               }}
             >
               <Download className="h-4 w-4" />
-              Baixar 2Âª via
+              Baixar 2ª via
             </Button>
           )}
 
@@ -587,7 +587,7 @@ function GuiaInfoDialog({
               {solicitarSegundaVia.isPending
                 ? <Loader2 className="h-4 w-4 animate-spin" />
                 : <FileText className="h-4 w-4" />}
-              {solicitarSegundaVia.isPending ? 'Solicitando...' : 'Solicitar 2Âª via'}
+              {solicitarSegundaVia.isPending ? 'Solicitando...' : 'Solicitar 2ª via'}
             </Button>
           )}
         </div>
@@ -666,7 +666,7 @@ function GuiaCard({
             </div>
           ) : (
             <div className="bg-muted text-muted-foreground rounded-lg px-4 py-1.5 text-xs select-none">
-              Aguardando emissÃ£o
+              Aguardando emissão
             </div>
           )}
         </div>
@@ -675,7 +675,7 @@ function GuiaCard({
   )
 }
 
-// â”€â”€â”€ PÃ¡gina â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Página â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function PortalGuias() {
   const { currentUser } = useAuth()
@@ -718,8 +718,8 @@ export default function PortalGuias() {
         <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>
-            {totalVencida === 1 ? '1 guia estÃ¡ vencida.' : `${totalVencida} guias estÃ£o vencidas.`}
-            {' '}Entre em contato com o escritÃ³rio.
+            {totalVencida === 1 ? '1 guia está vencida.' : `${totalVencida} guias estão vencidas.`}
+            {' '}Entre em contato com o escritório.
           </span>
         </div>
       )}
@@ -757,7 +757,7 @@ export default function PortalGuias() {
           }
           description={
             filtro === 'todas'
-              ? 'Seu escritÃ³rio ainda nÃ£o emitiu guias para sua empresa.'
+              ? 'Seu escritório ainda não emitiu guias para sua empresa.'
               : undefined
           }
         />

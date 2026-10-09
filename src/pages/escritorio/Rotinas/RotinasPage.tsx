@@ -34,7 +34,7 @@ import type { Rotina, RotinaCliente, Periodicidade } from '@/domain/types'
 import PainelRotinaModal from '../Tarefas/PainelRotinaModal'
 import CatalogoRotinasModal from '../Tarefas/CatalogoRotinasModal'
 
-// â”€â”€â”€ Tipos locais do formulÃ¡rio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Tipos locais do formulário â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface RotinaForm {
   nome: string
@@ -154,7 +154,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
     !clienteSearch || c.razao_social.toLowerCase().includes(clienteSearch.toLowerCase())
   )
 
-  // Popula etapas quando abre o dialog de ediÃ§Ã£o (dados vÃªm do cache do React Query)
+  // Popula etapas quando abre o dialog de edição (dados vêm do cache do React Query)
   useEffect(() => {
     if (!dialogOpen || !editRotina || !etapasQuery.data) return
     setEtapas(
@@ -326,7 +326,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
   }
 
   function handleDelete(id: string) {
-    deleteRotina.mutate(id, { onSuccess: () => toast({ title: 'Rotina excluÃ­da' }) })
+    deleteRotina.mutate(id, { onSuccess: () => toast({ title: 'Rotina excluída' }) })
   }
 
   // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -368,7 +368,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden">
 
-          {/* CabeÃ§alho */}
+          {/* Cabeçalho */}
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
             <DialogTitle className="text-base">
               {editRotina ? `Editar Rotina â€” ${editRotina.nome}` : 'Nova Rotina'}
@@ -408,7 +408,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
             </div>
           </DialogHeader>
 
-          {/* ConteÃºdo do passo atual */}
+          {/* Conteúdo do passo atual */}
           <div className="flex-1 overflow-y-auto">
 
             {/* Passo 1 â€” Dados */}
@@ -455,9 +455,9 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                     >
                       <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="dia_mes_seguinte">Dia do mÃªs seguinte</SelectItem>
-                        <SelectItem value="dia_mes_atual">Dia do mesmo mÃªs</SelectItem>
-                        <SelectItem value="ultimo_dia_mes">Ãšltimo dia do mÃªs</SelectItem>
+                        <SelectItem value="dia_mes_seguinte">Dia do mês seguinte</SelectItem>
+                        <SelectItem value="dia_mes_atual">Dia do mesmo mês</SelectItem>
+                        <SelectItem value="ultimo_dia_mes">Ãšltimo dia do mês</SelectItem>
                       </SelectContent>
                     </Select>
                     {form.regra_tipo !== 'ultimo_dia_mes' && (
@@ -499,7 +499,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                 {etapas.length === 0 ? (
                   <div className="border-2 border-dashed rounded-lg py-10 text-center text-sm text-muted-foreground">
                     Clique em "Nova Etapa" para adicionar etapas ao fluxo de trabalho.
-                    <br /><span className="text-xs opacity-70">Opcional â€” vocÃª pode salvar sem etapas.</span>
+                    <br /><span className="text-xs opacity-70">Opcional â€” você pode salvar sem etapas.</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -509,7 +509,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                         prazoLabel(e.prazo_relativo_dias),
                         responsavelNome,
                         e.checklist.length > 0 ? `${e.checklist.length} ${e.checklist.length === 1 ? 'item' : 'itens'}` : '',
-                      ].filter(Boolean).join(' Â· ')
+                      ].filter(Boolean).join(' · ')
 
                       return (
                         <div
@@ -599,7 +599,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
             )}
           </div>
 
-          {/* Footer de navegaÃ§Ã£o */}
+          {/* Footer de navegação */}
           <div className="px-6 py-4 border-t shrink-0 flex items-center gap-2">
             <Button variant="ghost" className="mr-auto text-muted-foreground" onClick={() => setDialogOpen(false)}>
               Cancelar
@@ -617,11 +617,11 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                 }}
                 disabled={step === 0 && !form.nome.trim()}
               >
-                PrÃ³ximo â†’
+                Próximo â†’
               </Button>
             ) : (
               <Button onClick={handleSalvar} disabled={isSaving}>
-                {editRotina ? 'Salvar alteraÃ§Ãµes' : 'Criar rotina'}
+                {editRotina ? 'Salvar alterações' : 'Criar rotina'}
               </Button>
             )}
           </div>
@@ -635,7 +635,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
             <DialogTitle>{etapaEditKey ? 'Editar Etapa' : 'Nova Etapa'}</DialogTitle>
           </DialogHeader>
 
-          {/* Corpo: dois painÃ©is em desktop */}
+          {/* Corpo: dois painéis em desktop */}
           <div className="flex-1 overflow-hidden flex flex-col sm:flex-row min-h-0">
 
             {/* Painel esquerdo â€” campos principais */}
@@ -663,7 +663,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                   <p className="text-xs text-muted-foreground">Negativo = antes do vencimento</p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>ResponsÃ¡vel padrÃ£o</Label>
+                  <Label>Responsável padrão</Label>
                   <Select
                     value={etapaForm.responsavel_padrao || '__none__'}
                     onValueChange={(v) => setEtapaForm({ ...etapaForm, responsavel_padrao: v === '__none__' ? '' : v })}
@@ -678,11 +678,11 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
               </div>
 
               <div className="space-y-1.5">
-                <Label>DescriÃ§Ã£o</Label>
+                <Label>Descrição</Label>
                 <Textarea
                   value={etapaForm.descricao}
                   onChange={(e) => setEtapaForm({ ...etapaForm, descricao: e.target.value })}
-                  placeholder="InstruÃ§Ãµes ou observaÃ§Ãµes para esta etapaâ€¦"
+                  placeholder="Instruções ou observações para esta etapaâ€¦"
                   className="resize-none text-sm"
                   rows={4}
                 />
@@ -718,7 +718,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                       <Input
                         value={item.nome}
                         onChange={(e) => patchEtapaFormItem(item.id, e.target.value)}
-                        placeholder="DescriÃ§Ã£o do item"
+                        placeholder="Descrição do item"
                         className="flex-1 text-sm h-8"
                       />
                       <Button
@@ -747,7 +747,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
   )
 }
 
-// â”€â”€â”€ RotinaRow (somente leitura â€” ediÃ§Ã£o via dialog unificado) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ RotinaRow (somente leitura â€” edição via dialog unificado) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const periodicidadeGradient: Record<Periodicidade, string> = {
   mensal:      'from-sky-500/15   to-transparent border-sky-400/30',
@@ -809,12 +809,12 @@ function RotinaRow({
         <div className="flex items-center gap-1.5">
           <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${periodicidadeDot[rotina.periodicidade]}`} />
           <span className="text-[11px] text-muted-foreground truncate">
-            {periodicidadeLabel[rotina.periodicidade]} Â· {regraLabel}
-            {rotina.regime ? ` Â· ${rotina.regime}` : ''}
+            {periodicidadeLabel[rotina.periodicidade]} · {regraLabel}
+            {rotina.regime ? ` · ${rotina.regime}` : ''}
           </span>
         </div>
 
-        {/* rodapÃ©: etapas Â· clientes + lixeira */}
+        {/* rodapé: etapas · clientes + lixeira */}
         <div className="flex items-center justify-between pt-0.5">
           <span className="text-[11px] text-muted-foreground flex items-center gap-2">
             <span>
@@ -864,10 +864,10 @@ function PainelCiclos({ tenantId }: { tenantId: string }) {
           if (ocorrenciasCriadas > 0) {
             toast({
               title: 'Ciclo gerado',
-              description: `${ocorrenciasCriadas} ocorrÃªncia${ocorrenciasCriadas !== 1 ? 's' : ''} e ${tarefasCriadas} tarefa${tarefasCriadas !== 1 ? 's' : ''} criadas`,
+              description: `${ocorrenciasCriadas} ocorrência${ocorrenciasCriadas !== 1 ? 's' : ''} e ${tarefasCriadas} tarefa${tarefasCriadas !== 1 ? 's' : ''} criadas`,
             })
           } else {
-            toast({ title: 'Ciclo jÃ¡ existe', description: `Nenhuma ocorrÃªncia nova para ${ciclo.periodo}` })
+            toast({ title: 'Ciclo já existe', description: `Nenhuma ocorrência nova para ${ciclo.periodo}` })
           }
         },
         onError: () => toast({ title: 'Erro ao gerar ciclo', variant: 'destructive' }),
@@ -890,7 +890,7 @@ function PainelCiclos({ tenantId }: { tenantId: string }) {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>PerÃ­odo (AAAA-MM)</Label>
+          <Label>Período (AAAA-MM)</Label>
           <Input
             className="w-36"
             value={periodo}
@@ -950,7 +950,7 @@ function PainelCiclos({ tenantId }: { tenantId: string }) {
   )
 }
 
-// â”€â”€â”€ PÃ¡gina Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ Página Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function RotinasPage() {
   const { currentUser } = useAuth()
@@ -968,7 +968,7 @@ export default function RotinasPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold tracking-tight">Rotinas</h1>
-        <p className="text-muted-foreground text-sm">ObrigaÃ§Ãµes recorrentes e geraÃ§Ã£o de ciclos</p>
+        <p className="text-muted-foreground text-sm">Obrigações recorrentes e geração de ciclos</p>
       </div>
 
       <CadastroRotinas tenantId={tenantId} onPainelRotinas={() => setCatalogoOpen(true)} />

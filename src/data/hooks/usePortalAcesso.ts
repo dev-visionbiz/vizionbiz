@@ -1,7 +1,7 @@
 import { useAuth } from '@/auth/AuthProvider'
 import type { PortalSecao, PapelPortalCliente } from '@/domain/types'
 
-const TODAS: PortalSecao[] = ['inicio', 'documentos', 'financeiro', 'guias']
+const TODAS: PortalSecao[] = ['inicio', 'cadastro', 'documentos', 'financeiro', 'guias']
 
 interface PortalAcesso {
   secoesPermitidas: PortalSecao[]

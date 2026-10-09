@@ -7,10 +7,12 @@ import type {
   StorageConnection, FichaBloco, FichaCampo,
   Fluxo, FluxoTarefa, Rotina, RotinaCliente, Ciclo, Ocorrencia, Tarefa,
   ChecklistItemTemplate, GuiaRecolhimento,
+  ClienteEndereco, ClienteContato, ClienteCnae,
+  ProcessoAbertura, ProcessoAlteracao,
 } from '@/domain/types'
 
 const TENANT_ID = 'tenant-001'
-const SEED_KEY = 'vb_seeded_v19'
+const SEED_KEY = 'vb_seeded_v22'
 
 // suppress unused import warning
 const _uuidv4 = uuidv4
@@ -52,6 +54,8 @@ export function runSeed(): void {
     status: 'ativo',
     email: 'contato@padariasbento.com',
     telefone: '(11) 3333-1111',
+    inscricao_estadual: '111.222.333.444',
+    inscricao_municipal: '1234567',
   }
   const client2: Client = {
     id: 'client-002',
@@ -62,6 +66,7 @@ export function runSeed(): void {
     regime: 'Lucro Presumido',
     status: 'ativo',
     email: 'contato@techsolutions.com',
+    inscricao_estadual: 'Isento',
   }
   const client3: Client = {
     id: 'client-003',
@@ -85,7 +90,47 @@ export function runSeed(): void {
     email: 'joao@padariasbento.com',
     telefone: '(11) 99999-1111',
   }
-  localStorage.setItem('vb_clients', JSON.stringify([client1, client2, client3, client4]))
+  // Cliente em abertura — sem CNPJ ainda
+  const clientAbertura: Client = {
+    id: 'client-abertura-001',
+    tenant_id: TENANT_ID,
+    tipo: 'juridica',
+    razao_social: 'Restaurante do João (em abertura)',
+    regime: 'Simples Nacional',
+    status: 'em_abertura',
+    email: 'joao@exemplo.com',
+    telefone: '(11) 98888-1234',
+  }
+  localStorage.setItem('vb_clients', JSON.stringify([client1, client2, client3, client4, clientAbertura]))
+
+  const processoAbertura: ProcessoAbertura = {
+    id: 'processo-abertura-001',
+    tenant_id: TENANT_ID,
+    client_id: 'client-abertura-001',
+    status: 'coleta_dados',
+    tipo_empresa: 'LTDA',
+    capital_social: 30000,
+    data_abertura_desejada: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+    formulario_status: 'nao_enviado',
+    observacoes: 'Cliente indicado pelo João Bento. Pretende abrir restaurante no centro.',
+    criado_por: 'user-admin',
+    criado_em: subDays(new Date(), 5).toISOString(),
+  }
+  localStorage.setItem('vb_processos_abertura', JSON.stringify([processoAbertura]))
+
+  // --- Processos de Alteração ---
+  const processoAlteracao: ProcessoAlteracao = {
+    id: 'processo-alteracao-001',
+    tenant_id: TENANT_ID,
+    client_id: 'client-001',
+    tipo: 'endereco',
+    descricao: 'Mudamos para o novo endereço no bairro Centro.',
+    status: 'aguardando_envio',
+    solicitado_por: 'cliente',
+    criado_por: 'user-cliente',
+    criado_em: subDays(new Date(), 2).toISOString(),
+  }
+  localStorage.setItem('vb_processos_alteracao', JSON.stringify([processoAlteracao]))
 
   // --- Pessoas ---
   const pessoas: Pessoa[] = [
@@ -794,6 +839,63 @@ export function runSeed(): void {
     },
   ]
   localStorage.setItem('vb_guias', JSON.stringify(guias))
+
+  // --- Endereços ---
+  const enderecos: ClienteEndereco[] = [
+    {
+      id: 'end-001', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      tipo: 'fiscal', cep: '01310-100', logradouro: 'Av. Paulista', numero: '1000',
+      complemento: 'Sala 5', bairro: 'Bela Vista', cidade: 'São Paulo', estado: 'SP', principal: true,
+    },
+    {
+      id: 'end-002', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      tipo: 'correspondencia', cep: '01310-200', logradouro: 'Rua Augusta', numero: '200',
+      bairro: 'Consolação', cidade: 'São Paulo', estado: 'SP', principal: false,
+    },
+    {
+      id: 'end-003', tenant_id: TENANT_ID, cliente_id: 'client-002',
+      tipo: 'fiscal', cep: '04538-132', logradouro: 'Av. Brigadeiro Faria Lima', numero: '3900',
+      bairro: 'Itaim Bibi', cidade: 'São Paulo', estado: 'SP', principal: true,
+    },
+  ]
+  localStorage.setItem('vb_cliente_enderecos', JSON.stringify(enderecos))
+
+  // --- Contatos ---
+  const contatos: ClienteContato[] = [
+    {
+      id: 'ct-001', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      nome: 'Carlos Mendes', setor: 'Financeiro', cargo: 'Gerente',
+      telefone: '5511933331111', email: 'carlos@padariasbento.com', principal: true,
+    },
+    {
+      id: 'ct-002', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      nome: 'Ana Lima', setor: 'Administrativo', cargo: 'Assistente',
+      telefone: '5511933332222', email: 'ana@padariasbento.com', principal: false,
+    },
+    {
+      id: 'ct-003', tenant_id: TENANT_ID, cliente_id: 'client-002',
+      nome: 'Roberto Silva', setor: 'Diretoria', cargo: 'Sócio',
+      telefone: '5511988887777', email: 'roberto@techsolutions.com', principal: true,
+    },
+  ]
+  localStorage.setItem('vb_cliente_contatos', JSON.stringify(contatos))
+
+  // --- CNAEs ---
+  const cnaes: ClienteCnae[] = [
+    {
+      id: 'cnae-001', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      codigo: '1091-1/02', descricao: 'Fabricação de produtos de padaria e confeitaria com predominância de produção própria', principal: true,
+    },
+    {
+      id: 'cnae-002', tenant_id: TENANT_ID, cliente_id: 'client-001',
+      codigo: '4721-1/02', descricao: 'Padaria, confeitaria e outros comércios varejistas de pães', principal: false,
+    },
+    {
+      id: 'cnae-003', tenant_id: TENANT_ID, cliente_id: 'client-002',
+      codigo: '6209-1/00', descricao: 'Suporte técnico, manutenção e outros serviços em tecnologia da informação', principal: true,
+    },
+  ]
+  localStorage.setItem('vb_cliente_cnaes', JSON.stringify(cnaes))
 
   // Marca seed como executado
   localStorage.setItem(SEED_KEY, new Date().toISOString())
