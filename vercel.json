@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/receitaws/:path*",
+      "destination": "https://www.receitaws.com.br/:path*"
+    }
+  ]
+}
