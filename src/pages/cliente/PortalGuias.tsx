@@ -715,7 +715,7 @@ export default function PortalGuias() {
       </div>
 
       {totalVencida > 0 && (
-        <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-md border border-red-300 bg-card px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>
             {totalVencida === 1 ? '1 guia está vencida.' : `${totalVencida} guias estão vencidas.`}

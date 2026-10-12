@@ -1,6 +1,6 @@
 export type UserRole = 'escritorio_admin' | 'escritorio_colaborador' | 'cliente'
 export type ContrataNatureza = 'principal' | 'avulso' | 'gestao_provisoria' | 'emissao'
-export type PortalSecao = 'inicio' | 'cadastro' | 'documentos' | 'financeiro' | 'guias'
+export type PortalSecao = 'inicio' | 'cadastro' | 'documentos' | 'financeiro' | 'guias' | 'solicitacoes' | 'pesquisas'
 export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'tarefas'
 export type SubModuloTarefas = 'ocorrencias' | 'rotinas'
 export type PapelPortalCliente = 'responsavel' | 'membro'
@@ -59,6 +59,14 @@ export interface Tenant {
   vocabulario?: Partial<Vocabulario>
   template_whatsapp_guia?: string
   template_whatsapp_documento?: string
+  chave_pix?: string
+  instrucoes_pagamento?: string
+}
+
+export interface ClienteAcesso {
+  client_id: string
+  papel_portal: PapelPortalCliente
+  secoes_portal?: PortalSecao[]
 }
 
 export interface User {
@@ -67,12 +75,13 @@ export interface User {
   nome: string
   email: string
   papel: UserRole
-  client_id?: string
+  client_id?: string           // empresa ativa na sessão — gerenciada pelo AuthProvider
+  clientes?: ClienteAcesso[]   // lista de acessos (quando acessa mais de uma empresa)
   ativo: boolean
   senha_hash?: string
   // escritorio_colaborador: módulos liberados (undefined = todos)
   modulos?: ModuloEscritorio[]
-  // cliente: papel no portal e seções liberadas
+  // cliente: campos legados (usados quando clientes[] não existe)
   papel_portal?: PapelPortalCliente
   secoes_portal?: PortalSecao[]
 }
@@ -165,6 +174,8 @@ export interface Client {
   titulo_eleitor?: string
   doc_profissional_tipo?: string  // CRM, OAB, CREA, CRC…
   doc_profissional_numero?: string
+  /** Template de descrição para cobrança bancária/boleto deste cliente — sobrepõe o padrão do escritório. Use [mes/ano] como variável. */
+  descricao_cobranca_padrao?: string
 }
 
 export type TipoEndereco = 'fiscal' | 'correspondencia' | 'entrega' | 'cobranca' | 'outro'
@@ -310,6 +321,10 @@ export interface Servico {
   valor_padrao: number
   tipo_cobranca_padrao: TipoCobrancaServico
   ativo: boolean
+  // Solicitações
+  fluxo_id?: string
+  requer_aceite_padrao?: boolean
+  formulario_template_id?: string
 }
 
 export interface PlanoItem {
@@ -351,6 +366,9 @@ export interface Invoice {
   renegotiation_id?: string
   /** false = quitação obrigatória (taxas/encargos fixos); ausente ou true = aceita termo de renegociação */
   permite_renegociacao?: boolean
+  /** Descrição para remessa bancária/boleto — máx. 250 chars. Gerado a partir dos serviços do contrato; editável no lote. */
+  descricao_cobranca?: string
+  // Futuro: itens_avulsos?: LancamentoItem[] — lançamentos mensais além dos itens fixos do contrato
 }
 
 export interface Payment {
@@ -380,6 +398,8 @@ export interface BillingPolicy {
     data: string
     user_id: string
   }
+  /** Template de descrição para cobrança bancária/boleto — use [mes/ano] como variável. Aplica a todos os clientes sem override. */
+  descricao_cobranca_padrao?: string
 }
 
 export interface Renegotiation {
@@ -401,6 +421,26 @@ export interface Renegotiation {
     user_id: string
   }
   status: RenegotiationStatus
+}
+
+// ==================== LANÇAMENTOS / SERVIÇOS REALIZADOS ====================
+
+export type ServicoRealizadoStatus = 'pendente_cobranca' | 'incluido_fatura' | 'cancelado'
+
+export interface ServicoRealizado {
+  id: string
+  tenant_id: string
+  cliente_id: string
+  servico_id?: string       // ref. ao catálogo (opcional)
+  nome: string
+  descricao?: string
+  valor: number
+  competencia: string       // YYYY-MM (mês de referência do serviço)
+  data_execucao: string     // YYYY-MM-DD
+  status: ServicoRealizadoStatus
+  invoice_id?: string       // preenchido quando incluído em fatura
+  criado_por: string
+  criado_em: string
 }
 
 export interface ChargeCalculation {
@@ -571,7 +611,7 @@ export interface HistoricoTarefa {
 export type CategoriaDemanda = 'societario' | 'fiscal' | 'dp' | 'contabil' | 'outros'
 
 export type OcorrenciaStatus = 'pendente' | 'em_andamento' | 'concluida' | 'cancelada'
-export type OcorrenciaOrigem = 'manual' | 'fluxo' | 'rotina'
+export type OcorrenciaOrigem = 'manual' | 'fluxo' | 'rotina' | 'cliente'
 
 export interface Fluxo {
   id: string
@@ -622,6 +662,7 @@ export interface FluxoTarefa {
   responsavel_padrao?: string
   checklist?: ChecklistItemTemplate[]
   documentos_config?: OcorrenciaDocumentoConfig[]
+  formulario_template_id?: string
 }
 
 export interface Rotina {
@@ -696,6 +737,9 @@ export interface Tarefa {
   impedimento_data?: string
   checklist_progresso?: ChecklistItemProgresso[]
   documentos_config?: OcorrenciaDocumentoConfig[]
+  formulario_template_id?: string
+  formulario_token?: string
+  formulario_status?: FormularioColetaStatus
 }
 
 // ==================== GUIAS E RECOLHIMENTOS ====================
@@ -867,4 +911,69 @@ export interface ProcessoAbertura {
   criado_em: string
   atualizado_em?: string
   concluido_em?: string
+}
+
+// ==================== FORMULÁRIOS DINÂMICOS ====================
+
+export type FormularioDestino =
+  | 'cliente_pj'
+  | 'cliente_pf'
+  | 'socio_novo'
+  | 'socio_saida'
+  | 'processo_alteracao'
+  | 'generico'
+
+export type FormularioCampoTipo =
+  | 'texto'
+  | 'texto_longo'
+  | 'numero'
+  | 'moeda'
+  | 'data'
+  | 'percentual'
+  | 'cpf'
+  | 'cnpj'
+  | 'cep'
+  | 'telefone'
+  | 'email'
+  | 'select'
+  | 'checkbox'
+  | 'slider'
+
+export interface FormularioCampoTemplate {
+  id: string
+  rotulo: string
+  tipo: FormularioCampoTipo
+  obrigatorio: boolean
+  mapeamento?: string
+  ordem: number
+  placeholder?: string
+  opcoes?: string[]
+  slider_min?: number
+  slider_max?: number
+}
+
+export interface FormularioTemplate {
+  id: string
+  tenant_id: string
+  nome: string
+  descricao?: string
+  destino: FormularioDestino
+  campos: FormularioCampoTemplate[]
+  ativo: boolean
+  publicado?: boolean
+  acesso?: 'publico' | 'clientes'
+  criado_em: string
+}
+
+export interface FormularioResposta {
+  id: string
+  tenant_id: string
+  template_id: string
+  ocorrencia_id?: string
+  tarefa_id?: string
+  cliente_id?: string
+  respostas: Record<string, string>
+  processado: boolean
+  processado_em?: string
+  criado_em: string
 }

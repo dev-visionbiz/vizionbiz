@@ -13,6 +13,17 @@ import { useToast } from '@/components/ui/use-toast'
 import { whatsappService } from '@/lib/whatsapp/whatsappService'
 import { MessageCircle, AlertTriangle } from 'lucide-react'
 
+function normalizeWhatsappError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err)
+  if (/detached Frame|Execution context was destroyed|Session closed|Target closed|Protocol error|context.*destroyed/i.test(raw)) {
+    return 'A sessão do WhatsApp Web ficou instável. Aguarde alguns segundos e tente novamente. Se persistir, reconecte em Configurações → WhatsApp.'
+  }
+  if (/timeout|Timeout/i.test(raw)) {
+    return 'Tempo esgotado ao tentar enviar. Verifique se o WhatsApp Web está conectado e tente novamente.'
+  }
+  return raw || 'Tente novamente.'
+}
+
 export interface ContatoDisponivel {
   id: string
   nome: string
@@ -85,7 +96,7 @@ export function WhatsAppMessageDialog({
     } catch (err) {
       toast({
         title: 'Erro ao enviar',
-        description: err instanceof Error ? err.message : 'Tente novamente.',
+        description: normalizeWhatsappError(err),
         variant: 'destructive',
       })
     } finally {

@@ -14,6 +14,7 @@ export interface DadosCNPJ {
   situacao_cadastral: number           // 2 = ATIVA
   descricao_situacao_cadastral: string
   data_situacao_cadastral?: string     // YYYY-MM-DD
+  tipo_logradouro?: string             // ex: "AVENIDA" — campo separado em algumas APIs
   logradouro: string
   numero: string
   complemento: string
@@ -24,9 +25,9 @@ export interface DadosCNPJ {
   ddd_telefone_1: string
   ddd_telefone_2?: string
   email: string
-  cnae_fiscal: number
+  cnae_fiscal: string
   cnae_fiscal_descricao: string
-  cnaes_secundarios: Array<{ codigo: number; descricao: string }>
+  cnaes_secundarios: Array<{ codigo: string; descricao: string }>
   qsa?: QSASocio[]
 }
 
@@ -40,7 +41,20 @@ async function fetchCNPJ(url: string): Promise<DadosCNPJ> {
   if (res.status === 404) throw new Error('CNPJ não encontrado na Receita Federal')
   if (res.status === 400) throw new Error('CNPJ inválido')
   if (!res.ok) throw new Error('unavailable')
-  return res.json()
+  const raw = await res.json()
+  return {
+    ...raw,
+    tipo_logradouro: raw.tipo_logradouro || '',
+    cnae_fiscal: raw.cnae_fiscal
+      ? String(raw.cnae_fiscal).padStart(7, '0')
+      : '',
+    cnaes_secundarios: (raw.cnaes_secundarios ?? []).map(
+      (c: { codigo: number; descricao: string }) => ({
+        codigo: String(c.codigo).padStart(7, '0'),
+        descricao: c.descricao,
+      }),
+    ),
+  }
 }
 
 // ReceitaWS usa campos diferentes — mapeia para DadosCNPJ
@@ -81,11 +95,11 @@ async function fetchReceitaWS(digits: string): Promise<DadosCNPJ> {
     ddd_telefone_1: d.telefone?.replace(/\D/g, '') || '',
     email: d.email || '',
     cnae_fiscal: d.atividade_principal?.[0]
-      ? parseInt(d.atividade_principal[0].code.replace(/\D/g, ''), 10)
-      : 0,
+      ? d.atividade_principal[0].code.replace(/\D/g, '').padStart(7, '0')
+      : '',
     cnae_fiscal_descricao: d.atividade_principal?.[0]?.text || '',
     cnaes_secundarios: (d.atividades_secundarias || []).map((c) => ({
-      codigo: parseInt(c.code.replace(/\D/g, ''), 10),
+      codigo: c.code.replace(/\D/g, '').padStart(7, '0'),
       descricao: c.text,
     })),
     qsa: (d.qsa || []).map((s) => ({
@@ -140,6 +154,11 @@ function norm(s?: string | null): string {
   return (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
+// Monta logradouro completo: tipo_logradouro pode vir separado em BrasilAPI/minhareceita
+function logradouroCompleto(dados: DadosCNPJ): string {
+  return [dados.tipo_logradouro, dados.logradouro].filter(Boolean).join(' ')
+}
+
 export function calcularDivergenciasRF(
   client: { razao_social: string; fantasia?: string | null; email?: string | null; telefone?: string | null },
   enderecos: Array<{ tipo: string; principal?: boolean; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; cep?: string }> | undefined | null,
@@ -172,27 +191,28 @@ export function calcularDivergenciasRF(
     const endFiscal = enderecos?.find((e) => e.tipo === 'fiscal' && e.principal)
       ?? enderecos?.find((e) => e.tipo === 'fiscal')
     const cepRF = dados.cep ? formatarCEP(dados.cep) : ''
+    const rfLogradouro = logradouroCompleto(dados)
+    const fmtEnd = (log?: string, num?: string, mun?: string, uf?: string) =>
+      [log, num, mun && uf ? `${mun}/${uf}` : ''].filter(Boolean).join(', ')
     if (!endFiscal) {
       divs.push({
         campo: 'Endereço Fiscal',
         atual: 'Não cadastrado',
-        receita: [dados.logradouro, dados.numero, dados.municipio && dados.uf ? `${dados.municipio}/${dados.uf}` : ''].filter(Boolean).join(', '),
+        receita: fmtEnd(rfLogradouro, dados.numero, dados.municipio, dados.uf),
       })
     } else {
       const changed =
-        norm(endFiscal.logradouro) !== norm(dados.logradouro) ||
+        norm(endFiscal.logradouro) !== norm(rfLogradouro) ||
         norm(endFiscal.numero) !== norm(dados.numero) ||
         norm(endFiscal.bairro) !== norm(dados.bairro) ||
         norm(endFiscal.cidade) !== norm(dados.municipio) ||
         norm(endFiscal.estado) !== norm(dados.uf) ||
         norm(endFiscal.cep) !== norm(cepRF)
       if (changed) {
-        const fmtEnd = (log?: string, num?: string, mun?: string, uf?: string) =>
-          [log, num, mun && uf ? `${mun}/${uf}` : ''].filter(Boolean).join(', ')
         divs.push({
           campo: 'Endereço Fiscal',
           atual: fmtEnd(endFiscal.logradouro, endFiscal.numero, endFiscal.cidade, endFiscal.estado),
-          receita: fmtEnd(dados.logradouro, dados.numero, dados.municipio, dados.uf),
+          receita: fmtEnd(rfLogradouro, dados.numero, dados.municipio, dados.uf),
         })
       }
     }
@@ -200,8 +220,8 @@ export function calcularDivergenciasRF(
 
   if (dados.cnae_fiscal) {
     const rfCods = [
-      String(dados.cnae_fiscal),
-      ...(dados.cnaes_secundarios ?? []).map((c) => String(c.codigo)),
+      dados.cnae_fiscal,
+      ...(dados.cnaes_secundarios ?? []).map((c) => c.codigo),
     ].map((c) => c.replace(/\D/g, ''))
     const localCods = (cnaes ?? []).map((c) => c.codigo.replace(/\D/g, ''))
     const rfSet = new Set(rfCods)

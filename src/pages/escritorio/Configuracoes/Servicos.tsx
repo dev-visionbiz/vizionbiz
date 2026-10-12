@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/auth/AuthProvider'
 import { useServicos, useCreateServico, useUpdateServico, useDeleteServico } from '@/data/hooks/useServicos'
+import { useFluxosAtivos } from '@/data/hooks/useFluxos'
+import { useFormulariosTemplate } from '@/data/hooks/useFormulariosTemplate'
 import { useToast } from '@/components/ui/use-toast'
 import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -23,7 +25,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Pencil, Trash2, Plus, Wrench } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
+import { Pencil, Trash2, Plus, Wrench, GitBranch } from 'lucide-react'
 import type { Servico, TipoCobrancaServico } from '@/domain/types'
 import { formatCurrency } from '@/lib/utils'
 import { v4 as uuidv4 } from 'uuid'
@@ -39,12 +42,17 @@ const emptyForm = {
   valor_padrao: '',
   tipo_cobranca_padrao: 'mensal' as TipoCobrancaServico,
   ativo: true,
+  fluxo_id: '',
+  requer_aceite_padrao: false,
+  formulario_template_id: '',
 }
 
 export default function Servicos() {
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const { data: servicos, isLoading } = useServicos(tenantId)
+  const { data: fluxos = [] }          = useFluxosAtivos(tenantId)
+  const { data: templates = [] }       = useFormulariosTemplate(tenantId)
   const createServico = useCreateServico()
   const updateServico = useUpdateServico()
   const deleteServico = useDeleteServico()
@@ -68,30 +76,31 @@ export default function Servicos() {
       valor_padrao: String(s.valor_padrao),
       tipo_cobranca_padrao: s.tipo_cobranca_padrao,
       ativo: s.ativo,
+      fluxo_id: s.fluxo_id ?? '',
+      requer_aceite_padrao: s.requer_aceite_padrao ?? false,
+      formulario_template_id: s.formulario_template_id ?? '',
     })
     setDialogOpen(true)
   }
 
   const handleSave = async () => {
     if (!form.nome.trim() || !form.valor_padrao) return
-    const data = {
+    const data: Partial<Servico> = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || undefined,
       valor_padrao: parseFloat(form.valor_padrao),
       tipo_cobranca_padrao: form.tipo_cobranca_padrao,
       ativo: form.ativo,
+      fluxo_id: form.fluxo_id || undefined,
+      requer_aceite_padrao: form.requer_aceite_padrao,
+      formulario_template_id: form.formulario_template_id || undefined,
     }
     try {
       if (editTarget) {
         await updateServico.mutateAsync({ id: editTarget.id, data })
         toast({ title: 'Serviço atualizado' })
       } else {
-        await createServico.mutateAsync({
-          id: uuidv4(),
-          tenant_id: tenantId,
-          ...data,
-          descricao: data.descricao,
-        } as Servico)
+        await createServico.mutateAsync({ id: uuidv4(), tenant_id: tenantId, ...data } as Servico)
         toast({ title: 'Serviço criado' })
       }
       setDialogOpen(false)
@@ -256,6 +265,54 @@ export default function Servicos() {
                 id="svc-ativo"
                 checked={form.ativo}
                 onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))}
+              />
+            </div>
+            <Separator />
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <GitBranch className="w-3.5 h-3.5" /> Automação de solicitações
+            </p>
+            <div className="space-y-1">
+              <Label>Fluxo padrão ao aprovar</Label>
+              <Select
+                value={form.fluxo_id}
+                onValueChange={(v) => setForm((f) => ({ ...f, fluxo_id: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum / selecionar na hora" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">— Nenhum —</SelectItem>
+                  {fluxos.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Template de formulário padrão</Label>
+              <Select
+                value={form.formulario_template_id}
+                onValueChange={(v) => setForm((f) => ({ ...f, formulario_template_id: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">— Nenhum —</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-md border px-3 py-2">
+              <div>
+                <Label className="cursor-pointer">Exigir aceite do cliente</Label>
+                <p className="text-xs text-muted-foreground">Envia proposta para aprovação antes de iniciar</p>
+              </div>
+              <Switch
+                checked={form.requer_aceite_padrao}
+                onCheckedChange={(v) => setForm((f) => ({ ...f, requer_aceite_padrao: v }))}
               />
             </div>
           </div>

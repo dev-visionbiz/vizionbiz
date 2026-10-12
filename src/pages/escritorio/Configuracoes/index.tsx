@@ -19,6 +19,7 @@ import {
   HardDrive,
   Network,
   MessageCircle,
+  ClipboardList,
 } from 'lucide-react'
 import DadosEscritorio from './DadosEscritorio'
 import PoliticaCobranca from './PoliticaCobranca'
@@ -30,6 +31,7 @@ import Planos from './Planos'
 import Armazenamento from './Armazenamento'
 import GruposLista from '../Grupos/GruposLista'
 import WhatsAppPage from './WhatsAppPage'
+import FormulariosTemplates from './FormulariosTemplates'
 
 const sections = [
   {
@@ -101,6 +103,13 @@ const sections = [
     title: 'WhatsApp',
     description: 'Conexão do WhatsApp do escritório para envio de mensagens aos clientes',
     content: <WhatsAppPage />,
+  },
+  {
+    value: 'formularios',
+    icon: ClipboardList,
+    title: 'Formulários',
+    description: 'Templates de formulários para coleta de dados do cliente em tarefas',
+    content: <FormulariosTemplates />,
   },
 ]
 

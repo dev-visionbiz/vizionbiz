@@ -1,5 +1,6 @@
 ﻿import { useState, useMemo, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { usePinnedClient } from '@/lib/clientePinado'
 import { format } from 'date-fns'
 import { Clock, AlertTriangle, Users, Inbox, CheckCircle2, List, PlayCircle, LayoutDashboard, Plus, SlidersHorizontal, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -258,7 +259,7 @@ function TarefaCard({ t, isSelected, onAbrir, onIniciar, onConcluir }: {
             if (!ativos.length) return null
             const label = ativos.length === 1 ? ativos[0].nome : `${ativos.length} em execução`
             return (
-              <span className="text-xs text-amber-600 hidden sm:flex items-center gap-0.5 max-w-[120px] truncate">
+              <span className="text-xs text-amber-600 dark:text-amber-400 hidden sm:flex items-center gap-0.5 max-w-[120px] truncate">
                 <PlayCircle className="h-3 w-3 shrink-0" />
                 <span className="truncate">{label}</span>
               </span>
@@ -315,6 +316,7 @@ export default function TarefasPage() {
   const { toast } = useToast()
   const isAdmin   = currentUser?.papel === 'escritorio_admin'
   const isDesktop = useIsDesktop()
+  const { clientePinado } = usePinnedClient()
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -334,10 +336,14 @@ export default function TarefasPage() {
   const [ocorrenciaDetalhe,   setOcorrenciaDetalhe]   = useState<Ocorrencia | null>(null)
 
   const [filtrosOpen,      setFiltrosOpen]      = useState(false)
-  const [filtroCliente,    setFiltroCliente]    = useState('')
+  const [filtroCliente,    setFiltroCliente]    = useState(() => clientePinado?.id ?? '')
   const [filtroStatus,     setFiltroStatus]     = useState<TarefaStatus | ''>('')
   const [filtroDataInicio, setFiltroDataInicio] = useState('')
   const [filtroDataFim,    setFiltroDataFim]    = useState('')
+
+  useEffect(() => {
+    setFiltroCliente(clientePinado?.id ?? '')
+  }, [clientePinado])
 
   const filtrosAtivos = filtroCliente !== '' || filtroStatus !== '' || filtroDataInicio !== '' || filtroDataFim !== ''
 
@@ -588,7 +594,7 @@ export default function TarefasPage() {
                   {abertas.length} abertas
                 </span>
                 {atrasadas.length > 0 && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-100 rounded-full px-2.5 py-0.5">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 bg-card border border-red-300 dark:border-red-800 dark:text-red-400 rounded-full px-2.5 py-0.5">
                     <AlertTriangle className="h-3 w-3" />
                     {atrasadas.length} atrasadas
                   </span>

@@ -196,7 +196,7 @@ export function TarefaDocumentosPanel({
             </Badge>
           )}
           {slotsObrigatoriosNaoCumpridos.length > 0 && (
-            <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 bg-red-50 text-red-600 border-red-200">
+            <Badge variant="outline" className="text-xs px-1.5 py-0 h-4 bg-card text-red-600 border-red-300 dark:border-red-800 dark:text-red-400">
               {slotsObrigatoriosNaoCumpridos.length} obrigatório{slotsObrigatoriosNaoCumpridos.length > 1 ? 's' : ''}
             </Badge>
           )}
@@ -221,9 +221,9 @@ export function TarefaDocumentosPanel({
                     className={cn(
                       'flex items-center justify-between rounded-md border px-2.5 py-2 gap-2',
                       cumprido
-                        ? 'bg-green-50/60 border-green-200'
+                        ? 'bg-card border-green-300 dark:border-green-900'
                         : cfg.obrigatorio
-                          ? 'bg-red-50/40 border-red-200'
+                          ? 'bg-card border-red-300 dark:border-red-800'
                           : 'bg-muted/20 border-dashed'
                     )}
                   >

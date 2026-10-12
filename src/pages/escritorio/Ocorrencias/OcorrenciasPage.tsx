@@ -1,5 +1,6 @@
-﻿import { useState, useMemo } from 'react'
-import { Plus, Building2, FileText, Users, Calculator, Inbox, Layers } from 'lucide-react'
+﻿import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Plus, Building2, FileText, Users, Calculator, Inbox, Layers, UserCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -10,11 +11,12 @@ import { useAuth } from '@/auth/AuthProvider'
 import { useClients } from '@/data/hooks/useClients'
 import { useUsers } from '@/data/hooks/useUsers'
 import { useOcorrencias, useTarefasOcorrencia } from '@/data/hooks/useOcorrencias'
+import { usePinnedClient } from '@/lib/clientePinado'
 import { useFluxos, useFluxoTarefas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from '@/data/hooks/useFluxos'
 import { NovaOcorrenciaDialog } from './NovaOcorrenciaDialog'
 import { OcorrenciaDetalheDialog } from './OcorrenciaDetalheDialog'
 import { formatDate } from '@/lib/utils'
-import type { Ocorrencia, OcorrenciaStatus, CategoriaDemanda, Fluxo } from '@/domain/types'
+import type { Ocorrencia, OcorrenciaStatus, OcorrenciaOrigem, CategoriaDemanda, Fluxo } from '@/domain/types'
 
 const categoriaConfig: Record<CategoriaDemanda, { label: string; icon: React.ElementType; color: string }> = {
   societario: { label: 'Societário',   icon: Building2,  color: 'text-purple-600' },
@@ -26,7 +28,7 @@ const categoriaConfig: Record<CategoriaDemanda, { label: string; icon: React.Ele
 
 const ocorrenciaStatusConfig: Record<OcorrenciaStatus, { label: string; className: string }> = {
   pendente:     { label: 'Pendente',     className: 'bg-blue-100 text-blue-800 border-transparent' },
-  em_andamento: { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent' },
+  em_andamento: { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent dark:bg-amber-950/50 dark:text-amber-300' },
   concluida:    { label: 'Concluída',    className: 'bg-green-100 text-green-800 border-transparent' },
   cancelada:    { label: 'Cancelada',    className: 'bg-gray-100 text-gray-500 border-transparent' },
 }
@@ -55,12 +57,18 @@ function ListaOcorrencias({
   const { data: ocorrencias = [] } = useOcorrencias(tenantId)
   const { data: clientes = [] }    = useClients(tenantId)
   const { data: users = [] }       = useUsers(tenantId)
+  const { clientePinado }          = usePinnedClient()
 
   const [filtroStatus,    setFiltroStatus]    = useState<OcorrenciaStatus | ''>('')
   const [filtroCategoria, setFiltroCategoria] = useState<CategoriaDemanda | ''>('')
-  const [filtroClienteId, setFiltroClienteId] = useState('')
+  const [filtroClienteId, setFiltroClienteId] = useState(() => clientePinado?.id ?? '')
   const [filtroResp,      setFiltroResp]      = useState('')
   const [filtroLote,      setFiltroLote]      = useState('')
+  const [filtroOrigem,    setFiltroOrigem]    = useState<'cliente' | 'interna' | ''>('')
+
+  useEffect(() => {
+    setFiltroClienteId(clientePinado?.id ?? '')
+  }, [clientePinado])
 
   const clienteMap = useMemo(() => Object.fromEntries(clientes.map(c => [c.id, c.razao_social])), [clientes])
   const userMap    = useMemo(() => Object.fromEntries(users.map(u => [u.id, u.nome])), [users])
@@ -83,10 +91,11 @@ function ListaOcorrencias({
         (!filtroStatus     || o.status === filtroStatus) &&
         (!filtroCategoria  || o.categoria === filtroCategoria) &&
         (!filtroClienteId  || o.cliente_id === filtroClienteId) &&
-        (!filtroResp       || o.responsavel_id === filtroResp)
+        (!filtroResp       || o.responsavel_id === filtroResp) &&
+        (!filtroOrigem     || (filtroOrigem === 'cliente' ? o.origem === 'cliente' : o.origem !== 'cliente'))
       )
       .sort((a, b) => a.data_prevista.localeCompare(b.data_prevista)),
-    [ocorrencias, filtroLote, filtroStatus, filtroCategoria, filtroClienteId, filtroResp]
+    [ocorrencias, filtroLote, filtroStatus, filtroCategoria, filtroClienteId, filtroResp, filtroOrigem]
   )
 
   const colaboradores = users.filter(u => u.papel !== 'cliente' && u.ativo)
@@ -159,8 +168,19 @@ function ListaOcorrencias({
             </Select>
           </div>
         )}
-        {(filtroStatus || filtroCategoria || filtroClienteId || filtroResp || filtroLote) && (
-          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFiltroStatus(''); setFiltroCategoria(''); setFiltroClienteId(''); setFiltroResp(''); setFiltroLote('') }}>
+        <div className="flex items-center gap-1 border rounded-md p-0.5">
+          {(['', 'cliente', 'interna'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setFiltroOrigem(v)}
+              className={`h-7 px-2.5 rounded text-xs font-medium transition-colors ${filtroOrigem === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+            >
+              {v === '' ? 'Todas' : v === 'cliente' ? '🧑 Do cliente' : '🏢 Internas'}
+            </button>
+          ))}
+        </div>
+        {(filtroStatus || filtroCategoria || filtroClienteId || filtroResp || filtroLote || filtroOrigem) && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setFiltroStatus(''); setFiltroCategoria(''); setFiltroClienteId(''); setFiltroResp(''); setFiltroLote(''); setFiltroOrigem('') }}>
             Limpar filtros
           </Button>
         )}
@@ -199,6 +219,11 @@ function ListaOcorrencias({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    {o.origem === 'cliente' && (
+                      <span className="hidden sm:flex items-center gap-1 text-[10px] text-cyan-700 bg-cyan-50 border border-cyan-200 rounded px-1.5 py-0.5 font-medium">
+                        <UserCircle className="h-3 w-3" /> Cliente
+                      </span>
+                    )}
                     <OcorrenciaProgressoBadge tenantId={tenantId} ocorrenciaId={o.id} />
                     <span className="text-xs text-muted-foreground hidden sm:block">{formatDate(o.data_prevista)}</span>
                     {respNome && <span className="text-xs text-muted-foreground hidden md:block">{respNome}</span>}
@@ -267,11 +292,24 @@ function GerenciarFluxos({ tenantId }: { tenantId: string }) {
 export default function OcorrenciasPage() {
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
+  const [searchParams] = useSearchParams()
 
   const [novaOcorrenciaOpen, setNovaOcorrenciaOpen]         = useState(false)
   const [novaOcorrenciaClienteId, setNovaOcorrenciaClienteId] = useState<string | undefined>()
   const [ocorrenciaSelecionada, setOcorrenciaSelecionada]   = useState<Ocorrencia | null>(null)
   const [detalheOpen, setDetalheOpen]                       = useState(false)
+
+  const { data: ocorrencias = [] } = useOcorrencias(tenantId)
+
+  useEffect(() => {
+    const id = searchParams.get('id')
+    if (!id || !ocorrencias.length) return
+    const found = ocorrencias.find(o => o.id === id)
+    if (found) {
+      setOcorrenciaSelecionada(found)
+      setDetalheOpen(true)
+    }
+  }, [searchParams, ocorrencias])
 
   function handleNova(clienteId?: string) {
     setNovaOcorrenciaClienteId(clienteId)

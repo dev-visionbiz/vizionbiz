@@ -1,6 +1,7 @@
 ﻿import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
+import { usePinnedClient } from '@/lib/clientePinado'
 import { useClients, useCreateClient } from '@/data/hooks/useClients'
 import { useInvoices } from '@/data/hooks/useInvoices'
 import { usePessoas, useAllEmpresaPessoas } from '@/data/hooks/usePessoas'
@@ -52,8 +53,8 @@ interface FormPF {
   regime: string; email: string; telefone: string
 }
 
-const defaultPJ: FormPJ = { razao_social: '', fantasia: '', cnpj: '', regime: 'Simples Nacional', email: '', telefone: '' }
-const defaultPF: FormPF = { nome: '', cpf: '', regime: 'MEI', email: '', telefone: '' }
+const defaultPJ: FormPJ = { razao_social: '', fantasia: '', cnpj: '', regime: '', email: '', telefone: '' }
+const defaultPF: FormPF = { nome: '', cpf: '', regime: '', email: '', telefone: '' }
 const defaultAbertura: FormAbertura = { nome_provisorio: '', tipo_empresa: 'LTDA', regime: 'Simples Nacional', email: '', telefone: '' }
 
 function SortBtn({
@@ -85,6 +86,7 @@ export default function ClientesLista() {
   const navigate = useNavigate()
   const { currentUser, currentTenant } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
+  const { clientePinado } = usePinnedClient()
 
   const { data: clients, isLoading } = useClients(tenantId)
   const { data: allInvoices } = useInvoices(tenantId)
@@ -118,6 +120,7 @@ export default function ClientesLista() {
   const [cnpjStatus, setCnpjStatus] = useState<'idle' | 'buscando' | 'ok' | 'erro'>('idle')
   const [cnpjErro, setCnpjErro] = useState('')
   const [dadosCNPJ, setDadosCNPJ] = useState<DadosCNPJ | null>(null)
+  const [cnpjConsultando, setCnpjConsultando] = useState(false)
 
   const [aberturaDialogOpen, setAberturaDialogOpen] = useState(false)
   const [formAbertura, setFormAbertura] = useState<FormAbertura>(defaultAbertura)
@@ -126,6 +129,7 @@ export default function ClientesLista() {
     const digits = formPJ.cnpj.replace(/\D/g, '')
     if (digits.length !== 14) return
     setCnpjStatus('buscando')
+    setCnpjConsultando(true)
     setCnpjErro('')
     try {
       const dados = await consultarCNPJ(digits)
@@ -142,6 +146,8 @@ export default function ClientesLista() {
       setCnpjErro(e instanceof Error ? e.message : 'Erro ao consultar CNPJ')
       setDadosCNPJ(null)
       setCnpjStatus('erro')
+    } finally {
+      setCnpjConsultando(false)
     }
   }
 
@@ -213,6 +219,8 @@ export default function ClientesLista() {
     if (!clients) return []
     let result = clients
 
+    if (clientePinado) return result.filter(c => c.id === clientePinado.id)
+
     if (filtroTipo !== 'todos') result = result.filter(c => (c.tipo ?? 'juridica') === filtroTipo)
     if (filtroStatus !== 'todos') result = result.filter(c => c.status === filtroStatus)
     if (filtroGrupo !== 'todos') {
@@ -247,7 +255,7 @@ export default function ClientesLista() {
       else if (ordem.col === 'pendencias') cmp = (overdueMap.get(a.id) ?? 0) - (overdueMap.get(b.id) ?? 0)
       return ordem.dir === 'asc' ? cmp : -cmp
     })
-  }, [clients, filtroTipo, filtroStatus, filtroGrupo, search, pessoasByEmpresa, pfNomesByPJ, empresasByGrupo, ordem, overdueMap])
+  }, [clients, clientePinado, filtroTipo, filtroStatus, filtroGrupo, search, pessoasByEmpresa, pfNomesByPJ, empresasByGrupo, ordem, overdueMap])
 
   const openDialog = () => {
     setFormPJ(defaultPJ)
@@ -330,7 +338,7 @@ export default function ClientesLista() {
             })
           }
           if (dadosCNPJ.cnae_fiscal) {
-            const codigo = String(dadosCNPJ.cnae_fiscal)
+            const codigo = dadosCNPJ.cnae_fiscal
             createCnae.mutate({
               id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
               codigo, descricao: dadosCNPJ.cnae_fiscal_descricao || codigo,
@@ -340,7 +348,7 @@ export default function ClientesLista() {
           dadosCNPJ.cnaes_secundarios?.slice(0, 5).forEach((c) => {
             createCnae.mutate({
               id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
-              codigo: String(c.codigo), descricao: c.descricao, principal: false,
+              codigo: c.codigo, descricao: c.descricao, principal: false,
             })
           })
         }
@@ -713,7 +721,7 @@ export default function ClientesLista() {
                   <div className="space-y-1">
                     <Label>Regime Tributário</Label>
                     <Select value={formPJ.regime} onValueChange={v => setFormPJ(f => ({ ...f, regime: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                         <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
@@ -748,7 +756,7 @@ export default function ClientesLista() {
                   <div className="space-y-1">
                     <Label>Regime Tributário</Label>
                     <Select value={formPF.regime} onValueChange={v => setFormPF(f => ({ ...f, regime: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="MEI">MEI</SelectItem>
                         <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
@@ -780,6 +788,29 @@ export default function ClientesLista() {
       </Dialog>
 
       <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
+
+      {/* Modal de consulta à Receita Federal */}
+      <Dialog open={cnpjConsultando} onOpenChange={() => {}}>
+        <DialogContent
+          className="sm:max-w-xs text-center [&>button]:hidden"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <div className="flex flex-col items-center gap-5 py-4">
+            <div className="relative flex items-center justify-center">
+              <span className="absolute h-20 w-20 rounded-full bg-primary/10 animate-ping" style={{ animationDuration: '1.6s' }} />
+              <span className="absolute h-14 w-14 rounded-full bg-primary/15 animate-ping" style={{ animationDuration: '1.6s', animationDelay: '0.3s' }} />
+              <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </span>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Consultando a Receita Federal…</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">Buscando os dados cadastrais atuais da empresa.</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

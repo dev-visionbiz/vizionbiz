@@ -4,7 +4,7 @@ import { format, addDays } from 'date-fns'
 import {
   Plus, Trash2, Pencil, X, ListChecks,
   Building2, FileText, Users, Calculator,
-  CheckSquare, Square, Layers, Check, Paperclip,
+  CheckSquare, Square, Layers, Check, Paperclip, ClipboardList,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +27,7 @@ import { useFluxosAtivos, useFluxoTarefas } from '@/data/hooks/useFluxos'
 import { useRotinas } from '@/data/hooks/useRotinas'
 import { useCreateOcorrencia, useCreateOcorrenciasLote } from '@/data/hooks/useOcorrencias'
 import { useClientFolders } from '@/data/hooks/useFolders'
+import { useFormulariosTemplate } from '@/data/hooks/useFormulariosTemplate'
 import { cn } from '@/lib/utils'
 import type { CategoriaDemanda, OcorrenciaDocumentoConfig, OcorrenciaDocumentoTipo } from '@/domain/types'
 
@@ -56,6 +57,7 @@ interface TarefaEditavel {
   responsavel_id: string
   checklist: ChecklistItemForm[]
   documentos_config: OcorrenciaDocumentoConfig[]
+  formulario_template_id?: string
 }
 
 // ─── Sub-dialog de tarefa ─────────────────────────────────────────────────────
@@ -78,8 +80,10 @@ function TarefaEditavelDialog({ tarefa, ordem, colaboradores, tenantId, clienteI
   const [respId, setRespId]       = useState(tarefa?.responsavel_id ?? '')
   const [checklist, setChecklist] = useState<ChecklistItemForm[]>(tarefa?.checklist ?? [])
   const [docsConfig, setDocsConfig] = useState<OcorrenciaDocumentoConfig[]>(tarefa?.documentos_config ?? [])
+  const [templateId, setTemplateId] = useState(tarefa?.formulario_template_id ?? '')
 
   const { data: pastas = [] } = useClientFolders(tenantId, clienteId ?? '')
+  const { data: templates = [] } = useFormulariosTemplate(tenantId)
 
   function addItem() {
     setChecklist(prev => [...prev, { id: uuid(), nome: '', origem: 'custom' }])
@@ -104,7 +108,7 @@ function TarefaEditavelDialog({ tarefa, ordem, colaboradores, tenantId, clienteI
   function handleSalvar() {
     if (!nome.trim()) return toast({ title: 'Informe o nome da tarefa', variant: 'destructive' })
     const docsValidos = docsConfig.filter(d => d.label.trim())
-    onSalvar({ _id: tarefa?._id, nome: nome.trim(), descricao, prazo_relativo_dias: prazoDias, responsavel_id: respId, checklist, documentos_config: docsValidos })
+    onSalvar({ _id: tarefa?._id, nome: nome.trim(), descricao, prazo_relativo_dias: prazoDias, responsavel_id: respId, checklist, documentos_config: docsValidos, formulario_template_id: templateId || undefined })
   }
 
   return (
@@ -297,6 +301,33 @@ function TarefaEditavelDialog({ tarefa, ordem, colaboradores, tenantId, clienteI
               )}
             </div>
 
+            <Separator />
+
+            {/* Formulário do cliente */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-sm">
+                <ClipboardList className="h-4 w-4" />
+                Formulário do cliente
+              </Label>
+              <Select
+                value={templateId || '__none__'}
+                onValueChange={v => setTemplateId(v === '__none__' ? '' : v)}
+              >
+                <SelectTrigger className="text-sm h-8">
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
+                  {templates.filter(t => t.ativo).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Permite gerar link de formulário para o cliente preencher nesta etapa.
+              </p>
+            </div>
+
           </div>
         </div>
 
@@ -413,6 +444,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange, initialClienteId }: P
         responsavel_id: t.responsavel_padrao ?? '',
         checklist: (t.checklist ?? []).map(c => ({ id: c.id, nome: c.nome, origem: 'template' as const })),
         documentos_config: t.documentos_config ?? [],
+        formulario_template_id: t.formulario_template_id,
       })))
     }
   }, [fluxoTarefas])
@@ -457,6 +489,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange, initialClienteId }: P
         responsavel_id: data.responsavel_id ?? '',
         checklist: data.checklist ?? [],
         documentos_config: data.documentos_config ?? [],
+        formulario_template_id: data.formulario_template_id,
       }])
     } else if (tarefaDialog && data._id) {
       setTarefas(prev => prev.map(t => t._id === data._id ? { ...t, ...data } : t))
@@ -490,6 +523,7 @@ export function NovaOcorrenciaDialog({ open, onOpenChange, initialClienteId }: P
         origem: c.origem,
       })),
       documentos_config: t.documentos_config.length > 0 ? t.documentos_config : undefined,
+      formulario_template_id: t.formulario_template_id || undefined,
     }))
   }
 

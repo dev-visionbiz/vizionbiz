@@ -1,5 +1,6 @@
-﻿import { useState, Fragment } from 'react'
+﻿import { useState, Fragment, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { usePinnedClient } from '@/lib/clientePinado'
 import { v4 as uuidv4 } from 'uuid'
 import { format, differenceInDays, parseISO } from 'date-fns'
 import { useAuth } from '@/auth/AuthProvider'
@@ -704,13 +705,18 @@ export default function DocumentosPage() {
   const { currentUser, currentTenant } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const [searchParams] = useSearchParams()
+  const { clientePinado } = usePinnedClient()
 
   // View mode
   const [viewMode, setViewMode] = useState<'cliente' | 'tipo'>('cliente')
 
   // "Por Cliente" state
   const { data: clients, isLoading: loadingClients } = useClients(tenantId)
-  const [selectedClientId, setSelectedClientId] = useState(() => searchParams.get('cliente') ?? '')
+  const [selectedClientId, setSelectedClientId] = useState(() => searchParams.get('cliente') ?? clientePinado?.id ?? '')
+
+  useEffect(() => {
+    setSelectedClientId(prev => prev || clientePinado?.id || '')
+  }, [clientePinado])
   const [folderPath, setFolderPath] = useState<Folder[]>([])
   const { data: folders } = useClientFolders(tenantId, selectedClientId)
   const currentFolder = folderPath.length > 0 ? folderPath[folderPath.length - 1] : null

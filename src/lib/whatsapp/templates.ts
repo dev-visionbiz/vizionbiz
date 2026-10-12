@@ -131,6 +131,34 @@ export function templateFormularioColeta(
     .replace('{{linkFormulario}}', linkFormulario)
 }
 
+export function templateFormularioTarefa(
+  nomeCliente: string,
+  nomeTarefa: string,
+  linkFormulario: string,
+): string {
+  return (
+    `Olá, ${nomeCliente}! 👋\n\n` +
+    `Para darmos andamento ao processo, precisamos que você preencha o formulário referente a:\n\n` +
+    `📋 *${nomeTarefa}*\n\n` +
+    `Acesse pelo link abaixo:\n${linkFormulario}\n\n` +
+    `Em caso de dúvidas, entre em contato conosco.`
+  )
+}
+
+export function templatePesquisa(
+  nomeCliente: string,
+  nomePesquisa: string,
+  linkFormulario: string,
+): string {
+  return (
+    `Olá, ${nomeCliente}! 👋\n\n` +
+    `Convidamos você a participar da nossa pesquisa:\n\n` +
+    `📊 *${nomePesquisa}*\n\n` +
+    `Acesse pelo link:\n${linkFormulario}\n\n` +
+    `Agradecemos sua participação!`
+  )
+}
+
 export function templateDocumento(
   nomeDocumento: string,
   nomeCliente: string,

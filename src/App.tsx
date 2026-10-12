@@ -2,6 +2,7 @@ import { RouterProvider } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { ThemeProvider } from '@/theme/ThemeProvider'
+import { PinnedClientProvider } from '@/lib/clientePinado'
 import { router } from '@/router'
 import { runSeed } from '@/data/seed'
 import { migrarDemandas } from '@/lib/migrations/migrarDemandas'
@@ -31,9 +32,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider>
-          <AppInner />
-        </ThemeProvider>
+        <PinnedClientProvider>
+          <ThemeProvider>
+            <AppInner />
+          </ThemeProvider>
+        </PinnedClientProvider>
       </AuthProvider>
     </QueryClientProvider>
   )

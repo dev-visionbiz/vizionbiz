@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/shared/AppLayout'
 import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { ProtectedRoute } from '@/auth/ProtectedRoute'
 import { EscritorioRoute } from '@/auth/EscritorioRoute'
+import { PortalEmpresaGuard } from '@/auth/PortalEmpresaGuard'
 
 // Lazy-loaded pages
 const Login = React.lazy(() => import('@/pages/Login'))
@@ -26,7 +27,14 @@ const PortalEquipe = React.lazy(() => import('@/pages/cliente/PortalEquipe'))
 const PortalGuias = React.lazy(() => import('@/pages/cliente/PortalGuias'))
 const ShareDocumentoPage = React.lazy(() => import('@/pages/share/ShareDocumentoPage'))
 const FormularioAbertura = React.lazy(() => import('@/pages/public/FormularioAbertura'))
+const FormularioDinamico = React.lazy(() => import('@/pages/public/FormularioDinamico'))
+const PesquisaPublica    = React.lazy(() => import('@/pages/public/PesquisaPublica'))
+const PesquisasPage      = React.lazy(() => import('@/pages/escritorio/Pesquisas/PesquisasPage'))
 const PortalCadastro = React.lazy(() => import('@/pages/cliente/PortalCadastro'))
+const PortalSolicitacoes = React.lazy(() => import('@/pages/cliente/PortalSolicitacoes'))
+const PortalNegociacao = React.lazy(() => import('@/pages/cliente/PortalNegociacao'))
+const PortalPesquisas = React.lazy(() => import('@/pages/cliente/PortalPesquisas'))
+const SelecionarEmpresa = React.lazy(() => import('@/pages/cliente/SelecionarEmpresa'))
 
 function Lazy({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -48,6 +56,14 @@ export const router = createBrowserRouter([
   {
     path: '/formulario/:token',
     element: <Lazy><FormularioAbertura /></Lazy>,
+  },
+  {
+    path: '/formulario-dados/:token',
+    element: <Lazy><FormularioDinamico /></Lazy>,
+  },
+  {
+    path: '/pesquisa/:id',
+    element: <Lazy><PesquisaPublica /></Lazy>,
   },
   {
     path: '/escritorio',
@@ -95,6 +111,10 @@ export const router = createBrowserRouter([
             element: <EscritorioRoute modulo="tarefas"><Lazy><FluxosPage /></Lazy></EscritorioRoute>,
           },
           {
+            path: 'pesquisas',
+            element: <EscritorioRoute modulo="tarefas"><Lazy><PesquisasPage /></Lazy></EscritorioRoute>,
+          },
+          {
             path: 'guias',
             element: <EscritorioRoute modulo="financeiro"><Lazy><GuiasPage /></Lazy></EscritorioRoute>,
           },
@@ -111,15 +131,24 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute roles={['cliente']} />,
     children: [
       {
-        element: <AppLayout />,
+        element: <PortalEmpresaGuard />,
         children: [
-          { index: true, element: <Navigate to="inicio" replace /> },
-          { path: 'inicio', element: <Lazy><PortalInicio /></Lazy> },
-          { path: 'cadastro', element: <Lazy><PortalCadastro /></Lazy> },
-          { path: 'documentos', element: <Lazy><PortalDocumentos /></Lazy> },
-          { path: 'financeiro', element: <Lazy><PortalFinanceiro /></Lazy> },
-          { path: 'equipe', element: <Lazy><PortalEquipe /></Lazy> },
-          { path: 'guias', element: <Lazy><PortalGuias /></Lazy> },
+          {
+            element: <AppLayout />,
+            children: [
+              { index: true, element: <Navigate to="inicio" replace /> },
+              { path: 'selecionar-empresa', element: <Lazy><SelecionarEmpresa /></Lazy> },
+              { path: 'inicio', element: <Lazy><PortalInicio /></Lazy> },
+              { path: 'cadastro', element: <Lazy><PortalCadastro /></Lazy> },
+              { path: 'documentos', element: <Lazy><PortalDocumentos /></Lazy> },
+              { path: 'financeiro', element: <Lazy><PortalFinanceiro /></Lazy> },
+              { path: 'negociacao', element: <Lazy><PortalNegociacao /></Lazy> },
+              { path: 'equipe', element: <Lazy><PortalEquipe /></Lazy> },
+              { path: 'guias', element: <Lazy><PortalGuias /></Lazy> },
+              { path: 'solicitacoes', element: <Lazy><PortalSolicitacoes /></Lazy> },
+              { path: 'pesquisas', element: <Lazy><PortalPesquisas /></Lazy> },
+            ],
+          },
         ],
       },
     ],

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
   font-size: 17px;
 }
@@ -90,7 +92,7 @@ html {
     /* #c4c7c5 */ --muted-foreground: 142 2% 78%;
     /* #333537 */ --accent: 210 4% 21%;
     /* #e3e2e6 */ --accent-foreground: 255 8% 89%;
-                  --destructive: 0 62.8% 30.6%;
+                  --destructive: 0 75% 62%;
                   --destructive-foreground: 0 0% 100%;
     /* #2f3033 */ --border: 225 4% 19%;
     /* #2f3033 */ --input: 225 4% 19%;
@@ -183,4 +185,31 @@ html {
   .dark .alert-warning > svg {
     color: #facc15;            /* yellow-400 */
   }
+}
+
+/* ── Fatura documento: print isolation ──────────────────────────────────── */
+@media print {
+  body > * { display: none !important; }
+  #fatura-print-area {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    color: #000;
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 11pt;
+    padding: 16mm 18mm;
+    z-index: 99999;
+  }
+  #fatura-print-area * {
+    color: #000 !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+  #fatura-print-area .fatura-no-print { display: none !important; }
+  #fatura-print-area .fatura-header-border { border-bottom: 2pt solid #000 !important; }
+  #fatura-print-area .fatura-section-border { border: 1pt solid #ccc !important; }
+  #fatura-print-area .fatura-total-row { border-top: 1.5pt solid #000 !important; }
+  @page { margin: 10mm; size: A4; }
 }

@@ -152,9 +152,10 @@ const TIPO_LABELS: Record<FichaCampoTipo, string> = {
 interface CopyButtonProps {
   value: string
   title?: string
+  variant?: 'default' | 'digits'
 }
 
-function CopyButton({ value, title = 'Copiar' }: CopyButtonProps) {
+function CopyButton({ value, title = 'Copiar', variant = 'default' }: CopyButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -165,12 +166,32 @@ function CopyButton({ value, title = 'Copiar' }: CopyButtonProps) {
     }
   }
 
+  if (variant === 'digits') {
+    return (
+      <button
+        type="button"
+        onClick={handleCopy}
+        title={copied ? 'Copiado!' : title}
+        className="inline-flex items-center gap-0.5 align-middle px-1 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+      >
+        {copied ? (
+          <Check className="h-2.5 w-2.5 text-green-600" />
+        ) : (
+          <>
+            <Copy className="h-2.5 w-2.5" />
+            <span>01</span>
+          </>
+        )}
+      </button>
+    )
+  }
+
   return (
     <button
       type="button"
       onClick={handleCopy}
       title={copied ? 'Copiado!' : title}
-      className="inline-flex items-center align-middle text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+      className="inline-flex items-center align-middle text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors"
     >
       {copied ? (
         <Check className="h-3 w-3 text-green-600" />
@@ -209,7 +230,7 @@ function CampoRow({ campo, onEdit, onDelete }: CampoRowProps) {
           <>
             <CopyButton value={formatted} title="Copiar formatado" />
             {' '}
-            <CopyButton value={digitsOnly(campo.valor)} title="Copiar só dígitos" />
+            <CopyButton value={digitsOnly(campo.valor)} title="Copiar só dígitos" variant="digits" />
           </>
         ) : (
           <CopyButton value={campo.valor} />
@@ -527,7 +548,7 @@ function CampoReadOnly({ rotulo, valor, tipo = 'texto' }: CampoReadOnlyProps) {
           <>
             <CopyButton value={formatted} title="Copiar formatado" />
             {' '}
-            <CopyButton value={digitsOnly(valor)} title="Copiar só dígitos" />
+            <CopyButton value={digitsOnly(valor)} title="Copiar só dígitos" variant="digits" />
           </>
         ) : (
           <CopyButton value={valor} />

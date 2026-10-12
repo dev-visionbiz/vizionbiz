@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import {
   Plus, Search, X, CreditCard, AlertTriangle, CheckCircle2, Clock, Upload,
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/auth/AuthProvider'
+import { usePinnedClient } from '@/lib/clientePinado'
 import { useClients } from '@/data/hooks/useClients'
 import { useGuias } from '@/data/hooks/useGuias'
 import { storageService } from '@/lib/storage'
@@ -37,10 +38,15 @@ export default function GuiasPage() {
   const tenantId = currentUser?.tenant_id ?? ''
   const { data: clientes = [] } = useClients(tenantId)
   const { toast } = useToast()
+  const { clientePinado } = usePinnedClient()
 
   const [filtroTipo, setFiltroTipo] = useState<TipoGuia | 'todos'>('todos')
   const [filtroStatus, setFiltroStatus] = useState<GuiaStatus | 'todos'>('todos')
-  const [filtroCliente, setFiltroCliente] = useState<string>('todos')
+  const [filtroCliente, setFiltroCliente] = useState<string>(() => clientePinado?.id ?? 'todos')
+
+  useEffect(() => {
+    setFiltroCliente(clientePinado?.id ?? 'todos')
+  }, [clientePinado])
   const [filtroCompetencia, setFiltroCompetencia] = useState('')
   const [busca, setBusca] = useState('')
 
@@ -149,28 +155,28 @@ export default function GuiasPage() {
               count={totalAVencer.length}
               value={somaAVencer}
               icon={<Clock className="h-5 w-5 text-blue-600" />}
-              colorClass="border-blue-200 bg-blue-50/60"
+              colorClass="border-blue-300 bg-card dark:border-blue-900 dark:bg-blue-950/20"
             />
             <SummaryCard
               label="Vencidas"
               count={totalVencidas.length}
               value={somaVencidas}
               icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
-              colorClass="border-red-200 bg-red-50/60"
+              colorClass="border-red-300 bg-card dark:border-red-900 dark:bg-red-950/20"
             />
             <SummaryCard
               label="Pagas no Mês"
               count={totalPagasMes.length}
               value={somaPagasMes}
               icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
-              colorClass="border-green-200 bg-green-50/60"
+              colorClass="border-green-300 bg-card dark:border-green-900 dark:bg-green-950/20"
             />
             <SummaryCard
               label="Ag. Emissão"
               count={totalAgEmissao.length}
               value={totalAgEmissao.reduce((s, g) => s + g.valor, 0)}
               icon={<CreditCard className="h-5 w-5 text-zinc-500" />}
-              colorClass="border-zinc-200 bg-zinc-50/60"
+              colorClass="border-border bg-card"
             />
           </div>
 

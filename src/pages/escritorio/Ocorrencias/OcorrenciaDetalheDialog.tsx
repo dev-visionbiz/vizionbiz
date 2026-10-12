@@ -3,7 +3,8 @@ import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
 import {
   CheckCircle2, Circle, AlertTriangle, X, Plus, Trash2,
-  Pencil, DollarSign, List, PlayCircle, Clock,
+  Pencil, DollarSign, List, PlayCircle, Clock, ClipboardList, Link, Copy, CheckCheck,
+  MessageCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,8 +31,14 @@ import {
   useDeleteTarefa,
   useUpdateChecklistTarefa,
   useConcluirTarefa,
+  useGerarFormularioLink,
 } from '@/data/hooks/useOcorrencias'
+import { useFormulariosTemplate } from '@/data/hooks/useFormulariosTemplate'
+import { useClienteContatos } from '@/data/hooks/useClienteContatos'
 import { useRegistrarHistoricoTarefa } from '@/data/hooks/useHistoricoTarefa'
+import { WhatsAppMessageDialog } from '@/components/whatsapp/WhatsAppMessageDialog'
+import type { ContatoDisponivel } from '@/components/whatsapp/WhatsAppMessageDialog'
+import { templateFormularioTarefa, templatePesquisa } from '@/lib/whatsapp/templates'
 import { ChecklistProgresso } from '@/components/shared/ChecklistProgresso'
 import { HistoricoPanel } from '@/components/shared/HistoricoPanel'
 import { TarefaDocumentosPanel } from './TarefaDocumentosPanel'
@@ -39,14 +46,14 @@ import { useIsDesktop } from '@/lib/hooks/useIsDesktop'
 import { formatDate, cn } from '@/lib/utils'
 import type {
   Ocorrencia, Tarefa, TarefaStatus, OcorrenciaStatus,
-  ChecklistItemProgresso, ChecklistItemTemplate, CategoriaDemanda,
+  ChecklistItemProgresso, ChecklistItemTemplate, CategoriaDemanda, FormularioTemplate,
 } from '@/domain/types'
 
 // ─── Config de status ────────────────────────────────────────────────────────
 
 const tarefaStatusConfig: Record<TarefaStatus, { label: string; className: string }> = {
   pendente:      { label: 'Pendente',     className: 'bg-blue-100 text-blue-800 border-transparent' },
-  em_andamento:  { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent' },
+  em_andamento:  { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent dark:bg-amber-950/50 dark:text-amber-300' },
   concluida:     { label: 'Concluída',    className: 'bg-green-100 text-green-800 border-transparent' },
   atrasada:      { label: 'Atrasada',     className: 'bg-red-100 text-red-800 border-transparent' },
   nao_se_aplica: { label: 'N/A',          className: 'bg-gray-100 text-gray-500 border-transparent' },
@@ -75,6 +82,215 @@ interface TarefaDetalheConteudoProps {
   isSaving: boolean
 }
 
+function FormularioLinkPanel({
+  tarefa, template, tenantId, clienteId, clienteNome, tarefaNome,
+}: {
+  tarefa: Tarefa
+  template: FormularioTemplate
+  tenantId: string
+  clienteId?: string
+  clienteNome?: string
+  tarefaNome?: string
+}) {
+  const { toast } = useToast()
+  const gerarLink = useGerarFormularioLink()
+  const [copiado, setCopiado]               = useState(false)
+  const [whatsappOpen, setWhatsappOpen]     = useState(false)
+  const [whatsappMensagem, setWhatsappMsg]  = useState('')
+
+  const { data: contatos = [] } = useClienteContatos(tenantId, clienteId ?? '')
+  const contatosDisp: ContatoDisponivel[] = contatos
+    .filter(c => c.telefone)
+    .map(c => ({ id: c.id, nome: c.nome, telefone: c.telefone!, setor: c.setor, principal: c.principal }))
+
+  const isGenerico = template.destino === 'generico'
+
+  // ── Pesquisa genérica: link público fixo, sem token por tarefa ────────────
+  if (isGenerico) {
+    const publicUrl = `${window.location.origin}/pesquisa/${template.id}`
+
+    function copiar() {
+      navigator.clipboard.writeText(publicUrl).then(() => {
+        setCopiado(true)
+        setTimeout(() => setCopiado(false), 2000)
+      })
+    }
+
+    function abrirWhatsApp() {
+      setWhatsappMsg(templatePesquisa(clienteNome ?? 'Cliente', template.nome, publicUrl))
+      setWhatsappOpen(true)
+    }
+
+    return (
+      <div className="border rounded-lg p-3 space-y-2 bg-muted/20">
+        <div className="flex items-center gap-1.5 text-sm font-medium">
+          <ClipboardList className="h-4 w-4 text-primary" />
+          Formulário livre
+        </div>
+        {template.publicado ? (
+          <>
+            <p className="text-xs text-muted-foreground">
+              Link fixo — qualquer pessoa com o link pode responder. Gerencie em <strong>Formulários Livres</strong>.
+            </p>
+            <div className="flex items-center gap-1.5">
+              <code className="flex-1 text-xs bg-background border rounded px-2 py-1 truncate text-muted-foreground">
+                {publicUrl}
+              </code>
+              <button
+                type="button"
+                onClick={copiar}
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                title="Copiar link"
+              >
+                {copiado ? <CheckCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              </button>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full gap-1.5 h-8 text-xs text-green-700 border-green-300 hover:bg-green-50"
+              onClick={abrirWhatsApp}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Enviar por WhatsApp
+            </Button>
+          </>
+        ) : (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+            Formulário não publicado. Ative a publicação em <strong>Processos → Formulários Livres</strong>.
+          </p>
+        )}
+        <WhatsAppMessageDialog
+          open={whatsappOpen}
+          onClose={() => setWhatsappOpen(false)}
+          escritorioId={tenantId}
+          mensagemInicial={whatsappMensagem}
+          titulo={`Enviar formulário: ${template.nome}`}
+          contatosDisponiveis={contatosDisp}
+        />
+      </div>
+    )
+  }
+
+  // ── Formulário estruturado: link único por tarefa (token) ──────────────────
+  const url = tarefa.formulario_token
+    ? `${window.location.origin}/formulario-dados/${tarefa.formulario_token}`
+    : null
+
+  function handleGerar() {
+    gerarLink.mutate(tarefa.id, {
+      onSuccess: (token) => {
+        const link = `${window.location.origin}/formulario-dados/${token}`
+        navigator.clipboard.writeText(link).catch(() => {})
+        toast({ title: 'Link gerado e copiado!' })
+      },
+    })
+  }
+
+  function handleCopiar() {
+    if (!url) return
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    })
+  }
+
+  async function abrirWhatsAppEstruturado() {
+    let token = tarefa.formulario_token
+    if (!token) {
+      try {
+        token = await gerarLink.mutateAsync(tarefa.id)
+        toast({ title: 'Link gerado!' })
+      } catch {
+        toast({ title: 'Erro ao gerar link', variant: 'destructive' })
+        return
+      }
+    }
+    const link = `${window.location.origin}/formulario-dados/${token}`
+    setWhatsappMsg(templateFormularioTarefa(clienteNome ?? 'Cliente', tarefaNome ?? tarefa.nome, link))
+    setWhatsappOpen(true)
+  }
+
+  const statusLabels: Record<string, string> = {
+    nao_enviado: 'Sem link',
+    enviado:     'Link ativo',
+    preenchido:  'Preenchido',
+    expirado:    'Expirado',
+  }
+  const statusColors: Record<string, string> = {
+    nao_enviado: 'bg-gray-100 text-gray-600',
+    enviado:     'bg-blue-100 text-blue-700',
+    preenchido:  'bg-green-100 text-green-700',
+    expirado:    'bg-red-100 text-red-700',
+  }
+  const status = tarefa.formulario_status ?? 'nao_enviado'
+
+  return (
+    <div className="border rounded-lg p-3 space-y-2.5 bg-muted/20">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-sm font-medium">
+          <ClipboardList className="h-4 w-4 text-primary" />
+          Formulário do cliente
+        </div>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[status]}`}>
+          {statusLabels[status] ?? status}
+        </span>
+      </div>
+
+      {status !== 'preenchido' && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full gap-1.5 h-8 text-xs"
+          onClick={handleGerar}
+          disabled={gerarLink.isPending}
+        >
+          <Link className="h-3.5 w-3.5" />
+          {url ? 'Gerar novo link' : 'Gerar link'}
+        </Button>
+      )}
+
+      {url && (
+        <div className="flex items-center gap-1.5">
+          <code className="flex-1 text-xs bg-background border rounded px-2 py-1 truncate text-muted-foreground">
+            {url}
+          </code>
+          <button
+            type="button"
+            onClick={handleCopiar}
+            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            title="Copiar link"
+          >
+            {copiado ? <CheckCheck className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+          </button>
+        </div>
+      )}
+
+      {status !== 'preenchido' && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full gap-1.5 h-8 text-xs text-green-700 border-green-300 hover:bg-green-50"
+          onClick={abrirWhatsAppEstruturado}
+          disabled={gerarLink.isPending}
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          Enviar por WhatsApp
+        </Button>
+      )}
+
+      <WhatsAppMessageDialog
+        open={whatsappOpen}
+        onClose={() => setWhatsappOpen(false)}
+        escritorioId={tenantId}
+        mensagemInicial={whatsappMensagem}
+        titulo={`Enviar formulário: ${template.nome}`}
+        contatosDisponiveis={contatosDisp}
+      />
+    </div>
+  )
+}
+
 function TarefaDetalheConteudo({
   tarefa, ocorrenciaTitulo, ocorrenciaId, clienteId, clienteNome, colaboradores, onClose, onSalvar, onConcluir, isSaving,
 }: TarefaDetalheConteudoProps) {
@@ -84,14 +300,17 @@ function TarefaDetalheConteudo({
   const updateChecklist = useUpdateChecklistTarefa()
   const registrar       = useRegistrarHistoricoTarefa()
 
-  const [editStatus,  setEditStatus]  = useState<TarefaStatus>(tarefa.status)
-  const [editResp,    setEditResp]    = useState(tarefa.responsavel_id ?? '')
-  const [editObs,     setEditObs]     = useState(tarefa.observacoes ?? '')
-  const [editImpDesc, setEditImpDesc] = useState(tarefa.impedimento_descricao ?? '')
-  const [editImpResp, setEditImpResp] = useState(tarefa.impedimento_responsavel ?? '')
-  const [checklist,   setChecklist]   = useState<ChecklistItemProgresso[]>(() =>
+  const [editStatus,     setEditStatus]     = useState<TarefaStatus>(tarefa.status)
+  const [editResp,       setEditResp]       = useState(tarefa.responsavel_id ?? '')
+  const [editObs,        setEditObs]        = useState(tarefa.observacoes ?? '')
+  const [editImpDesc,    setEditImpDesc]    = useState(tarefa.impedimento_descricao ?? '')
+  const [editImpResp,    setEditImpResp]    = useState(tarefa.impedimento_responsavel ?? '')
+  const [editTemplateId, setEditTemplateId] = useState(tarefa.formulario_template_id ?? '')
+  const [checklist,      setChecklist]      = useState<ChecklistItemProgresso[]>(() =>
     tarefa.checklist_progresso ?? []
   )
+
+  const { data: templates = [] } = useFormulariosTemplate(tenantId)
 
   useEffect(() => {
     setEditStatus(tarefa.status)
@@ -99,6 +318,7 @@ function TarefaDetalheConteudo({
     setEditObs(tarefa.observacoes ?? '')
     setEditImpDesc(tarefa.impedimento_descricao ?? '')
     setEditImpResp(tarefa.impedimento_responsavel ?? '')
+    setEditTemplateId(tarefa.formulario_template_id ?? '')
     setChecklist(tarefa.checklist_progresso ?? [])
   }, [tarefa.id])
 
@@ -107,7 +327,8 @@ function TarefaDetalheConteudo({
     editResp !== (tarefa.responsavel_id ?? '') ||
     editObs !== (tarefa.observacoes ?? '') ||
     editImpDesc !== (tarefa.impedimento_descricao ?? '') ||
-    editImpResp !== (tarefa.impedimento_responsavel ?? '')
+    editImpResp !== (tarefa.impedimento_responsavel ?? '') ||
+    editTemplateId !== (tarefa.formulario_template_id ?? '')
 
   function saveChecklist(updated: ChecklistItemProgresso[]) {
     updateChecklist.mutate({ id: tarefa.id, checklist_progresso: updated })
@@ -204,6 +425,7 @@ function TarefaDetalheConteudo({
       status: editStatus,
       responsavel_id: editResp || undefined,
       observacoes: editObs || undefined,
+      formulario_template_id: editTemplateId || undefined,
       ...(editStatus === 'impedido'
         ? { impedimento_descricao: editImpDesc, impedimento_responsavel: editImpResp, impedimento_data: tarefa.impedimento_data ?? hoje }
         : { impedimento_descricao: undefined, impedimento_responsavel: undefined }),
@@ -357,6 +579,43 @@ function TarefaDetalheConteudo({
             readonly={isConcluida}
           />
         )}
+
+        {/* Formulário do cliente */}
+        {!isConcluida && (
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" />
+              Formulário do cliente
+            </Label>
+            <Select
+              value={editTemplateId || '__none__'}
+              onValueChange={v => setEditTemplateId(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder="Nenhum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nenhum</SelectItem>
+                {templates.map(t => (
+                  <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {editTemplateId && (() => {
+          const tmpl = templates.find(t => t.id === editTemplateId)
+          return tmpl ? (
+            <FormularioLinkPanel
+              tarefa={{ ...tarefa, formulario_template_id: editTemplateId }}
+              template={tmpl}
+              tenantId={tenantId}
+              clienteId={clienteId}
+              clienteNome={clienteNome}
+              tarefaNome={tarefa.nome}
+            />
+          ) : null
+        })()}
 
         {/* Histórico */}
         <HistoricoPanel tenantId={tenantId} tarefaId={tarefa.id} tarefaTipo="tarefa" />

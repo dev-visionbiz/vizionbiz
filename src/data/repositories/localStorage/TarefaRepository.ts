@@ -18,6 +18,12 @@ export class LocalTarefaRepository
     )
   }
 
+  async findByFormularioToken(token: string): Promise<Tarefa | null> {
+    return Promise.resolve(
+      this.readAll().find((t) => t.formulario_token === token) ?? null
+    )
+  }
+
   async findByCliente(tenantId: string, clienteId: string): Promise<Tarefa[]> {
     const ocorrencias = JSON.parse(
       localStorage.getItem('vb_ocorrencias') ?? '[]'

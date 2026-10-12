@@ -299,10 +299,10 @@ export default function PortalCadastro() {
 
       if (dadosReceita.cnae_fiscal) {
         const novosCnaes = [
-          { id: uuidv4(), tenant_id: tenantId, cliente_id: clientId, codigo: String(dadosReceita.cnae_fiscal), descricao: dadosReceita.cnae_fiscal_descricao, principal: true },
+          { id: uuidv4(), tenant_id: tenantId, cliente_id: clientId, codigo: dadosReceita.cnae_fiscal, descricao: dadosReceita.cnae_fiscal_descricao, principal: true },
           ...(dadosReceita.cnaes_secundarios ?? []).map((c) => ({
             id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
-            codigo: String(c.codigo), descricao: c.descricao, principal: false,
+            codigo: c.codigo, descricao: c.descricao, principal: false,
           })),
         ]
         await syncCnaes.mutateAsync({ tenantId, clienteId: clientId, cnaes: novosCnaes })
@@ -319,8 +319,9 @@ export default function PortalCadastro() {
   async function enviarSolicitacao() {
     setSalvando(true)
     try {
+      const processoId = uuidv4()
       const novo: ProcessoAlteracao = {
-        id: uuidv4(),
+        id: processoId,
         tenant_id: tenantId,
         client_id: clientId,
         tipo: secoesToTipo(secoesSelected),
@@ -332,6 +333,7 @@ export default function PortalCadastro() {
         criado_em: new Date().toISOString(),
       }
       await createProcesso.mutateAsync(novo)
+
       setEtapa('enviado')
     } catch (err) {
       console.error(err)

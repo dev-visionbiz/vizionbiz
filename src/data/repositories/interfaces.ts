@@ -9,6 +9,8 @@ import type {
   OcorrenciaDocumento,
   GuiaRecolhimento, GuiaStatus, TipoGuia,
   LoteImportacao,
+  FormularioTemplate, FormularioResposta,
+  ServicoRealizado,
 } from '@/domain/types'
 
 export interface Repository<T> {
@@ -182,6 +184,7 @@ export interface OcorrenciaRepository extends Repository<Ocorrencia> {
 export interface TarefaRepository extends Repository<Tarefa> {
   findByOcorrencia(tenantId: string, ocorrenciaId: string): Promise<Tarefa[]>
   findByCliente(tenantId: string, clienteId: string): Promise<Tarefa[]>
+  findByFormularioToken(token: string): Promise<Tarefa | null>
 }
 
 export interface OcorrenciaDocumentoRepository extends Repository<OcorrenciaDocumento> {
@@ -201,4 +204,20 @@ export interface GuiaRecolhimentoRepository extends Repository<GuiaRecolhimento>
 
 export interface LoteImportacaoRepository extends Repository<LoteImportacao> {
   findByTenant(tenantId: string): Promise<LoteImportacao[]>
+}
+
+export interface FormularioTemplateRepository extends Repository<FormularioTemplate> {
+  findAtivos(tenantId: string): Promise<FormularioTemplate[]>
+}
+
+export interface FormularioRespostaRepository extends Repository<FormularioResposta> {
+  findByOcorrencia(ocorrenciaId: string): Promise<FormularioResposta[]>
+  findByCliente(tenantId: string, clienteId: string): Promise<FormularioResposta[]>
+  findByTemplate(tenantId: string, templateId: string): Promise<FormularioResposta[]>
+}
+
+export interface ServicoRealizadoRepository extends Repository<ServicoRealizado> {
+  findByCliente(tenantId: string, clienteId: string): Promise<ServicoRealizado[]>
+  findPendentes(tenantId: string): Promise<ServicoRealizado[]>
+  findByCompetencia(tenantId: string, competencia: string): Promise<ServicoRealizado[]>
 }

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, RotateCcw } from 'lucide-react'
 import type { BillingPolicy } from '@/domain/types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -32,6 +32,7 @@ const schema = z.object({
   encargo_renegociacao_valor: z.coerce.number().min(0),
   encargo_teto: z.coerce.number().min(0),
   modo_acesso: z.enum(['informativo', 'parcial', 'total']),
+  descricao_cobranca_padrao: z.string().max(250).optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -63,6 +64,7 @@ export default function PoliticaCobranca() {
       encargo_renegociacao_valor: 0,
       encargo_teto: 0,
       modo_acesso: 'informativo',
+      descricao_cobranca_padrao: 'Referente honorários dos serviços contábeis contratados Competência [mes/ano]',
     },
   })
 
@@ -79,6 +81,7 @@ export default function PoliticaCobranca() {
         encargo_renegociacao_valor: policy.encargo_renegociacao_valor,
         encargo_teto: policy.encargo_teto,
         modo_acesso: policy.modo_acesso,
+        descricao_cobranca_padrao: policy.descricao_cobranca_padrao ?? 'Referente honorários dos serviços contábeis contratados Competência [mes/ano]',
       })
     }
   }, [policy, reset])
@@ -87,10 +90,12 @@ export default function PoliticaCobranca() {
   const encargoTipo = watch('encargo_renegociacao_tipo')
 
   const onSubmit = async (data: FormData) => {
+    const { descricao_cobranca_padrao, ...rest } = data
     const updated: BillingPolicy = {
       id: policy?.id ?? uuidv4(),
       tenant_id: tenantId,
-      ...data,
+      ...rest,
+      descricao_cobranca_padrao: descricao_cobranca_padrao || undefined,
     }
     try {
       await upsert.mutateAsync(updated)
@@ -224,6 +229,46 @@ export default function PoliticaCobranca() {
                 <SelectItem value="total">Total — Tudo bloqueado até regularização (requer aceite)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Descrição Padrão de Cobrança</CardTitle>
+          <CardDescription>
+            Texto padrão enviado ao banco/boleto. Use <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">[mes/ano]</code> como variável — será substituído pela competência na geração do lote.
+            Pode ser sobreposto individualmente no cadastro de cada cliente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="descricao_cobranca_padrao">Template (máx. 250 caracteres)</Label>
+              <button
+                type="button"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => {
+                  const field = document.getElementById('descricao_cobranca_padrao') as HTMLTextAreaElement | null
+                  if (field) {
+                    field.value = 'Referente honorários dos serviços contábeis contratados Competência [mes/ano]'
+                    field.dispatchEvent(new Event('input', { bubbles: true }))
+                  }
+                }}
+              >
+                <RotateCcw size={12} /> Restaurar padrão
+              </button>
+            </div>
+            <textarea
+              id="descricao_cobranca_padrao"
+              rows={2}
+              maxLength={250}
+              className="w-full resize-none text-sm rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
+              {...register('descricao_cobranca_padrao')}
+            />
+            <p className="text-xs text-muted-foreground">
+              Exemplo de saída: <em>"Referente honorários dos serviços contábeis contratados Competência 10/2026"</em>
+            </p>
           </div>
         </CardContent>
       </Card>

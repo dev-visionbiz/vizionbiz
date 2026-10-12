@@ -39,3 +39,5 @@ export { LocalClienteContatoRepository, clienteContatoRepo } from './ClienteCont
 export { LocalClienteCnaeRepository, clienteCnaeRepo } from './ClienteCnaeRepository'
 export { LocalProcessoAberturaRepository, processoAberturaRepo } from './ProcessoAberturaRepository'
 export { LocalProcessoAlteracaoRepository, processoAlteracaoRepo } from './ProcessoAlteracaoRepository'
+export { LocalFormularioTemplateRepository, LocalFormularioRespostaRepository, formularioTemplateRepo, formularioRespostaRepo } from './FormularioTemplateRepository'
+export { LocalServicoRealizadoRepository, servicoRealizadoRepo } from './ServicoRealizadoRepository'

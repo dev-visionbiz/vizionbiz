@@ -219,6 +219,7 @@ export default function ClienteFicha() {
     titulo_eleitor: string
     doc_profissional_tipo: string
     doc_profissional_numero: string
+    descricao_cobranca_padrao: string
   } | null>(null)
 
   // Status change dialog
@@ -383,10 +384,10 @@ export default function ClienteFicha() {
     if (!dadosCNPJ || !clientId) return
     try {
       const todos = [
-        { id: uuidv4(), tenant_id: tenantId, cliente_id: clientId, codigo: String(dadosCNPJ.cnae_fiscal), descricao: dadosCNPJ.cnae_fiscal_descricao, principal: true },
+        { id: uuidv4(), tenant_id: tenantId, cliente_id: clientId, codigo: dadosCNPJ.cnae_fiscal, descricao: dadosCNPJ.cnae_fiscal_descricao, principal: true },
         ...(dadosCNPJ.cnaes_secundarios ?? []).map((c) => ({
           id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
-          codigo: String(c.codigo), descricao: c.descricao, principal: false,
+          codigo: c.codigo, descricao: c.descricao, principal: false,
         })),
       ]
       await syncCnaes.mutateAsync({ tenantId, clienteId: clientId, cnaes: todos })
@@ -448,10 +449,10 @@ export default function ClienteFicha() {
 
       if (dadosCNPJ.cnae_fiscal) {
         const novosCnaes = [
-          { id: uuidv4(), tenant_id: tenantId, cliente_id: clientId, codigo: String(dadosCNPJ.cnae_fiscal), descricao: dadosCNPJ.cnae_fiscal_descricao, principal: true },
+          { id: uuidv4(), tenant_id: tenantId, cliente_id: clientId, codigo: dadosCNPJ.cnae_fiscal, descricao: dadosCNPJ.cnae_fiscal_descricao, principal: true },
           ...(dadosCNPJ.cnaes_secundarios ?? []).map((c) => ({
             id: uuidv4(), tenant_id: tenantId, cliente_id: clientId,
-            codigo: String(c.codigo), descricao: c.descricao, principal: false,
+            codigo: c.codigo, descricao: c.descricao, principal: false,
           })),
         ]
         await syncCnaes.mutateAsync({ tenantId, clienteId: clientId, cnaes: novosCnaes })
@@ -506,6 +507,7 @@ export default function ClienteFicha() {
       titulo_eleitor: client.titulo_eleitor ?? '',
       doc_profissional_tipo: client.doc_profissional_tipo ?? '',
       doc_profissional_numero: client.doc_profissional_numero ?? '',
+      descricao_cobranca_padrao: client.descricao_cobranca_padrao ?? '',
     })
   }
 
@@ -526,6 +528,7 @@ export default function ClienteFicha() {
               carteira_id: editData.carteira_id || undefined,
               inscricao_estadual: editData.inscricao_estadual || undefined,
               inscricao_municipal: editData.inscricao_municipal || undefined,
+              descricao_cobranca_padrao: editData.descricao_cobranca_padrao || undefined,
             }
           : {
               razao_social: editData.razao_social,
@@ -540,6 +543,7 @@ export default function ClienteFicha() {
               titulo_eleitor: editData.titulo_eleitor || undefined,
               doc_profissional_tipo: editData.doc_profissional_tipo || undefined,
               doc_profissional_numero: editData.doc_profissional_numero || undefined,
+              descricao_cobranca_padrao: editData.descricao_cobranca_padrao || undefined,
             },
       })
       log('dados_editados', 'Dados cadastrais atualizados')
@@ -997,6 +1001,29 @@ export default function ClienteFicha() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between">
+                      <Label>Descrição de cobrança (override)</Label>
+                      <span className={`text-[11px] tabular-nums ${
+                        (editData.descricao_cobranca_padrao?.length ?? 0) > 240 ? 'text-red-500' :
+                        (editData.descricao_cobranca_padrao?.length ?? 0) > 200 ? 'text-amber-500' :
+                        'text-muted-foreground'
+                      }`}>
+                        {editData.descricao_cobranca_padrao?.length ?? 0}/250
+                      </span>
+                    </div>
+                    <textarea
+                      rows={2}
+                      maxLength={250}
+                      value={editData.descricao_cobranca_padrao}
+                      placeholder="Deixe em branco para usar o texto padrão do escritório. Use [mes/ano] como variável."
+                      className="w-full resize-none text-sm rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
+                      onChange={(e) => setEditData((d) => d && ({ ...d, descricao_cobranca_padrao: e.target.value }))}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Sobrepõe o padrão do escritório para este cliente. Use <code className="bg-muted px-1 rounded font-mono text-[11px]">[mes/ano]</code> para inserir a competência.
+                    </p>
+                  </div>
                   <div className="flex gap-2">
                     <Button onClick={saveClient}>Salvar</Button>
                     <Button variant="outline" onClick={() => { setEditData(null); setDadosCNPJ(null); setDivergenciasRF([]) }}>Cancelar</Button>
@@ -1055,7 +1082,7 @@ export default function ClienteFicha() {
                                 <MapPin className="h-3.5 w-3.5 mr-1" /> Importar endereço fiscal
                               </Button>
                             )}
-                            {temDivCnaes && dadosCNPJ.cnae_fiscal > 0 && (
+                            {temDivCnaes && !!dadosCNPJ.cnae_fiscal && (
                               <Button
                                 size="sm" variant="outline"
                                 onClick={() => pedirConfirmacao(
@@ -1171,6 +1198,14 @@ export default function ClienteFicha() {
                     <div><span className="text-muted-foreground">Carteira:</span> <Badge variant="outline" className="ml-1">{carteiraAtual.nome}</Badge></div>
                   ) : (
                     <div><span className="text-muted-foreground">Carteira:</span> <span className="text-muted-foreground italic">Não definida</span></div>
+                  )}
+                  {client.descricao_cobranca_padrao ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-muted-foreground text-xs">Descrição de cobrança (override):</span>
+                      <span className="text-sm italic text-foreground/80">{client.descricao_cobranca_padrao}</span>
+                    </div>
+                  ) : (
+                    <div><span className="text-muted-foreground">Descrição de cobrança:</span> <span className="text-muted-foreground italic text-xs">Usa padrão do escritório</span></div>
                   )}
                 </div>
               )}

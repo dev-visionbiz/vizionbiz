@@ -26,6 +26,7 @@ import {
   useCreateFluxo, useUpdateFluxo, useDeleteFluxo,
   useCreateFluxoTarefa, useUpdateFluxoTarefa, useDeleteFluxoTarefa,
 } from '@/data/hooks/useFluxos'
+import { useFormulariosTemplate } from '@/data/hooks/useFormulariosTemplate'
 import type { Fluxo, CategoriaDemanda, OcorrenciaDocumentoConfig, OcorrenciaDocumentoTipo } from '@/domain/types'
 
 // â”€â”€â”€ Tipos locais â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -52,6 +53,7 @@ interface EtapaForm {
   responsavel_padrao: string
   checklist: ChecklistItemForm[]
   documentos_config: OcorrenciaDocumentoConfig[]
+  formulario_template_id: string
 }
 
 interface EtapaFormData {
@@ -61,6 +63,7 @@ interface EtapaFormData {
   responsavel_padrao: string
   checklist: ChecklistItemForm[]
   documentos_config: OcorrenciaDocumentoConfig[]
+  formulario_template_id: string
 }
 
 // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -88,6 +91,7 @@ const defaultEtapaForm: EtapaFormData = {
   responsavel_padrao: '',
   checklist: [],
   documentos_config: [],
+  formulario_template_id: '',
 }
 
 function prazoLabel(dias: string) {
@@ -120,6 +124,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
   const [etapaForm, setEtapaForm] = useState<EtapaFormData>(defaultEtapaForm)
 
   const etapasQuery = useFluxoTarefas(tenantId, editFluxo?.id ?? '')
+  const { data: templates = [] } = useFormulariosTemplate(tenantId)
   const escritorioUsers = users.filter((u) => u.papel !== 'cliente' && u.ativo)
 
   // Popula etapas quando abre o dialog de edição (dados vêm do cache do React Query)
@@ -135,6 +140,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
         responsavel_padrao: et.responsavel_padrao ?? '',
         checklist: (et.checklist ?? []).map((c) => ({ id: c.id, nome: c.nome })),
         documentos_config: et.documentos_config ?? [],
+        formulario_template_id: et.formulario_template_id ?? '',
       }))
     )
   }, [dialogOpen, editFluxo?.id, etapasQuery.data])
@@ -197,6 +203,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
       responsavel_padrao: e.responsavel_padrao,
       checklist: e.checklist.map((c) => ({ ...c })),
       documentos_config: e.documentos_config.map((d) => ({ ...d })),
+      formulario_template_id: e.formulario_template_id,
     })
     setEtapaDialogOpen(true)
   }
@@ -248,6 +255,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
         .filter((c) => c.nome.trim())
         .map((c, i) => ({ id: c.id, ordem: i + 1, nome: c.nome })),
       documentos_config: e.documentos_config.length > 0 ? e.documentos_config : undefined,
+      formulario_template_id: e.formulario_template_id || undefined,
     }
   }
 
@@ -714,6 +722,33 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                     ))}
                   </div>
                 )}
+              </div>
+
+              <Separator />
+
+              {/* Formulário de coleta de dados */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5 text-sm">
+                  <Check className="h-4 w-4" />
+                  Formulário do cliente
+                </Label>
+                <Select
+                  value={etapaForm.formulario_template_id || '__none__'}
+                  onValueChange={(v) => setEtapaForm({ ...etapaForm, formulario_template_id: v === '__none__' ? '' : v })}
+                >
+                  <SelectTrigger className="text-sm h-8">
+                    <SelectValue placeholder="Nenhum" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Nenhum</SelectItem>
+                    {templates.filter(t => t.ativo).map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Quando definido, o escritório pode gerar um link de formulário para o cliente preencher durante esta etapa.
+                </p>
               </div>
 
             </div>

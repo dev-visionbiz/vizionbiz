@@ -7,6 +7,7 @@ import { useClientDocuments } from '@/data/hooks/useDocuments'
 import { useClientFolders } from '@/data/hooks/useFolders'
 import { useBillingPolicy } from '@/data/hooks/useBillingPolicy'
 import { useProcessosAlteracao } from '@/data/hooks/useProcessoAlteracao'
+import { useOcorrenciasByCliente } from '@/data/hooks/useOcorrencias'
 import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   FileText, CreditCard, Calendar, AlertCircle, AlertTriangle,
-  ClipboardEdit, ExternalLink,
+  ClipboardEdit, ExternalLink, SendHorizonal,
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { calcularEncargos } from '@/domain/financeiro/calcularEncargos'
@@ -38,6 +39,7 @@ export default function PortalInicio() {
   const { data: folders } = useClientFolders(tenantId, clientId)
   const { data: policy } = useBillingPolicy(tenantId)
   const { data: processos } = useProcessosAlteracao(tenantId, clientId)
+  const { data: ocorrencias = [] } = useOcorrenciasByCliente(tenantId, clientId)
 
   if (loadingInv || loadingDocs) return <PageLoader />
 
@@ -90,6 +92,11 @@ export default function PortalInicio() {
     (p) => p.formulario_status === 'enviado' && p.status === 'formulario_enviado'
   )
 
+  const ocorrenciasAbertas = ocorrencias
+    .filter(o => o.status === 'pendente' || o.status === 'em_andamento')
+    .sort((a, b) => b.criado_em.localeCompare(a.criado_em))
+    .slice(0, 3)
+
   return (
     <div className="space-y-6">
       {/* Greeting */}
@@ -141,6 +148,38 @@ export default function PortalInicio() {
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* Solicitações em aberto */}
+      {ocorrenciasAbertas.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <SendHorizonal className="h-4 w-4 text-cyan-600" />
+            Minhas Solicitações
+          </h2>
+          <div className="flex flex-col gap-2">
+            {ocorrenciasAbertas.map(o => (
+              <div key={o.id} className="rounded-lg border p-3.5 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{o.titulo}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {o.status === 'em_andamento' ? 'Em andamento' : 'Aguardando início'}
+                  </p>
+                </div>
+                <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border ${o.status === 'em_andamento' ? 'bg-yellow-100 text-yellow-800 border-transparent dark:bg-amber-950/50 dark:text-amber-300' : 'bg-blue-100 text-blue-800 border-transparent'}`}>
+                  {o.status === 'em_andamento' ? 'Em andamento' : 'Pendente'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Button
+            variant="link"
+            className="h-auto p-0 text-xs"
+            onClick={() => navigate('/portal/solicitacoes')}
+          >
+            Ver todas as solicitações
+          </Button>
         </div>
       )}
 

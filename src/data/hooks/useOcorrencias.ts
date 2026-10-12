@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
 import { ocorrenciaRepo } from '@/data/repositories/localStorage/OcorrenciaRepository'
 import { tarefaRepo } from '@/data/repositories/localStorage/TarefaRepository'
-import type { Ocorrencia, Tarefa, TarefaStatus, ChecklistItemProgresso, OcorrenciaStatus } from '@/domain/types'
+import type { Ocorrencia, Tarefa, TarefaStatus, ChecklistItemProgresso, OcorrenciaStatus, FormularioColetaStatus } from '@/domain/types'
 
 function derivarStatusTarefa(t: Tarefa): Tarefa {
   if (t.status === 'impedido') return t
@@ -166,6 +166,21 @@ export function useUpdateChecklistTarefa() {
   return useMutation({
     mutationFn: ({ id, checklist_progresso }: { id: string; checklist_progresso: ChecklistItemProgresso[] }) =>
       tarefaRepo.update(id, { checklist_progresso }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tarefas'] }),
+  })
+}
+
+export function useGerarFormularioLink() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (tarefaId: string) => {
+      const token = uuid()
+      await tarefaRepo.update(tarefaId, {
+        formulario_token: token,
+        formulario_status: 'enviado' as FormularioColetaStatus,
+      })
+      return token
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tarefas'] }),
   })
 }

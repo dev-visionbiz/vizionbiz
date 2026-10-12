@@ -976,9 +976,9 @@ function ArquivoStatusRow({ arquivo }: { arquivo: ArquivoItem }) {
 
 function StatCard({ count, label, color }: { count: number; label: string; color: 'green' | 'amber' | 'red' }) {
   const colors = {
-    green: 'bg-green-50 border-green-200 text-green-700',
-    amber: 'bg-amber-50 border-amber-200 text-amber-700',
-    red: 'bg-red-50 border-red-200 text-red-700',
+    green: 'bg-card border-green-300 text-green-700 dark:border-green-900 dark:text-green-400',
+    amber: 'bg-card border-amber-300 text-amber-700 dark:border-amber-900 dark:text-amber-400',
+    red:   'bg-card border-red-300 text-red-600 dark:border-red-900 dark:text-red-400',
   }
   return (
     <div className={cn('border rounded-lg p-3 text-center', colors[color])}>
@@ -997,9 +997,9 @@ function AlertBox({
   items: string[]
 }) {
   const colors = {
-    amber: 'bg-amber-50 border-amber-200 text-amber-700',
-    red: 'bg-red-50 border-red-200 text-red-700',
-    zinc: 'bg-zinc-50 border-zinc-200 text-zinc-600',
+    amber: 'bg-card border-amber-300 text-amber-700 dark:border-amber-900 dark:text-amber-400',
+    red:   'bg-card border-red-300 text-red-600 dark:border-red-900 dark:text-red-400',
+    zinc:  'bg-card border-border text-muted-foreground',
   }
   return (
     <div className={cn('border rounded-lg p-2.5 text-xs', colors[color])}>

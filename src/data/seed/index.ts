@@ -12,7 +12,7 @@ import type {
 } from '@/domain/types'
 
 const TENANT_ID = 'tenant-001'
-const SEED_KEY = 'vb_seeded_v22'
+const SEED_KEY = 'vb_seeded_v23'
 
 // suppress unused import warning
 const _uuidv4 = uuidv4
@@ -172,7 +172,15 @@ export function runSeed(): void {
   const users: User[] = [
     { id: 'user-admin', tenant_id: TENANT_ID, nome: 'Admin Fidelis', email: 'admin@fidelis.com', papel: 'escritorio_admin', ativo: true, senha_hash: 'senha123' },
     { id: 'user-colab', tenant_id: TENANT_ID, nome: 'Ana Colaboradora', email: 'colaborador@fidelis.com', papel: 'escritorio_colaborador', ativo: true, senha_hash: 'senha123', modulos: ['clientes', 'documentos'] },
-    { id: 'user-c1', tenant_id: TENANT_ID, nome: 'João Bento', email: 'cliente@padariasbento.com', papel: 'cliente', client_id: 'client-001', ativo: true, senha_hash: 'senha123', papel_portal: 'responsavel' },
+    // João Bento: acessa Padaria São Bento (PJ) e João Bento MEI (PF) — demo multi-empresa
+    {
+      id: 'user-c1', tenant_id: TENANT_ID, nome: 'João Bento',
+      email: 'cliente@padariasbento.com', papel: 'cliente', ativo: true, senha_hash: 'senha123',
+      clientes: [
+        { client_id: 'client-001', papel_portal: 'responsavel' },
+        { client_id: 'client-004', papel_portal: 'responsavel' },
+      ],
+    },
     { id: 'user-c2', tenant_id: TENANT_ID, nome: 'Maria Tech', email: 'cliente@techsolutions.com', papel: 'cliente', client_id: 'client-002', ativo: true, senha_hash: 'senha123', papel_portal: 'membro', secoes_portal: ['inicio', 'documentos'] },
     { id: 'user-c3', tenant_id: TENANT_ID, nome: 'Carlos ABC', email: 'cliente@comercioabc.com', papel: 'cliente', client_id: 'client-003', ativo: true, senha_hash: 'senha123', papel_portal: 'responsavel' },
   ]

@@ -4,11 +4,12 @@ import {
   LayoutDashboard, Users, DollarSign, Settings,
   Home, FolderOpen, Receipt, ChevronLeft, ChevronRight, Pin, PinOff,
   UserCog, ClipboardList, CheckSquare, Layers, Workflow, ChevronDown, GitBranch,
-  FileBarChart2, FileText, Building2,
+  FileBarChart2, FileText, Building2, SendHorizonal, FlaskConical, ArrowLeftRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
 import { useTenant } from '@/data/hooks/useTenant'
+import { useClient } from '@/data/hooks/useClients'
 import { usePortalAcesso } from '@/data/hooks/usePortalAcesso'
 import { podeAcessarModulo, podeAcessarSubModuloTarefas } from '@/auth/roles'
 import type { ModuloEscritorio, SubModuloTarefas } from '@/domain/types'
@@ -31,7 +32,7 @@ type NavGroup = {
 
 type NavEntry = NavLink | NavGroup
 
-const PROCESSOS_HREFS = ['/escritorio/tarefas', '/escritorio/ocorrencias', '/escritorio/rotinas', '/escritorio/fluxos']
+const PROCESSOS_HREFS = ['/escritorio/tarefas', '/escritorio/ocorrencias', '/escritorio/rotinas', '/escritorio/fluxos', '/escritorio/pesquisas']
 
 const escritorioNavBase: NavEntry[] = [
   { label: 'Dashboard', href: '/escritorio/dashboard', icon: LayoutDashboard },
@@ -41,10 +42,11 @@ const escritorioNavBase: NavEntry[] = [
     icon: Workflow,
     modulo: 'tarefas',
     children: [
-      { label: 'Tarefas',     href: '/escritorio/tarefas',     icon: CheckSquare,  modulo: 'tarefas' },
-      { label: 'Ocorrências', href: '/escritorio/ocorrencias', icon: Layers,       modulo: 'tarefas', submodulo: 'ocorrencias' },
-      { label: 'Rotinas',     href: '/escritorio/rotinas',     icon: ClipboardList, modulo: 'tarefas', submodulo: 'rotinas' },
-      { label: 'Modelo de fluxos', href: '/escritorio/fluxos', icon: GitBranch,    modulo: 'tarefas' },
+      { label: 'Tarefas',          href: '/escritorio/tarefas',      icon: CheckSquare,  modulo: 'tarefas' },
+      { label: 'Ocorrências',      href: '/escritorio/ocorrencias',  icon: Layers,       modulo: 'tarefas', submodulo: 'ocorrencias' },
+      { label: 'Rotinas',          href: '/escritorio/rotinas',      icon: ClipboardList, modulo: 'tarefas', submodulo: 'rotinas' },
+      { label: 'Modelo de fluxos', href: '/escritorio/fluxos',       icon: GitBranch,     modulo: 'tarefas' },
+      { label: 'Formulários Livres', href: '/escritorio/pesquisas',   icon: FlaskConical,  modulo: 'tarefas' },
     ],
   },
   { label: 'Clientes',      href: '/escritorio/clientes',      icon: Users,      modulo: 'clientes' },
@@ -55,12 +57,14 @@ const escritorioNavBase: NavEntry[] = [
 ]
 
 const clienteNavBase: { label: string; href: string; icon: React.ElementType; somenteResponsavel?: boolean }[] = [
-  { label: 'Início',              href: '/portal/inicio',      icon: Home },
-  { label: 'Dados Cadastrais',    href: '/portal/cadastro',    icon: Building2 },
-  { label: 'Documentos',          href: '/portal/documentos',  icon: FolderOpen },
-  { label: 'Financeiro',          href: '/portal/financeiro',  icon: Receipt },
-  { label: 'Guias e Recolhimentos', href: '/portal/guias',     icon: FileText },
-  { label: 'Equipe',              href: '/portal/equipe',      icon: UserCog, somenteResponsavel: true },
+  { label: 'Início',              href: '/portal/inicio',         icon: Home },
+  { label: 'Dados Cadastrais',    href: '/portal/cadastro',       icon: Building2 },
+  { label: 'Solicitar Serviço',   href: '/portal/solicitacoes',   icon: SendHorizonal },
+  { label: 'Formulários',         href: '/portal/pesquisas',      icon: FlaskConical },
+  { label: 'Documentos',          href: '/portal/documentos',     icon: FolderOpen },
+  { label: 'Financeiro',          href: '/portal/financeiro',     icon: Receipt },
+  { label: 'Guias e Recolhimentos', href: '/portal/guias',        icon: FileText },
+  { label: 'Equipe',              href: '/portal/equipe',         icon: UserCog, somenteResponsavel: true },
 ]
 
 interface SidebarProps {
@@ -78,6 +82,8 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
   const { data: tenant } = useTenant(currentUser?.tenant_id ?? '')
   const isCliente = currentUser?.papel === 'cliente'
   const { secoesPermitidas, papelPortal } = usePortalAcesso()
+  const temMultiplasEmpresas = isCliente && (currentUser?.clientes?.length ?? 0) > 1
+  const { data: empresaAtiva } = useClient(isCliente ? (currentUser?.client_id ?? '') : '')
 
   const grupoProcessosAtivo = PROCESSOS_HREFS.some(h => location.pathname.startsWith(h))
   const [processosAberto, setProcessosAberto] = useState(grupoProcessosAtivo)
@@ -91,7 +97,7 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
         .filter((item) => {
           if (item.somenteResponsavel && papelPortal !== 'responsavel') return false
           if (!item.somenteResponsavel && item.href !== '/portal/inicio') {
-            const secao = item.href.split('/').pop() as 'documentos' | 'financeiro' | 'guias'
+            const secao = item.href.split('/').pop() as typeof secoesPermitidas[number]
             return secoesPermitidas.includes(secao)
           }
           return true
@@ -261,6 +267,29 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
           <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
             {renderNavEntries(nav)}
           </nav>
+
+          {temMultiplasEmpresas && (
+            <div className="border-t p-2 shrink-0">
+              <Link
+                to="/portal/selecionar-empresa"
+                title={!showFull ? 'Trocar empresa' : undefined}
+                className={cn(
+                  'flex items-center rounded-md text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  showFull ? 'gap-3 px-3 py-2' : 'justify-center p-2',
+                )}
+              >
+                <Building2 className="h-5 w-5 shrink-0" />
+                {showFull && (
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-xs leading-tight">{empresaAtiva?.fantasia ?? empresaAtiva?.razao_social ?? '...'}</p>
+                    <p className="text-xs text-primary font-medium flex items-center gap-1 mt-0.5">
+                      <ArrowLeftRight className="h-3 w-3" /> Trocar empresa
+                    </p>
+                  </div>
+                )}
+              </Link>
+            </div>
+          )}
         </aside>
       </div>
 
@@ -286,6 +315,24 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {renderNavEntries(nav, true)}
         </nav>
+
+        {temMultiplasEmpresas && (
+          <div className="border-t p-3 shrink-0">
+            <Link
+              to="/portal/selecionar-empresa"
+              onClick={onCloseMobile}
+              className="flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground min-h-[44px]"
+            >
+              <Building2 className="h-5 w-5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-xs leading-tight">{empresaAtiva?.fantasia ?? empresaAtiva?.razao_social ?? '...'}</p>
+                <p className="text-xs text-primary font-medium flex items-center gap-1 mt-0.5">
+                  <ArrowLeftRight className="h-3 w-3" /> Trocar empresa
+                </p>
+              </div>
+            </Link>
+          </div>
+        )}
       </aside>
     </>
   )

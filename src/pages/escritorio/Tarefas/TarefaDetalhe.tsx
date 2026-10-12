@@ -54,7 +54,7 @@ export interface TarefaUnificada {
 
 export const statusConfig: Record<TarefaStatus, { label: string; className: string }> = {
   pendente:      { label: 'Pendente',     className: 'bg-blue-100 text-blue-800 border-transparent' },
-  em_andamento:  { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent' },
+  em_andamento:  { label: 'Em andamento', className: 'bg-yellow-100 text-yellow-800 border-transparent dark:bg-amber-950/50 dark:text-amber-300' },
   concluida:     { label: 'Concluída',    className: 'bg-green-100 text-green-800 border-transparent' },
   atrasada:      { label: 'Atrasada',     className: 'bg-red-100 text-red-800 border-transparent' },
   nao_se_aplica: { label: 'N/A',          className: 'bg-gray-100 text-gray-500 border-transparent' },
@@ -64,7 +64,7 @@ export const statusConfig: Record<TarefaStatus, { label: string; className: stri
 export const urgenciaConfig: Record<Urgencia, { label: string; className: string }> = {
   critico: { label: 'Crítico', className: 'bg-red-600 text-white border-transparent' },
   alta:    { label: 'Alta',    className: 'bg-orange-500 text-white border-transparent' },
-  media:   { label: 'Média',   className: 'bg-yellow-500 text-white border-transparent' },
+  media:   { label: 'Média',   className: 'bg-yellow-500 text-white border-transparent dark:bg-yellow-400 dark:text-yellow-950' },
   normal:  { label: '',        className: '' },
 }
 
