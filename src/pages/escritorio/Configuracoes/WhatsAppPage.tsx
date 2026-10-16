@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/auth/AuthProvider'
 import { whatsappService, type WhatsAppStatus } from '@/lib/whatsapp/whatsappService'
 import { useTenant, useUpdateTenant } from '@/data/hooks/useTenant'
@@ -23,7 +23,10 @@ import {
   ScanLine,
   RotateCcw,
   Info,
+  Link,
+  X,
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import {
   DEFAULT_TEMPLATE_GUIA,
   DEFAULT_TEMPLATE_DOCUMENTO,
@@ -132,10 +135,14 @@ export default function WhatsAppPage() {
   const [tmplDoc, setTmplDoc] = useState(DEFAULT_TEMPLATE_DOCUMENTO)
   const [salvando, setSalvando] = useState(false)
 
+  const [urlServidor, setUrlServidor] = useState(() => whatsappService.getUrl())
+  const [urlInput, setUrlInput] = useState(() => whatsappService.isUrlCustomizada() ? whatsappService.getUrl() : '')
+  const [salvandoUrl, setSalvandoUrl] = useState(false)
+
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const apiConfigurada = !!import.meta.env.VITE_WHATSAPP_API_URL
+  const apiConfigurada = !!whatsappService.getUrl()
 
   // Carrega os templates salvos quando o tenant chegar
   useEffect(() => {
@@ -145,7 +152,7 @@ export default function WhatsAppPage() {
   }, [tenant])
 
   async function fetchStatus() {
-    if (!escritorioId || !apiConfigurada) return
+    if (!escritorioId || !whatsappService.getUrl()) return
     const res = await whatsappService.obterStatus(escritorioId)
     setStatus(res.status)
     setPhone(res.phone)
@@ -204,6 +211,22 @@ export default function WhatsAppPage() {
     }
   }, [status])
 
+  const handleSalvarUrl = useCallback(async () => {
+    setSalvandoUrl(true)
+    whatsappService.setUrl(urlInput)
+    setUrlServidor(whatsappService.getUrl())
+    toast({ title: 'URL atualizada. Verificando conexão...' })
+    await fetchStatus()
+    setSalvandoUrl(false)
+  }, [urlInput, toast])
+
+  const handleLimparUrl = useCallback(() => {
+    whatsappService.clearUrl()
+    setUrlInput('')
+    setUrlServidor(whatsappService.getUrl())
+    toast({ title: 'URL redefinida para o padrão do .env.' })
+  }, [toast])
+
   async function handleConectar() {
     setLoading(true)
     try {
@@ -257,18 +280,13 @@ export default function WhatsAppPage() {
     }
   }
 
-  if (!apiConfigurada) {
-    return (
-      <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-        <strong>VITE_WHATSAPP_API_URL</strong> não está configurado. Adicione a variável no{' '}
-        <code className="font-mono">.env.local</code> apontando para o servidor Node.js (ex:{' '}
-        <code className="font-mono">http://localhost:3001</code>).
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6 py-2">
+      {!apiConfigurada && (
+        <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+          Nenhuma URL configurada. Cole o endereço do seu servidor Cloudflare Tunnel no campo abaixo.
+        </div>
+      )}
       {/* Barra de status */}
       <div className="flex items-center gap-3 rounded-lg border p-4">
         {status === 'connected' && <Wifi className="h-5 w-5 text-green-500 shrink-0" />}
@@ -317,6 +335,57 @@ export default function WhatsAppPage() {
           WhatsApp conectado. As mensagens enviadas aos clientes usarão este número.
         </div>
       )}
+
+      {/* URL do servidor */}
+      <div className="rounded-lg border p-4 space-y-3">
+        <div>
+          <p className="font-semibold text-sm flex items-center gap-1.5">
+            <Link className="h-4 w-4" />
+            URL do servidor WhatsApp
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Cole aqui a URL do Cloudflare Tunnel sempre que ela mudar. Não é necessário redeploy.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Input
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              placeholder="https://xyz.trycloudflare.com"
+              className="font-mono text-xs pr-8"
+            />
+            {urlInput && (
+              <button
+                type="button"
+                onClick={() => setUrlInput('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <Button size="sm" onClick={handleSalvarUrl} disabled={salvandoUrl || !urlInput.trim()}>
+            Salvar
+          </Button>
+          {whatsappService.isUrlCustomizada() && (
+            <Button size="sm" variant="ghost" onClick={handleLimparUrl} title="Usar URL do .env">
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          URL ativa:{' '}
+          <code className="font-mono">
+            {urlServidor || <span className="italic">não configurada</span>}
+          </code>
+          {whatsappService.isUrlCustomizada() && (
+            <span className="ml-2 text-amber-600 dark:text-amber-400">(personalizada)</span>
+          )}
+        </p>
+      </div>
 
       {/* Templates de mensagem */}
       <div className="rounded-lg border p-4 space-y-5">
