@@ -1,6 +1,8 @@
-export type UserRole = 'escritorio_admin' | 'escritorio_colaborador' | 'cliente'
+export type UserRole = 'escritorio_admin' | 'escritorio_colaborador' | 'cliente' | 'visionbiz_admin'
+export type TenantStatus = 'ativo' | 'inativo' | 'suspenso' | 'trial'
+export type TenantPlano = 'starter' | 'pro' | 'enterprise'
 export type ContrataNatureza = 'principal' | 'avulso' | 'gestao_provisoria' | 'emissao'
-export type PortalSecao = 'inicio' | 'cadastro' | 'documentos' | 'financeiro' | 'guias' | 'solicitacoes' | 'pesquisas'
+export type PortalSecao = 'inicio' | 'cadastro' | 'documentos' | 'financeiro' | 'guias' | 'solicitacoes' | 'pesquisas' | 'apps' | 'certificados'
 export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'tarefas'
 export type SubModuloTarefas = 'ocorrencias' | 'rotinas'
 export type PapelPortalCliente = 'responsavel' | 'membro'
@@ -61,6 +63,10 @@ export interface Tenant {
   template_whatsapp_documento?: string
   chave_pix?: string
   instrucoes_pagamento?: string
+  status?: TenantStatus
+  plano?: TenantPlano
+  data_cadastro?: string
+  data_expiracao?: string
 }
 
 export interface ClienteAcesso {
@@ -976,4 +982,200 @@ export interface FormularioResposta {
   processado: boolean
   processado_em?: string
   criado_em: string
+}
+
+// ==================== APP STORE ====================
+
+export type AppTipo = 'embarcado' | 'conectado'
+export type AppStatus = 'rascunho' | 'em_revisao' | 'publicado' | 'suspenso'
+export type AppInstallationStatus = 'ativa' | 'revogada' | 'suspensa'
+
+export type AppEscopoSlug =
+  | 'clientes:read'
+  | 'clientes:write'
+  | 'contratos:read'
+  | 'financeiro:read'
+  | 'financeiro:write'
+  | 'documentos:read'
+  | 'documentos:write'
+  | 'tarefas:write'
+  | 'notificacoes:send'
+
+export type AppSlotSlug =
+  | 'dashboard.card'
+  | 'cliente.aba'
+  | 'driveHub.acao'
+  | 'financeiro.acao'
+  | 'tarefas.gerador'
+  | 'menu.item'
+
+export type AppEventoTipo =
+  | 'cliente.criado'
+  | 'documento.baixado'
+  | 'cobranca.vencida'
+  | 'cobranca.paga'
+  | 'contrato.criado'
+  | 'app.instalado'
+  | 'app.desinstalado'
+
+export type AppPlanTipoCobranca = 'gratuito' | 'mensal' | 'anual' | 'por_uso' | 'por_lead'
+
+export interface AppPlanDef {
+  id: string
+  nome: string
+  tipo_cobranca: AppPlanTipoCobranca
+  valor: number | 'por_emissao' | null
+}
+
+export interface AppComissaoPadrao {
+  tipo: 'percentual' | 'fixo' | 'nenhum'
+  valor?: number
+}
+
+export interface AppManifesto {
+  slug: string
+  nome: string
+  tipo: AppTipo
+  versao: string
+  descricao: string
+  icone?: string
+  categoria?: string
+  escopos: AppEscopoSlug[]
+  slots: AppSlotSlug[]
+  eventos_assinados: AppEventoTipo[]
+  planos: AppPlanDef[]
+  comissao_padrao_sugerida?: AppComissaoPadrao
+}
+
+export interface App {
+  id: string
+  slug: string
+  nome: string
+  descricao: string
+  descricao_longa?: string
+  tipo: AppTipo
+  icone?: string
+  banner_url?: string
+  screenshots?: string[]
+  video_url?: string
+  recursos?: string[]
+  tags?: string[]
+  categoria?: string
+  desenvolvedor?: string
+  site_desenvolvedor?: string
+  avaliacao?: number
+  instalacoes_count?: number
+  destaque?: boolean
+  owner_id?: string
+  status: AppStatus
+  criado_em: string
+}
+
+export interface AppVersion {
+  id: string
+  app_id: string
+  versao: string
+  manifesto: AppManifesto
+  publicado_em: string
+}
+
+export interface AppPlan {
+  id: string
+  app_id: string
+  nome: string
+  tipo_cobranca: AppPlanTipoCobranca
+  valor: number | null
+  periodicidade?: string
+}
+
+export interface AppInstallation {
+  id: string
+  app_id: string
+  app_version_id: string
+  escritorio_id: string
+  cliente_id?: string        // undefined = instalação no nível do escritório
+  instalado_por: string
+  status: AppInstallationStatus
+  instalado_em: string
+  revogado_em?: string
+}
+
+export interface AppGrant {
+  id: string
+  installation_id: string
+  escopo: AppEscopoSlug
+  concedido_em: string
+  revogado_em?: string
+}
+
+export interface AppVisibility {
+  id: string
+  escritorio_id: string
+  app_id: string
+  visivel: boolean
+  destaque: boolean
+}
+
+// ==================== APP STORE — FASE 3: DINHEIRO ====================
+
+export type SubscriptionStatus = 'ativa' | 'cancelada' | 'vencida'
+export type CommissionTipo = 'percentual' | 'fixo' | 'nenhum'
+export type LedgerEntryTipo =
+  | 'receita'
+  | 'comissao_escritorio'
+  | 'comissao_plataforma'
+  | 'estorno_receita'
+  | 'estorno_comissao'
+
+export interface Subscription {
+  id: string
+  installation_id: string
+  plan_id: string
+  escritorio_id: string
+  app_id: string
+  status: SubscriptionStatus
+  inicio: string
+  fim?: string
+  criado_em: string
+}
+
+export interface CommissionRule {
+  id: string
+  app_id: string
+  escritorio_id?: string   // undefined = regra padrão para todos os escritórios
+  tipo: CommissionTipo
+  valor: number            // percentual (0–100) ou valor fixo em R$
+}
+
+export interface LedgerEntry {
+  id: string
+  tipo: LedgerEntryTipo
+  subscription_id?: string
+  escritorio_id: string
+  app_id: string
+  valor: number            // sempre positivo; tipo define crédito/débito
+  referencia: string
+  criado_em: string
+}
+
+// ==================== CERTIFICADO DIGITAL (app piloto) ====================
+
+export type CertificadoTipo = 'ecnpj_a1' | 'ecnpj_a3' | 'ecpf_a1' | 'ecpf_a3' | 'nfe' | 'outro'
+export type CertificadoStatus = 'valido' | 'vencendo' | 'vencido' | 'renovacao_solicitada'
+
+export interface CertificadoDigital {
+  id: string
+  tenant_id: string
+  cliente_id: string
+  tipo: CertificadoTipo
+  titular: string
+  cnpj_cpf: string
+  validade: string               // yyyy-MM-dd
+  status: CertificadoStatus
+  arquivo_key?: string           // storage_key do arquivo .pfx/.p12
+  observacoes?: string
+  ocorrencia_alerta_id?: string  // id da Ocorrencia criada pelo alerta de vencimento
+  criado_por: string
+  criado_em: string
+  atualizado_em?: string
 }

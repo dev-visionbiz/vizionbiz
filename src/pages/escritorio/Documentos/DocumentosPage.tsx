@@ -135,7 +135,7 @@ function HistoricoDialog({ doc, open, onClose }: { doc: Document; open: boolean;
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Histórico â€” {doc.nome}</DialogTitle>
+          <DialogTitle>Histórico — {doc.nome}</DialogTitle>
         </DialogHeader>
         <div className="max-h-80 overflow-y-auto space-y-2">
           {!events?.length ? (
@@ -193,7 +193,7 @@ function ShareDialog({ doc, open, onClose, tenantId }: { doc: Document; open: bo
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Compartilhar â€” {doc.nome}</DialogTitle>
+          <DialogTitle>Compartilhar — {doc.nome}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex items-end gap-2">
@@ -521,7 +521,7 @@ function EditDocumentDialog({
                         <SelectContent>
                           {openInvoices.map((inv) => (
                             <SelectItem key={inv.id} value={inv.id}>
-                              {inv.competencia} â€” {inv.valor_original.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({inv.status})
+                              {inv.competencia} — {inv.valor_original.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ({inv.status})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -603,7 +603,7 @@ function DocActions({
         toast({ title: 'Arquivo não encontrado no armazenamento.', variant: 'destructive' })
       } else {
         toast({
-          title: 'Arquivo de exemplo â€” faça upload de um arquivo real para testar o download.',
+          title: 'Arquivo de exemplo — faça upload de um arquivo real para testar o download.',
           variant: 'destructive',
         })
       }
@@ -784,7 +784,7 @@ export default function DocumentosPage() {
         await updateDoc.mutateAsync({ id: doc.id, data: { storage_status: 'arquivo_ausente' } })
         toast({ title: 'Arquivo não encontrado no armazenamento.', variant: 'destructive' })
       }
-      // arquivo de seed sem conteúdo real â€” abre viewer sem URL
+      // arquivo de seed sem conteúdo real — abre viewer sem URL
     }
     setViewerDoc(doc)
     setViewerUrl(url)
@@ -881,10 +881,10 @@ export default function DocumentosPage() {
 
   return (
     <div className="flex flex-col md:h-[calc(100vh-5rem)]">
-      {/* â”€â”€ Top bar â”€â”€ */}
+      {/* â"€â"€ Top bar â"€â"€ */}
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30 shrink-0 gap-2">
         <div className="flex items-center gap-2">
-          {/* Panel toggle â€” desktop only */}
+          {/* Panel toggle — desktop only */}
           <Button
             variant="ghost"
             size="sm"
@@ -923,7 +923,7 @@ export default function DocumentosPage() {
         </Button>
       </div>
 
-      {/* â”€â”€ Mobile context selectors (hidden on md+) â”€â”€ */}
+      {/* â"€â"€ Mobile context selectors (hidden on md+) â"€â"€ */}
       {viewMode === 'cliente' && folderPath.length === 0 && (
         <div className="md:hidden p-3 border-b shrink-0 bg-background">
           <Select value={selectedClientId} onValueChange={handleClientChange}>
@@ -959,10 +959,10 @@ export default function DocumentosPage() {
         </div>
       )}
 
-      {/* â”€â”€ Main content: side-by-side on desktop, stacked on mobile â”€â”€ */}
+      {/* â"€â"€ Main content: side-by-side on desktop, stacked on mobile â"€â"€ */}
       <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden">
 
-        {/* ====== LEFT PANEL â€” desktop only ====== */}
+        {/* ====== LEFT PANEL — desktop only ====== */}
         {leftPanelOpen && (viewMode === 'cliente' ? (
           <div className="hidden md:flex flex-col gap-3 p-3 overflow-y-auto w-56 shrink-0 border-r">
             <div className="space-y-1">
@@ -1080,7 +1080,7 @@ export default function DocumentosPage() {
               </div>
             ) : (
               <div className="flex flex-col md:flex-1 md:overflow-hidden">
-                {/* â”€â”€ Breadcrumb â”€â”€ */}
+                {/* â"€â"€ Breadcrumb â"€â"€ */}
                 <div className="px-3 py-2 border-b flex items-center gap-1 min-w-0 shrink-0">
                   <button
                     onClick={() => setFolderPath([])}
@@ -1115,7 +1115,7 @@ export default function DocumentosPage() {
                 </div>
 
                 <div className="overflow-auto md:flex-1">
-                  {/* â”€â”€ Pastas neste nível â”€â”€ */}
+                  {/* â"€â"€ Pastas neste nível â"€â"€ */}
                   {currentLevelFolders.length > 0 && (
                     <div className={currentFolderId ? 'border-b' : ''}>
                       {currentLevelFolders.map((folder) => (
@@ -1153,7 +1153,7 @@ export default function DocumentosPage() {
                     </div>
                   )}
 
-                  {/* â”€â”€ Documentos (somente dentro de uma pasta) â”€â”€ */}
+                  {/* â"€â"€ Documentos (somente dentro de uma pasta) â"€â"€ */}
                   {currentFolderId ? (
                     <>
                       <div className="p-3 border-b space-y-2">

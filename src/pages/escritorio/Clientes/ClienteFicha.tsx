@@ -64,6 +64,8 @@ import { ContratoTab } from './ContratoTab'
 import { FichaRapidaTab } from './FichaRapidaTab'
 import { AberturaTab } from './AberturaTab'
 import { AlteracoesTab } from './AlteracoesTab'
+import { CertificadosTab } from '@/apps/certificado-digital/CertificadosTab'
+import { useAppInstallacaoByApp } from '@/data/hooks/useApps'
 import { formatCurrency, formatDate, formatCNPJ, formatCPF } from '@/lib/utils'
 import { calcularEncargos } from '@/domain/financeiro/calcularEncargos'
 import { v4 as uuidv4 } from 'uuid'
@@ -155,6 +157,7 @@ export default function ClienteFicha() {
   const tenantId = currentUser?.tenant_id ?? ''
 
   const { data: client, isLoading: loadingClient } = useClient(clientId ?? '')
+  const { data: certApp } = useAppInstallacaoByApp(tenantId, 'app-cert-digital')
   const { data: portalUsers } = useUsers(tenantId, true)
   const clientUsers = portalUsers?.filter((u) => u.client_id === clientId && u.papel === 'cliente') ?? []
   const { data: invoices } = useClientInvoices(tenantId, clientId ?? '')
@@ -805,6 +808,7 @@ export default function ClienteFicha() {
             <SelectItem value="faturas">Faturas</SelectItem>
             <SelectItem value="historico">Histórico</SelectItem>
             <SelectItem value="ficha">Ficha Rápida</SelectItem>
+            {certApp && <SelectItem value="certificados">Certificados</SelectItem>}
           </SelectContent>
         </Select>
 
@@ -821,6 +825,7 @@ export default function ClienteFicha() {
           <TabsTrigger value="faturas">Faturas</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
           <TabsTrigger value="ficha">Ficha Rápida</TabsTrigger>
+          {certApp && <TabsTrigger value="certificados">🔐 Certificados</TabsTrigger>}
         </TabsList>
 
         {/* ABA ABERTURA */}
@@ -1545,6 +1550,12 @@ export default function ClienteFicha() {
             socios={socios ?? []}
           />
         </TabsContent>
+
+        {certApp && (
+          <TabsContent value="certificados" className="mt-4">
+            <CertificadosTab clienteId={clientId ?? ''} />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Dialog: Alterar Status */}

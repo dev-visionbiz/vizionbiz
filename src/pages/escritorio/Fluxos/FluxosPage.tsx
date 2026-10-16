@@ -29,7 +29,7 @@ import {
 import { useFormulariosTemplate } from '@/data/hooks/useFormulariosTemplate'
 import type { Fluxo, CategoriaDemanda, OcorrenciaDocumentoConfig, OcorrenciaDocumentoTipo } from '@/domain/types'
 
-// â”€â”€â”€ Tipos locais â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Tipos locais â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 interface FluxoFormData {
   nome: string
@@ -66,7 +66,7 @@ interface EtapaFormData {
   formulario_template_id: string
 }
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Helpers â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const categoriaLabel: Record<CategoriaDemanda, string> = {
   societario: 'Societário',
@@ -100,7 +100,7 @@ function prazoLabel(dias: string) {
   return n > 0 ? `+${n}d` : `${n}d`
 }
 
-// â”€â”€â”€ CadastroFluxos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ CadastroFluxos â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function CadastroFluxos({ tenantId }: { tenantId: string }) {
   const { toast } = useToast()
@@ -145,7 +145,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     )
   }, [dialogOpen, editFluxo?.id, etapasQuery.data])
 
-  // â”€â”€ Abrir dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Abrir dialog â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   function openCreate() {
     setEditFluxo(null)
@@ -169,7 +169,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     setDialogOpen(true)
   }
 
-  // â”€â”€ Etapas (lista) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Etapas (lista) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   function removeEtapa(key: string) {
     setEtapas((prev) => prev.filter((e) => e._key !== key))
@@ -186,7 +186,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     })
   }
 
-  // â”€â”€ Sub-modal de etapa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Sub-modal de etapa â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   function openEtapaCreate() {
     setEtapaEditKey(null)
@@ -242,7 +242,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     setEtapaForm((prev) => ({ ...prev, checklist: prev.checklist.map((c) => c.id === itemId ? { ...c, nome } : c) }))
   }
 
-  // â”€â”€ Salvar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Salvar â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   function buildEtapaData(e: EtapaForm, ordem: number) {
     return {
@@ -317,7 +317,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
     deleteFluxo.mutate(id, { onSuccess: () => toast({ title: 'Fluxo excluído' }) })
   }
 
-  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€ Render â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   return (
     <div className="space-y-4">
@@ -344,14 +344,14 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
         ))}
       </div>
 
-      {/* â”€â”€ Dialog com stepper â”€â”€ */}
+      {/* â"€â"€ Dialog com stepper â"€â"€ */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden">
 
           {/* Cabeçalho */}
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
             <DialogTitle className="text-base">
-              {editFluxo ? `Editar Fluxo â€” ${editFluxo.nome}` : 'Novo Fluxo'}
+              {editFluxo ? `Editar Fluxo — ${editFluxo.nome}` : 'Novo Fluxo'}
             </DialogTitle>
 
             {/* Stepper */}
@@ -398,7 +398,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
           {/* Conteúdo do passo atual */}
           <div className="flex-1 overflow-y-auto">
 
-            {/* Passo 1 â€” Dados */}
+            {/* Passo 1 — Dados */}
             {step === 0 && (
               <div className="px-6 py-5 space-y-4">
                 <div className="space-y-1.5">
@@ -443,7 +443,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                   <Textarea
                     value={form.descricao}
                     onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                    placeholder="Descreva o propósito deste fluxoâ€¦"
+                    placeholder="Descreva o propósito deste fluxo…"
                     className="resize-none text-sm"
                     rows={3}
                   />
@@ -460,7 +460,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
               </div>
             )}
 
-            {/* Passo 2 â€” Etapas */}
+            {/* Passo 2 — Etapas */}
             {step === 1 && (
               <div className="px-6 py-5 space-y-3">
                 <div className="flex items-center justify-between">
@@ -477,7 +477,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 {etapas.length === 0 ? (
                   <div className="border-2 border-dashed rounded-lg py-10 text-center text-sm text-muted-foreground">
                     Clique em "Nova Etapa" para adicionar etapas ao fluxo de trabalho.
-                    <br /><span className="text-xs opacity-70">Opcional â€” você pode salvar sem etapas.</span>
+                    <br /><span className="text-xs opacity-70">Opcional — você pode salvar sem etapas.</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -549,7 +549,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
         </DialogContent>
       </Dialog>
 
-      {/* â”€â”€ Sub-modal: criar / editar etapa â”€â”€ */}
+      {/* â"€â"€ Sub-modal: criar / editar etapa â"€â"€ */}
       <Dialog open={etapaDialogOpen} onOpenChange={setEtapaDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
@@ -559,7 +559,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
           {/* Dois painéis em desktop */}
           <div className="flex-1 overflow-hidden flex flex-col sm:flex-row min-h-0">
 
-            {/* Painel esquerdo â€” campos principais */}
+            {/* Painel esquerdo — campos principais */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               <div className="space-y-1.5">
                 <Label>Nome *</Label>
@@ -603,14 +603,14 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
                 <Textarea
                   value={etapaForm.descricao}
                   onChange={(e) => setEtapaForm({ ...etapaForm, descricao: e.target.value })}
-                  placeholder="Instruções ou observações para esta etapaâ€¦"
+                  placeholder="Instruções ou observações para esta etapa…"
                   className="resize-none text-sm"
                   rows={4}
                 />
               </div>
             </div>
 
-            {/* Painel direito â€” checklist + documentos */}
+            {/* Painel direito — checklist + documentos */}
             <div className="sm:w-80 shrink-0 overflow-y-auto border-t sm:border-t-0 sm:border-l px-6 py-5 space-y-5 bg-muted/20">
 
               {/* Checklist */}
@@ -766,7 +766,7 @@ function CadastroFluxos({ tenantId }: { tenantId: string }) {
   )
 }
 
-// â”€â”€â”€ FluxoRow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ FluxoRow â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 const catConfig: Record<CategoriaDemanda, {
   gradient: string
@@ -846,7 +846,7 @@ function FluxoRow({
   )
 }
 
-// â”€â”€â”€ Página Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Página Principal â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 export default function FluxosPage() {
   const { currentUser } = useAuth()

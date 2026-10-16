@@ -1,4 +1,6 @@
-import type { FolderType, Vocabulario } from '@/domain/types'
+import type { FolderType, Vocabulario, AppManifesto, AppSlotSlug, AppEscopoSlug, AppEventoTipo, AppPlanDef } from '@/domain/types'
+
+export type { AppManifesto, AppSlotSlug, AppEscopoSlug, AppEventoTipo, AppPlanDef }
 
 export interface PastaTemplate {
   nome: string
@@ -10,4 +12,6 @@ export interface ModuloManifest {
   nome: string
   pastasDefault: PastaTemplate[]
   vocabulario: Vocabulario
+  // extensão App Store — opcional para módulos legados
+  app?: AppManifesto
 }

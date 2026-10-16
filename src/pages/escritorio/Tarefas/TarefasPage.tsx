@@ -30,7 +30,7 @@ import {
   TarefaDetalheConteudo,
 } from './TarefaDetalhe'
 
-// â”€â”€â”€ ClienteCombobox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ClienteCombobox ─────────────────────────────────────────────────────────
 
 function ClienteCombobox({
   clientes,
@@ -137,7 +137,7 @@ function ClienteCombobox({
   )
 }
 
-// â”€â”€â”€ sortByUrgencia â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── sortByUrgencia ──────────────────────────────────────────────────────────
 
 function sortByUrgencia(a: TarefaUnificada, b: TarefaUnificada): number {
   const ordem: Record<Urgencia, number> = { critico: 0, alta: 1, media: 2, normal: 3 }
@@ -146,7 +146,7 @@ function sortByUrgencia(a: TarefaUnificada, b: TarefaUnificada): number {
   return a.dataPrevista.localeCompare(b.dataPrevista)
 }
 
-// â”€â”€â”€ Dialog wrapper (mobile) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Dialog wrapper (mobile) ─────────────────────────────────────────────────
 
 interface TarefaDetalheDialogProps {
   tarefa: TarefaUnificada | null
@@ -186,7 +186,7 @@ function TarefaDetalheDialog({
   )
 }
 
-// â”€â”€â”€ Card de tarefa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Card de tarefa ──────────────────────────────────────────────────────────
 
 function TarefaCard({ t, isSelected, onAbrir, onIniciar, onConcluir }: {
   t: TarefaUnificada
@@ -308,7 +308,7 @@ function ListaVazia({ msg }: { msg: string }) {
   )
 }
 
-// â”€â”€â”€ Página principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Página principal ────────────────────────────────────────────────────────
 
 export default function TarefasPage() {
   const { currentUser } = useAuth()
@@ -658,7 +658,7 @@ export default function TarefasPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Data prevista â€” de</Label>
+              <Label className="text-xs text-muted-foreground">Data prevista — de</Label>
               <Input
                 type="date"
                 value={filtroDataInicio}
@@ -709,7 +709,7 @@ export default function TarefasPage() {
         {/* Tabs: ocupa o restante da altura, TabsList fixo, conteúdo rola */}
         <Tabs defaultValue="meu-dia" className="lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
 
-          {/* TabsList â€” fixo, não rola */}
+          {/* TabsList — fixo, não rola */}
           <div className="overflow-x-auto shrink-0">
             <TabsList className="w-max">
               <TabsTrigger value="meu-dia" className="gap-1.5">
@@ -752,7 +752,7 @@ export default function TarefasPage() {
             </TabsList>
           </div>
 
-          {/* Área scrollável â€” apenas os cards rolam */}
+          {/* Área scrollável — apenas os cards rolam */}
           <div className="mt-2 lg:flex-1 lg:overflow-y-auto lg:min-h-0 lg:pr-1">
             <TabsContent value="meu-dia" className="space-y-2 mt-0">
               {meiasTarefas.length === 0 ? (
@@ -815,7 +815,7 @@ export default function TarefasPage() {
         </div>
       )}
 
-      {/* Dialog mobile â€” só abre quando não for desktop */}
+      {/* Dialog mobile — só abre quando não for desktop */}
       {tarefaSelecionada && !isDesktop && (
         <TarefaDetalheDialog
           key={tarefaSelecionada.id}

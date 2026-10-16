@@ -389,7 +389,7 @@ export default function ClientesLista() {
         <div>
           <h1 className="text-2xl font-bold">Clientes</h1>
           <p className="text-sm text-muted-foreground">
-            {clients?.length ?? 0} cadastro(s) â€”{' '}
+            {clients?.length ?? 0} cadastro(s) &mdash;{' '}
             {clients?.filter(c => (c.tipo ?? 'juridica') === 'juridica').length ?? 0} PJ,{' '}
             {clients?.filter(c => c.tipo === 'fisica').length ?? 0} PF
           </p>
@@ -483,7 +483,7 @@ export default function ClientesLista() {
         />
       ) : (
         <div className="rounded-lg border overflow-hidden">
-          {/* Cabeçalho das colunas â€” só em telas â‰¥ sm */}
+          {/* Cabeçalho das colunas — só em telas ≥ sm */}
           <div className="hidden sm:grid grid-cols-[2.5rem_1fr_9rem_9rem_6rem_8rem_3.5rem] gap-x-3 px-4 py-2 bg-muted/40 border-b">
             <span className="text-xs font-medium text-muted-foreground">Tipo</span>
             <SortBtn col="nome" label="Nome / Razão Social" {...sortProps} />

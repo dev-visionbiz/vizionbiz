@@ -43,7 +43,7 @@ function OcorrenciaProgressoBadge({ tenantId, ocorrenciaId }: { tenantId: string
   )
 }
 
-// â”€â”€â”€ Aba: Lista de Ocorrências â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Aba: Lista de Ocorrências â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function ListaOcorrencias({
   tenantId,
@@ -201,8 +201,8 @@ function ListaOcorrencias({
             const stConfig  = ocorrenciaStatusConfig[o.status]
             const catConfig = o.categoria ? categoriaConfig[o.categoria] : null
             const CatIcon   = catConfig?.icon
-            const clienteNome = clienteMap[o.cliente_id ?? ''] ?? 'â€”'
-            const respNome    = o.responsavel_id ? (userMap[o.responsavel_id] ?? 'â€”') : null
+            const clienteNome = clienteMap[o.cliente_id ?? ''] ?? '—'
+            const respNome    = o.responsavel_id ? (userMap[o.responsavel_id] ?? '—') : null
 
             return (
               <button
@@ -248,7 +248,7 @@ function ListaOcorrencias({
   )
 }
 
-// â”€â”€â”€ Aba: Gerenciar Fluxos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Aba: Gerenciar Fluxos â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function GerenciarFluxos({ tenantId }: { tenantId: string }) {
   const { data: fluxos = [] } = useFluxos(tenantId)
@@ -287,7 +287,7 @@ function GerenciarFluxos({ tenantId }: { tenantId: string }) {
   )
 }
 
-// â”€â”€â”€ Página principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Página principal â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 export default function OcorrenciasPage() {
   const { currentUser } = useAuth()

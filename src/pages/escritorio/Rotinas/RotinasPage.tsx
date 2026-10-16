@@ -34,7 +34,7 @@ import type { Rotina, RotinaCliente, Periodicidade } from '@/domain/types'
 import PainelRotinaModal from '../Tarefas/PainelRotinaModal'
 import CatalogoRotinasModal from '../Tarefas/CatalogoRotinasModal'
 
-// â”€â”€â”€ Tipos locais do formulário â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tipos locais do formulário ──────────────────────────────────────────────
 
 interface RotinaForm {
   nome: string
@@ -76,7 +76,7 @@ const defaultEtapaForm: EtapaFormData = {
   checklist: [],
 }
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const periodicidadeLabel: Record<Periodicidade, string> = {
   mensal: 'Mensal',
@@ -117,7 +117,7 @@ function prazoLabel(dias: string) {
   return n > 0 ? `+${n}d` : `${n}d`
 }
 
-// â”€â”€â”€ Cadastro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Cadastro ─────────────────────────────────────────────────────────────────
 
 function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPainelRotinas?: () => void }) {
   const { toast } = useToast()
@@ -170,7 +170,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
     )
   }, [dialogOpen, editRotina?.id, etapasQuery.data])
 
-  // â”€â”€ Abrir dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Abrir dialog ──────────────────────────────────────────────────────────
 
   function openCreate() {
     setEditRotina(null)
@@ -192,7 +192,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
     setDialogOpen(true)
   }
 
-  // â”€â”€ Etapas (lista) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Etapas (lista) ────────────────────────────────────────────────────────
 
   function removeEtapa(key: string) {
     setEtapas((prev) => prev.filter((e) => e._key !== key))
@@ -209,7 +209,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
     })
   }
 
-  // â”€â”€ Sub-modal de etapa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sub-modal de etapa ────────────────────────────────────────────────────
 
   function openEtapaCreate() {
     setEtapaEditKey(null)
@@ -251,7 +251,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
     setEtapaForm((prev) => ({ ...prev, checklist: prev.checklist.map((c) => c.id === itemId ? { ...c, nome } : c) }))
   }
 
-  // â”€â”€ Salvar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Salvar ────────────────────────────────────────────────────────────────
 
   function buildEtapaData(e: EtapaForm, ordem: number) {
     return {
@@ -329,7 +329,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
     deleteRotina.mutate(id, { onSuccess: () => toast({ title: 'Rotina excluída' }) })
   }
 
-  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-4">
@@ -364,14 +364,14 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
         ))}
       </div>
 
-      {/* â”€â”€ Dialog com stepper â”€â”€ */}
+      {/* ── Dialog com stepper ── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[88vh] flex flex-col gap-0 p-0 overflow-hidden">
 
           {/* Cabeçalho */}
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
             <DialogTitle className="text-base">
-              {editRotina ? `Editar Rotina â€” ${editRotina.nome}` : 'Nova Rotina'}
+              {editRotina ? `Editar Rotina — ${editRotina.nome}` : 'Nova Rotina'}
             </DialogTitle>
 
             {/* Indicador de progresso */}
@@ -411,7 +411,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
           {/* Conteúdo do passo atual */}
           <div className="flex-1 overflow-y-auto">
 
-            {/* Passo 1 â€” Dados */}
+            {/* Passo 1 — Dados */}
             {step === 0 && (
               <div className="px-6 py-5 space-y-4">
                 <div className="space-y-1.5">
@@ -482,7 +482,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
               </div>
             )}
 
-            {/* Passo 2 â€” Etapas */}
+            {/* Passo 2 — Etapas */}
             {step === 1 && (
               <div className="px-6 py-5 space-y-3">
                 <div className="flex items-center justify-between">
@@ -499,7 +499,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                 {etapas.length === 0 ? (
                   <div className="border-2 border-dashed rounded-lg py-10 text-center text-sm text-muted-foreground">
                     Clique em "Nova Etapa" para adicionar etapas ao fluxo de trabalho.
-                    <br /><span className="text-xs opacity-70">Opcional â€” você pode salvar sem etapas.</span>
+                    <br /><span className="text-xs opacity-70">Opcional — você pode salvar sem etapas.</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -541,7 +541,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
               </div>
             )}
 
-            {/* Passo 3 â€” Clientes */}
+            {/* Passo 3 — Clientes */}
             {step === 2 && (
               <div className="px-6 py-5 space-y-3">
                 <div className="flex items-center justify-between">
@@ -554,7 +554,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                   <div className="relative">
                     <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                     <Input
-                      placeholder="Buscar clienteâ€¦"
+                      placeholder="Buscar cliente…"
                       className="h-8 pl-7 w-40 text-sm"
                       value={clienteSearch}
                       onChange={(e) => setClienteSearch(e.target.value)}
@@ -628,7 +628,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
         </DialogContent>
       </Dialog>
 
-      {/* â”€â”€ Sub-modal: criar / editar etapa â”€â”€ */}
+      {/* ── Sub-modal: criar / editar etapa ── */}
       <Dialog open={etapaDialogOpen} onOpenChange={setEtapaDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b">
@@ -638,7 +638,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
           {/* Corpo: dois painéis em desktop */}
           <div className="flex-1 overflow-hidden flex flex-col sm:flex-row min-h-0">
 
-            {/* Painel esquerdo â€” campos principais */}
+            {/* Painel esquerdo — campos principais */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               <div className="space-y-1.5">
                 <Label>Nome *</Label>
@@ -682,14 +682,14 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
                 <Textarea
                   value={etapaForm.descricao}
                   onChange={(e) => setEtapaForm({ ...etapaForm, descricao: e.target.value })}
-                  placeholder="Instruções ou observações para esta etapaâ€¦"
+                  placeholder="Instruções ou observações para esta etapa…"
                   className="resize-none text-sm"
                   rows={4}
                 />
               </div>
             </div>
 
-            {/* Painel direito â€” checklist */}
+            {/* Painel direito — checklist */}
             <div className="sm:w-72 shrink-0 overflow-y-auto border-t sm:border-t-0 sm:border-l px-6 py-5 space-y-3 bg-muted/20">
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-1.5">
@@ -747,7 +747,7 @@ function CadastroRotinas({ tenantId, onPainelRotinas }: { tenantId: string; onPa
   )
 }
 
-// â”€â”€â”€ RotinaRow (somente leitura â€” edição via dialog unificado) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── RotinaRow (somente leitura — edição via dialog unificado) ────────────────
 
 const periodicidadeGradient: Record<Periodicidade, string> = {
   mensal:      'from-sky-500/15   to-transparent border-sky-400/30',
@@ -777,7 +777,7 @@ function RotinaRow({
   const { data: etapas = [] } = useFluxoTarefas(tenantId, rotina.fluxo_id ?? '')
   const clientesCount = todos.filter((v) => v.rotina_id === rotina.id).length
 
-  let regraLabel = 'â€”'
+  let regraLabel = '—'
   try {
     const r = JSON.parse(rotina.regra_vencimento)
     if (r.tipo === 'ultimo_dia_mes') regraLabel = 'Ãšltimo dia'
@@ -841,7 +841,7 @@ function RotinaRow({
   )
 }
 
-// â”€â”€â”€ Ciclos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Ciclos ───────────────────────────────────────────────────────────────────
 
 function PainelCiclos({ tenantId }: { tenantId: string }) {
   const { toast } = useToast()
@@ -950,7 +950,7 @@ function PainelCiclos({ tenantId }: { tenantId: string }) {
   )
 }
 
-// â”€â”€â”€ Página Principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Página Principal ─────────────────────────────────────────────────────────
 
 export default function RotinasPage() {
   const { currentUser } = useAuth()

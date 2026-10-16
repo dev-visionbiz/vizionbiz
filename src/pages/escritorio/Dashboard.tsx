@@ -24,6 +24,7 @@ import {
 
 import { useToast } from '@/components/ui/use-toast'
 import { TrendingUp, AlertCircle, Users, FileText, Upload, Download, Eye, Share2 } from 'lucide-react'
+import { CertificadosDashboardCard } from '@/apps/certificado-digital/CertificadosDashboardCard'
 import type { Invoice } from '@/domain/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { calcularEncargos } from '@/domain/financeiro/calcularEncargos'
@@ -213,7 +214,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-blue-600">{formatCurrency(aReceber)}</p>
-            <p className="text-xs text-muted-foreground">faturas abertas â€” {currentMonth}</p>
+            <p className="text-xs text-muted-foreground">faturas abertas — {currentMonth}</p>
           </CardContent>
         </Card>
 
@@ -252,7 +253,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">{docsEnviadosMes}</p>
-            <p className="text-xs text-muted-foreground">documentos â€” {currentMonth}</p>
+            <p className="text-xs text-muted-foreground">documentos — {currentMonth}</p>
           </CardContent>
         </Card>
       </div>
@@ -262,7 +263,7 @@ export default function Dashboard() {
         {/* Inadimplência chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Inadimplência â€” últimos 6 meses</CardTitle>
+            <CardTitle className="text-sm font-medium">Inadimplência — últimos 6 meses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -276,7 +277,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <span className="text-xs font-medium w-20 text-right shrink-0">
-                    {m.value > 0 ? formatCurrency(m.value) : 'â€”'}
+                    {m.value > 0 ? formatCurrency(m.value) : '—'}
                   </span>
                 </div>
               ))}
@@ -320,7 +321,7 @@ export default function Dashboard() {
       {/* Vencidos - Ação Rápida */}
       {vencidasSorted.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-base font-semibold">Vencidos â€” Ação Rápida</h2>
+          <h2 className="text-base font-semibold">Vencidos — Ação Rápida</h2>
           <div className="flex flex-col gap-2">
             {vencidasSorted.map((inv) => {
               const dias = differenceInDays(today, parseISO(inv.vencimento))
@@ -363,7 +364,7 @@ export default function Dashboard() {
         }}
       />
 
-      <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />
+      <CertificadosDashboardCard />
     </div>
   )
 }

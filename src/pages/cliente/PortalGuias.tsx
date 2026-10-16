@@ -37,7 +37,7 @@ const STATUS_CONFIG: Record<GuiaStatus, { label: string; className: string; icon
   em_retificacao:     { label: 'Em Retificação', className: 'bg-orange-100 text-orange-700', icon: Clock },
 }
 
-// â”€â”€â”€ PDF Viewer com ações integradas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ PDF Viewer com ações integradas â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function GuiaPDFDialog({
   guia,
@@ -143,7 +143,7 @@ function GuiaPDFDialog({
       {/* [&>button.absolute]:hidden oculta o DialogClose padrão do shadcn/ui */}
       <DialogContent className="max-w-4xl w-full h-[95dvh] flex flex-col gap-0 p-0 overflow-hidden [&>button.absolute]:hidden">
 
-        {/* Header â€” todos os botões alinhados, sem sobreposição */}
+        {/* Header — todos os botões alinhados, sem sobreposição */}
         <DialogHeader className="flex-row items-center shrink-0 px-3 py-2 border-b gap-1.5">
           <div className={cn('h-7 w-7 rounded shrink-0 flex items-center justify-center', cfg.cor)}>
             <cfg.icon className={cn('h-3.5 w-3.5', cfg.corTexto)} />
@@ -174,7 +174,7 @@ function GuiaPDFDialog({
           </DialogClose>
         </DialogHeader>
 
-        {/* PDF â€” sidebar oculta para 1 página, zoom para largura */}
+        {/* PDF — sidebar oculta para 1 página, zoom para largura */}
         <div className="flex-1 min-h-0 bg-zinc-100 dark:bg-zinc-900">
           {carregando && (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -238,7 +238,7 @@ function GuiaPDFDialog({
                 </div>
               )}
 
-              {/* Códigos de pagamento â€” o que o cliente precisa para pagar */}
+              {/* Códigos de pagamento — o que o cliente precisa para pagar */}
               {(guia.pix_copia_cola || guia.linha_digitavel || guia.codigo_barras) && (
                 <div className="border-t pt-2 space-y-3 pb-1">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -389,7 +389,7 @@ function GuiaPDFDialog({
   )
 }
 
-// â”€â”€â”€ Componente de código copiável â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Componente de código copiável â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function CodigoPagamento({
   label, valor, onCopiar, mono, destaque,
@@ -429,7 +429,7 @@ function CodigoPagamento({
   )
 }
 
-// â”€â”€â”€ Dialog de detalhe (sem PDF) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Dialog de detalhe (sem PDF) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function GuiaInfoDialog({
   guia,
@@ -552,7 +552,7 @@ function GuiaInfoDialog({
           {guia.segunda_via_status === 'solicitada' && (
             <Button variant="outline" className="w-full gap-2 text-amber-600 border-amber-300" disabled>
               <Clock className="h-4 w-4" />
-              2ª via solicitada â€” aguardando
+              2ª via solicitada — aguardando
             </Button>
           )}
 
@@ -608,7 +608,7 @@ function GuiaInfoDialog({
   )
 }
 
-// â”€â”€â”€ Card da guia â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Card da guia â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function GuiaCard({
   guia,
@@ -675,7 +675,7 @@ function GuiaCard({
   )
 }
 
-// â”€â”€â”€ Página â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Página â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 export default function PortalGuias() {
   const { currentUser } = useAuth()

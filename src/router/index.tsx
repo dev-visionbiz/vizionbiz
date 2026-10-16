@@ -5,6 +5,7 @@ import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { ProtectedRoute } from '@/auth/ProtectedRoute'
 import { EscritorioRoute } from '@/auth/EscritorioRoute'
 import { PortalEmpresaGuard } from '@/auth/PortalEmpresaGuard'
+import { AdminLayout } from '@/pages/admin/AdminLayout'
 
 // Lazy-loaded pages
 const Login = React.lazy(() => import('@/pages/Login'))
@@ -34,7 +35,23 @@ const PortalCadastro = React.lazy(() => import('@/pages/cliente/PortalCadastro')
 const PortalSolicitacoes = React.lazy(() => import('@/pages/cliente/PortalSolicitacoes'))
 const PortalNegociacao = React.lazy(() => import('@/pages/cliente/PortalNegociacao'))
 const PortalPesquisas = React.lazy(() => import('@/pages/cliente/PortalPesquisas'))
+const PortalApps = React.lazy(() => import('@/pages/cliente/PortalApps'))
+const PortalCertificados = React.lazy(() => import('@/pages/cliente/PortalCertificados'))
 const SelecionarEmpresa = React.lazy(() => import('@/pages/cliente/SelecionarEmpresa'))
+const AdminTenantsList = React.lazy(() => import('@/pages/admin/Tenants/TenantsList'))
+const AdminTenantDetail = React.lazy(() => import('@/pages/admin/Tenants/TenantDetail'))
+const AdminComissoes = React.lazy(() =>
+  import('@/pages/admin/Comissoes/ComissoesPage').then((m) => ({ default: m.ComissoesPage }))
+)
+const AppStorePage = React.lazy(() =>
+  import('@/pages/escritorio/AppStore/AppStorePage').then((m) => ({ default: m.AppStorePage }))
+)
+const AppStoreLoja = React.lazy(() =>
+  import('@/pages/loja/AppStoreLoja').then((m) => ({ default: m.AppStoreLoja }))
+)
+const AppLandingPage = React.lazy(() =>
+  import('@/pages/loja/AppLandingPage').then((m) => ({ default: m.AppLandingPage }))
+)
 
 function Lazy({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -48,6 +65,14 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Lazy><Login /></Lazy>,
+  },
+  {
+    path: '/loja',
+    element: <Lazy><AppStoreLoja /></Lazy>,
+  },
+  {
+    path: '/loja/:slug',
+    element: <Lazy><AppLandingPage /></Lazy>,
   },
   {
     path: '/share/:token',
@@ -120,8 +145,24 @@ export const router = createBrowserRouter([
           },
           { path: 'obrigacoes', element: <Navigate to="/escritorio/rotinas" replace /> },
           { path: 'demandas', element: <Navigate to="/escritorio/ocorrencias" replace /> },
+          { path: 'apps', element: <Lazy><AppStorePage /></Lazy> },
           { path: 'configuracoes', element: <Lazy><Configuracoes /></Lazy> },
           { path: 'configuracoes/*', element: <Lazy><Configuracoes /></Lazy> },
+        ],
+      },
+    ],
+  },
+  {
+    path: '/admin',
+    element: <ProtectedRoute roles={['visionbiz_admin']} />,
+    children: [
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <Navigate to="tenants" replace /> },
+          { path: 'tenants', element: <Lazy><AdminTenantsList /></Lazy> },
+          { path: 'tenants/:id', element: <Lazy><AdminTenantDetail /></Lazy> },
+          { path: 'comissoes', element: <Lazy><AdminComissoes /></Lazy> },
         ],
       },
     ],
@@ -147,6 +188,8 @@ export const router = createBrowserRouter([
               { path: 'guias', element: <Lazy><PortalGuias /></Lazy> },
               { path: 'solicitacoes', element: <Lazy><PortalSolicitacoes /></Lazy> },
               { path: 'pesquisas', element: <Lazy><PortalPesquisas /></Lazy> },
+              { path: 'apps', element: <Lazy><PortalApps /></Lazy> },
+              { path: 'certificados', element: <Lazy><PortalCertificados /></Lazy> },
             ],
           },
         ],

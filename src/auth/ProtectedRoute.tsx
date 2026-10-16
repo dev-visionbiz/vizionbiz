@@ -8,7 +8,9 @@ interface Props {
 }
 
 function homeFor(role: UserRole): string {
-  return role === 'cliente' ? '/portal/inicio' : '/escritorio/dashboard'
+  if (role === 'cliente') return '/portal/inicio'
+  if (role === 'visionbiz_admin') return '/admin/tenants'
+  return '/escritorio/dashboard'
 }
 
 export function ProtectedRoute({ roles }: Props) {

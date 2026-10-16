@@ -11,6 +11,7 @@ import type {
   LoteImportacao,
   FormularioTemplate, FormularioResposta,
   ServicoRealizado,
+  App, AppVersion, AppPlan, AppInstallation, AppGrant, AppVisibility, AppInstallationStatus,
 } from '@/domain/types'
 
 export interface Repository<T> {
@@ -220,4 +221,50 @@ export interface ServicoRealizadoRepository extends Repository<ServicoRealizado>
   findByCliente(tenantId: string, clienteId: string): Promise<ServicoRealizado[]>
   findPendentes(tenantId: string): Promise<ServicoRealizado[]>
   findByCompetencia(tenantId: string, competencia: string): Promise<ServicoRealizado[]>
+}
+
+// --- App Store ---
+
+export interface AppRepository {
+  findAll(): Promise<App[]>
+  findById(id: string): Promise<App | null>
+  findBySlug(slug: string): Promise<App | null>
+  create(item: App): Promise<App>
+  update(id: string, data: Partial<App>): Promise<App>
+}
+
+export interface AppVersionRepository {
+  findByApp(appId: string): Promise<AppVersion[]>
+  findLatest(appId: string): Promise<AppVersion | null>
+  findById(id: string): Promise<AppVersion | null>
+  create(item: AppVersion): Promise<AppVersion>
+}
+
+export interface AppPlanRepository {
+  findByApp(appId: string): Promise<AppPlan[]>
+  findById(id: string): Promise<AppPlan | null>
+  create(item: AppPlan): Promise<AppPlan>
+  update(id: string, data: Partial<AppPlan>): Promise<AppPlan>
+}
+
+export interface AppInstallationRepository {
+  findByEscritorio(escritorioId: string): Promise<AppInstallation[]>
+  findByCliente(escritorioId: string, clienteId: string): Promise<AppInstallation[]>
+  findById(id: string): Promise<AppInstallation | null>
+  findByApp(escritorioId: string, appId: string): Promise<AppInstallation | null>
+  create(item: AppInstallation): Promise<AppInstallation>
+  update(id: string, data: Partial<AppInstallation>): Promise<AppInstallation>
+}
+
+export interface AppGrantRepository {
+  findByInstallation(installationId: string): Promise<AppGrant[]>
+  findActive(installationId: string): Promise<AppGrant[]>
+  create(item: AppGrant): Promise<AppGrant>
+  revokeAll(installationId: string, revokedAt: string): Promise<void>
+}
+
+export interface AppVisibilityRepository {
+  findByEscritorio(escritorioId: string): Promise<AppVisibility[]>
+  findByApp(escritorioId: string, appId: string): Promise<AppVisibility | null>
+  upsert(item: AppVisibility): Promise<AppVisibility>
 }

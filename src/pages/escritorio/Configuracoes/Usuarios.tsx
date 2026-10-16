@@ -34,12 +34,14 @@ const papelLabels: Record<UserRole, string> = {
   escritorio_admin: 'Admin',
   escritorio_colaborador: 'Colaborador',
   cliente: 'Cliente',
+  visionbiz_admin: 'VisionBiz Admin',
 }
 
 const papelVariant: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
   escritorio_admin: 'default',
   escritorio_colaborador: 'secondary',
   cliente: 'outline',
+  visionbiz_admin: 'default',
 }
 
 const SECOES_PORTAL: { secao: PortalSecao; label: string }[] = [

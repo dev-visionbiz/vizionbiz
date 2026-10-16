@@ -3,6 +3,7 @@ import type { User, Tenant } from '@/domain/types'
 
 const SESSION_KEY = 'vb_active_user_id'
 const EMPRESA_KEY = 'vb_active_client_id'
+const IMPERSONATION_KEY = 'vb_admin_impersonation'
 
 interface AuthContextValue {
   currentUser: User | null
@@ -10,10 +11,14 @@ interface AuthContextValue {
   allUsers: User[]
   isLoading: boolean
   needsEmpresaSelection: boolean
+  isImpersonating: boolean
   login: (email: string, senha: string) => Promise<{ ok: boolean; erro?: string; papel?: string }>
   logout: () => void
   switchUser: (userId: string) => void
   switchCliente: (clientId: string) => void
+  impersonateEscritorio: (tenantId: string) => boolean
+  exitImpersonation: () => string | null
+  updateTenant: (updated: Tenant) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -96,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function logout() {
     sessionStorage.removeItem(SESSION_KEY)
     sessionStorage.removeItem(EMPRESA_KEY)
+    sessionStorage.removeItem(IMPERSONATION_KEY)
     setBaseUser(null)
     setCurrentTenant(null)
     setActiveClientId(null)
@@ -116,6 +122,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveClientId(clientId)
   }
 
+  // Returns true if successful, false if no escritorio_admin found for that tenant
+  function impersonateEscritorio(tenantId: string): boolean {
+    const users = readUsers()
+    const adminUser = users.find(u => u.tenant_id === tenantId && u.papel === 'escritorio_admin' && u.ativo !== false)
+    if (!adminUser || !baseUser) return false
+
+    sessionStorage.setItem(IMPERSONATION_KEY, baseUser.id)
+    sessionStorage.removeItem(EMPRESA_KEY)
+    applyUser(adminUser)
+    return true
+  }
+
+  // Returns the original admin user id (to allow caller to navigate back)
+  function exitImpersonation(): string | null {
+    const originalId = sessionStorage.getItem(IMPERSONATION_KEY)
+    if (!originalId) return null
+
+    const users = readUsers()
+    const originalUser = users.find(u => u.id === originalId)
+    sessionStorage.removeItem(IMPERSONATION_KEY)
+    if (originalUser) {
+      sessionStorage.removeItem(EMPRESA_KEY)
+      applyUser(originalUser)
+    }
+    return originalId
+  }
+
+  function updateTenant(updated: Tenant) {
+    const tenants = readTenants()
+    const next = tenants.map(t => t.id === updated.id ? updated : t)
+    localStorage.setItem('vb_tenants', JSON.stringify(next))
+    if (currentTenant?.id === updated.id) setCurrentTenant(updated)
+  }
+
+  const isImpersonating = !!sessionStorage.getItem(IMPERSONATION_KEY)
+
   // currentUser: baseUser com client_id refletindo a empresa ativa na sessão
   const currentUser = useMemo<User | null>(() => {
     if (!baseUser) return null
@@ -133,8 +175,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{
       currentUser, currentTenant, allUsers, isLoading,
-      needsEmpresaSelection,
+      needsEmpresaSelection, isImpersonating,
       login, logout, switchUser, switchCliente,
+      impersonateEscritorio, exitImpersonation, updateTenant,
     }}>
       {children}
     </AuthContext.Provider>

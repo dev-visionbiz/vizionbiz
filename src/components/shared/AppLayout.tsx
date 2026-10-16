@@ -5,6 +5,7 @@ import { Header } from './Header'
 import { BottomNav } from './BottomNav'
 import { Toaster } from '@/components/ui/toaster'
 import { PomodoroProvider } from '@/context/PomodoroContext'
+import { ImpersonationBanner } from './ImpersonationBanner'
 
 const WIDE_CONTENT_ROUTES = ['/escritorio/documentos', '/portal/documentos']
 
@@ -19,12 +20,15 @@ const PAGE_TITLES: { test: (p: string) => boolean; title: string }[] = [
   { test: (p) => p.startsWith('/escritorio/obrigacoes'), title: 'Obrigações' },
   { test: (p) => p.startsWith('/escritorio/tarefas'), title: 'Tarefas' },
   { test: (p) => p.startsWith('/escritorio/demandas'), title: 'Demandas' },
+  { test: (p) => p.startsWith('/escritorio/apps'), title: 'Loja de Apps' },
   { test: (p) => p.startsWith('/escritorio/configuracoes'), title: 'Configurações' },
   { test: (p) => p.startsWith('/portal/inicio'), title: 'Início' },
   { test: (p) => p.startsWith('/portal/cadastro'), title: 'Dados Cadastrais' },
   { test: (p) => p.startsWith('/portal/documentos'), title: 'Documentos' },
   { test: (p) => p.startsWith('/portal/financeiro'), title: 'Financeiro' },
   { test: (p) => p.startsWith('/portal/equipe'), title: 'Equipe' },
+  { test: (p) => p.startsWith('/portal/apps'), title: 'Aplicativos' },
+  { test: (p) => p.startsWith('/portal/certificados'), title: 'Certificados Digitais' },
 ]
 
 function getPageTitle(pathname: string): string {
@@ -78,7 +82,9 @@ export function AppLayout() {
 
   return (
     <PomodoroProvider>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex flex-col h-screen">
+      <ImpersonationBanner />
+      <div className="flex flex-1 overflow-hidden">
         {mobileSidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-20 lg:hidden"
@@ -105,6 +111,7 @@ export function AppLayout() {
         </div>
         <BottomNav onOpenMenu={() => setMobileSidebarOpen(true)} />
         <Toaster />
+      </div>
       </div>
     </PomodoroProvider>
   )

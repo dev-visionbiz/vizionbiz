@@ -28,7 +28,11 @@ export default function Login() {
       setErro(result.erro ?? 'Erro ao fazer login.')
       return
     }
-    const destino = redirectTo ?? (result.papel === 'cliente' ? '/portal/inicio' : '/escritorio/dashboard')
+    const destino = redirectTo ?? (
+      result.papel === 'cliente' ? '/portal/inicio' :
+      result.papel === 'visionbiz_admin' ? '/admin/tenants' :
+      '/escritorio/dashboard'
+    )
     navigate(destino, { replace: true })
   }
 

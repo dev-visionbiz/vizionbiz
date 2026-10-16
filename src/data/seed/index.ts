@@ -9,10 +9,14 @@ import type {
   ChecklistItemTemplate, GuiaRecolhimento,
   ClienteEndereco, ClienteContato, ClienteCnae,
   ProcessoAbertura, ProcessoAlteracao,
+  App, AppVersion, AppPlan, AppInstallation, AppGrant, AppVisibility,
+  CertificadoDigital,
+  CommissionRule, Subscription, LedgerEntry,
 } from '@/domain/types'
 
 const TENANT_ID = 'tenant-001'
-const SEED_KEY = 'vb_seeded_v23'
+const TENANT2_ID = 'tenant-002'
+const SEED_KEY = 'vb_seeded_v28'
 
 // suppress unused import warning
 const _uuidv4 = uuidv4
@@ -30,17 +34,44 @@ function vencimento(monthsAgo: number, diaVencimento: number): string {
 export function runSeed(): void {
   if (localStorage.getItem(SEED_KEY)) return
 
-  // --- Tenant ---
+  // --- Tenants ---
   const tenant: Tenant = {
     id: TENANT_ID,
     nome: 'Contábil Fidelis & Associados',
+    razao_social: 'Contábil Fidelis & Associados S/S Ltda',
     cnpj: '12.345.678/0001-90',
     cor_primaria: '221 83% 53%',
     logo_url: null,
     dominio: 'fidelis.visionbiz.app',
+    email: 'contato@fidelis.com.br',
+    telefone: '(11) 3000-1234',
+    responsavel: 'Carlos Fidelis',
+    endereco_cidade: 'São Paulo',
+    endereco_estado: 'SP',
     modulos: ['contabil'],
+    status: 'ativo',
+    plano: 'pro',
+    data_cadastro: '2024-03-15',
   }
-  localStorage.setItem('vb_tenants', JSON.stringify([tenant]))
+  const tenant2: Tenant = {
+    id: TENANT2_ID,
+    nome: 'Escritório Omega Contabilidade',
+    razao_social: 'Omega Contabilidade Ltda',
+    cnpj: '98.765.432/0001-10',
+    cor_primaria: '142 72% 42%',
+    logo_url: null,
+    dominio: 'omega.visionbiz.app',
+    email: 'suporte@omegacontab.com.br',
+    telefone: '(21) 2500-9876',
+    responsavel: 'Beatriz Omega',
+    endereco_cidade: 'Rio de Janeiro',
+    endereco_estado: 'RJ',
+    status: 'trial',
+    plano: 'starter',
+    data_cadastro: '2026-09-01',
+    data_expiracao: '2026-11-01',
+  }
+  localStorage.setItem('vb_tenants', JSON.stringify([tenant, tenant2]))
 
   // --- Clients ---
   const client1: Client = {
@@ -170,6 +201,7 @@ export function runSeed(): void {
 
   // --- Users ---
   const users: User[] = [
+    { id: 'vb-admin', tenant_id: '', nome: 'Admin VisionBiz', email: 'admin@visionbiz.com.br', papel: 'visionbiz_admin', ativo: true, senha_hash: 'admin123' },
     { id: 'user-admin', tenant_id: TENANT_ID, nome: 'Admin Fidelis', email: 'admin@fidelis.com', papel: 'escritorio_admin', ativo: true, senha_hash: 'senha123' },
     { id: 'user-colab', tenant_id: TENANT_ID, nome: 'Ana Colaboradora', email: 'colaborador@fidelis.com', papel: 'escritorio_colaborador', ativo: true, senha_hash: 'senha123', modulos: ['clientes', 'documentos'] },
     // João Bento: acessa Padaria São Bento (PJ) e João Bento MEI (PF) — demo multi-empresa
@@ -183,6 +215,7 @@ export function runSeed(): void {
     },
     { id: 'user-c2', tenant_id: TENANT_ID, nome: 'Maria Tech', email: 'cliente@techsolutions.com', papel: 'cliente', client_id: 'client-002', ativo: true, senha_hash: 'senha123', papel_portal: 'membro', secoes_portal: ['inicio', 'documentos'] },
     { id: 'user-c3', tenant_id: TENANT_ID, nome: 'Carlos ABC', email: 'cliente@comercioabc.com', papel: 'cliente', client_id: 'client-003', ativo: true, senha_hash: 'senha123', papel_portal: 'responsavel' },
+    { id: 'user-omega-admin', tenant_id: TENANT2_ID, nome: 'Beatriz Omega', email: 'admin@omegacontab.com.br', papel: 'escritorio_admin', ativo: true, senha_hash: 'senha123' },
   ]
   localStorage.setItem('vb_users', JSON.stringify(users))
 
@@ -904,6 +937,345 @@ export function runSeed(): void {
     },
   ]
   localStorage.setItem('vb_cliente_cnaes', JSON.stringify(cnaes))
+
+  // --- App Store ---
+
+  const apps: App[] = [
+    {
+      id: 'app-cert-digital',
+      slug: 'certificado-digital',
+      nome: 'Certificado Digital',
+      descricao: 'Armazene certificados, acompanhe vencimentos e solicite renovação com antecedência.',
+      descricao_longa: 'O app Certificado Digital centraliza o controle de todos os certificados A1, A3, NF-e, e-CNPJ e e-CPF dos seus clientes em um único painel.\n\nReceba alertas automáticos quando um certificado está próximo do vencimento — com 90, 60 e 30 dias de antecedência — e crie ocorrências de renovação com um único clique, diretamente integradas ao fluxo de tarefas do VisionBiz.\n\nNunca mais deixe um cliente ser surpreendido por um certificado vencido. Ganhe tempo, reduza erros e ofereça um serviço proativo que diferencia o seu escritório.',
+      tipo: 'embarcado',
+      icone: '🔐',
+      categoria: 'Compliance',
+      tags: ['certificado', 'segurança', 'A1', 'A3', 'NF-e', 'vencimento', 'renovação'],
+      recursos: [
+        'Painel unificado de todos os certificados digitais dos clientes',
+        'Alertas automáticos com 90, 60 e 30 dias antes do vencimento',
+        'Suporte a A1, A3, NF-e, e-CNPJ e e-CPF',
+        'Criação automática de ocorrência e tarefa de renovação',
+        'Histórico completo por cliente e tipo de certificado',
+        'Card de vencimentos no dashboard do escritório',
+      ],
+      screenshots: [
+        'https://placehold.co/800x500/EEF2FF/4F46E5?text=Painel+de+Certificados',
+        'https://placehold.co/800x500/F0FDF4/16A34A?text=Alertas+de+Vencimento',
+        'https://placehold.co/800x500/FFF7ED/EA580C?text=Aba+na+Ficha+do+Cliente',
+      ],
+      desenvolvedor: 'VisionBiz',
+      avaliacao: 4.8,
+      instalacoes_count: 234,
+      destaque: true,
+      status: 'publicado',
+      criado_em: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'app-ondesc',
+      slug: 'ondesc',
+      nome: 'OnDesc',
+      descricao: 'Conecte seus clientes a descontos em energia elétrica e ganhe comissão por lead.',
+      descricao_longa: 'O OnDesc conecta escritórios contábeis e seus clientes empresariais ao mercado livre de energia, onde empresas podem reduzir em até 35% o custo com energia elétrica.\n\nVocê configura o app no VisionBiz e cada cliente pode simular e ativar o desconto diretamente pelo portal. Para cada lead qualificado, você recebe comissão — sem nenhum custo mensal.\n\nO modelo é simples: você agrega valor ao cliente, diversifica a receita do escritório e não precisa entender nada de energia.',
+      tipo: 'conectado',
+      icone: '⚡',
+      categoria: 'Benefícios',
+      tags: ['energia', 'desconto', 'comissão', 'benefícios', 'mercado livre', 'lead'],
+      recursos: [
+        'Simulação de economia de energia em segundos',
+        'Proposta automática por WhatsApp ou e-mail',
+        'Acompanhamento de leads e comissões em tempo real',
+        'Sem mensalidade — 100% baseado em resultado',
+        'Painel dedicado no portal do cliente',
+        'Suporte a CNPJ com consumo acima de 500 kWh/mês',
+      ],
+      screenshots: [
+        'https://placehold.co/800x500/FEFCE8/CA8A04?text=Simulador+de+Energia',
+        'https://placehold.co/800x500/F0FDF4/16A34A?text=Painel+de+Comissões',
+        'https://placehold.co/800x500/EFF6FF/2563EB?text=Portal+do+Cliente',
+      ],
+      desenvolvedor: 'OnDesc Energia',
+      site_desenvolvedor: 'https://ondesc.com.br',
+      avaliacao: 4.5,
+      instalacoes_count: 89,
+      destaque: true,
+      status: 'publicado',
+      criado_em: '2026-03-01T00:00:00Z',
+    },
+    {
+      id: 'app-nf-facil',
+      slug: 'nota-fiscal-facil',
+      nome: 'Nota Fiscal Fácil',
+      descricao: 'Emita NFS-e e NF-e diretamente pelo VisionBiz, sem acessar outros sistemas.',
+      descricao_longa: 'Emissão de notas fiscais de serviço (NFS-e) e produto (NF-e) totalmente integrada ao fluxo de contratos e cobranças do VisionBiz. Suporte a mais de 500 municípios brasileiros.',
+      tipo: 'conectado',
+      icone: '🧾',
+      categoria: 'Fiscal',
+      tags: ['nota fiscal', 'NFS-e', 'NF-e', 'fiscal', 'tributário'],
+      recursos: [
+        'Emissão de NFS-e para mais de 500 municípios',
+        'Integração direta com contratos e cobranças',
+        'Envio automático da nota ao cliente por e-mail',
+        'Cancelamento e substituição de notas',
+        'Relatório fiscal por período e por cliente',
+      ],
+      desenvolvedor: 'VisionBiz',
+      avaliacao: 0,
+      instalacoes_count: 0,
+      destaque: false,
+      status: 'em_revisao',
+      criado_em: '2026-06-01T00:00:00Z',
+    },
+    {
+      id: 'app-socios',
+      slug: 'gestao-socios',
+      nome: 'Gestão de Sócios',
+      descricao: 'Mapa societário completo com histórico de alterações, procuradores e controle de participação.',
+      descricao_longa: 'Controle societário integrado ao cadastro do cliente. Registre sócios, administradores, procuradores e histórico de alterações contratuais em um único lugar.',
+      tipo: 'embarcado',
+      icone: '👥',
+      categoria: 'Societário',
+      tags: ['sócios', 'societário', 'contrato social', 'procuração', 'quadro societário'],
+      recursos: [
+        'Quadro societário com histórico de alterações',
+        'Gestão de procuradores e representantes legais',
+        'Controle de participação percentual',
+        'Alertas de vencimento de mandatos',
+        'Exportação para PDF e integração com contratos',
+      ],
+      desenvolvedor: 'VisionBiz',
+      avaliacao: 0,
+      instalacoes_count: 0,
+      destaque: false,
+      status: 'em_revisao',
+      criado_em: '2026-06-01T00:00:00Z',
+    },
+  ]
+  localStorage.setItem('vb_apps', JSON.stringify(apps))
+
+  const appVersions: AppVersion[] = [
+    {
+      id: 'appv-cert-1',
+      app_id: 'app-cert-digital',
+      versao: '1.0.0',
+      manifesto: {
+        slug: 'certificado-digital',
+        nome: 'Certificado Digital',
+        tipo: 'embarcado',
+        versao: '1.0.0',
+        descricao: 'Armazene certificados, acompanhe vencimentos e solicite renovação com antecedência.',
+        icone: '🔐',
+        categoria: 'Compliance',
+        escopos: ['clientes:read', 'documentos:read', 'documentos:write', 'financeiro:write', 'tarefas:write', 'notificacoes:send'],
+        slots: ['cliente.aba', 'dashboard.card', 'tarefas.gerador'],
+        eventos_assinados: ['cliente.criado', 'cobranca.paga'],
+        planos: [
+          { id: 'cert-gratuito', nome: 'Controle de vencimentos', tipo_cobranca: 'gratuito', valor: 0 },
+          { id: 'cert-renovacao', nome: 'Emissão / Renovação', tipo_cobranca: 'por_uso', valor: null },
+        ],
+        comissao_padrao_sugerida: { tipo: 'percentual' },
+      },
+      publicado_em: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'appv-ondesc-1',
+      app_id: 'app-ondesc',
+      versao: '1.0.0',
+      manifesto: {
+        slug: 'ondesc',
+        nome: 'OnDesc',
+        tipo: 'conectado',
+        versao: '1.0.0',
+        descricao: 'Conecte seus clientes a descontos em energia elétrica e ganhe comissão por lead.',
+        icone: '⚡',
+        categoria: 'Benefícios',
+        escopos: ['clientes:read', 'notificacoes:send'],
+        slots: ['dashboard.card', 'cliente.aba'],
+        eventos_assinados: ['cliente.criado'],
+        planos: [
+          { id: 'ondesc-gratuito', nome: 'Gratuito', tipo_cobranca: 'gratuito', valor: 0 },
+        ],
+        comissao_padrao_sugerida: { tipo: 'fixo' },
+      },
+      publicado_em: '2026-03-01T00:00:00Z',
+    },
+  ]
+  localStorage.setItem('vb_app_versions', JSON.stringify(appVersions))
+
+  const appPlans: AppPlan[] = [
+    { id: 'cert-gratuito', app_id: 'app-cert-digital', nome: 'Controle de vencimentos', tipo_cobranca: 'gratuito', valor: 0 },
+    { id: 'cert-renovacao', app_id: 'app-cert-digital', nome: 'Emissão / Renovação', tipo_cobranca: 'por_uso', valor: null },
+    { id: 'ondesc-gratuito', app_id: 'app-ondesc', nome: 'Gratuito', tipo_cobranca: 'gratuito', valor: 0 },
+  ]
+  localStorage.setItem('vb_app_plans', JSON.stringify(appPlans))
+
+  // tenant-001 já tem certificado-digital instalado (app piloto)
+  const appInstallations: AppInstallation[] = [
+    {
+      id: 'inst-cert-t001',
+      app_id: 'app-cert-digital',
+      app_version_id: 'appv-cert-1',
+      escritorio_id: TENANT_ID,
+      instalado_por: 'user-admin-001',
+      status: 'ativa',
+      instalado_em: '2026-01-15T10:00:00Z',
+    },
+  ]
+  localStorage.setItem('vb_app_installations', JSON.stringify(appInstallations))
+
+  const appGrants: AppGrant[] = [
+    { id: 'grant-cert-1', installation_id: 'inst-cert-t001', escopo: 'clientes:read', concedido_em: '2026-01-15T10:00:00Z' },
+    { id: 'grant-cert-2', installation_id: 'inst-cert-t001', escopo: 'documentos:read', concedido_em: '2026-01-15T10:00:00Z' },
+    { id: 'grant-cert-3', installation_id: 'inst-cert-t001', escopo: 'documentos:write', concedido_em: '2026-01-15T10:00:00Z' },
+    { id: 'grant-cert-4', installation_id: 'inst-cert-t001', escopo: 'financeiro:write', concedido_em: '2026-01-15T10:00:00Z' },
+    { id: 'grant-cert-5', installation_id: 'inst-cert-t001', escopo: 'tarefas:write', concedido_em: '2026-01-15T10:00:00Z' },
+    { id: 'grant-cert-6', installation_id: 'inst-cert-t001', escopo: 'notificacoes:send', concedido_em: '2026-01-15T10:00:00Z' },
+  ]
+  localStorage.setItem('vb_app_grants', JSON.stringify(appGrants))
+
+  const appVisibility: AppVisibility[] = [
+    { id: 'vis-cert-t001', escritorio_id: TENANT_ID, app_id: 'app-cert-digital', visivel: true, destaque: true },
+    { id: 'vis-ondesc-t001', escritorio_id: TENANT_ID, app_id: 'app-ondesc', visivel: true, destaque: false },
+  ]
+  localStorage.setItem('vb_app_visibility', JSON.stringify(appVisibility))
+
+  // --- Certificados Digitais (app piloto) ---
+  const hoje = new Date()
+  function addDiasStr(d: number): string {
+    const dt = new Date(hoje)
+    dt.setDate(dt.getDate() + d)
+    return format(dt, 'yyyy-MM-dd')
+  }
+
+  const certificados: CertificadoDigital[] = [
+    {
+      id: 'cert-001',
+      tenant_id: TENANT_ID,
+      cliente_id: 'client-001',
+      tipo: 'ecnpj_a3',
+      titular: 'Padaria São Bento Ltda',
+      cnpj_cpf: '11.222.333/0001-44',
+      validade: addDiasStr(25),   // vence em 25 dias — alerta vermelho
+      status: 'vencendo',
+      criado_por: 'user-admin-001',
+      criado_em: '2025-01-10T10:00:00Z',
+    },
+    {
+      id: 'cert-002',
+      tenant_id: TENANT_ID,
+      cliente_id: 'client-001',
+      tipo: 'ecpf_a1',
+      titular: 'Carlos Bento',
+      cnpj_cpf: '111.222.333-44',
+      validade: addDiasStr(55),   // vence em 55 dias — alerta laranja
+      status: 'vencendo',
+      criado_por: 'user-admin-001',
+      criado_em: '2025-01-10T10:00:00Z',
+    },
+    {
+      id: 'cert-003',
+      tenant_id: TENANT_ID,
+      cliente_id: 'client-002',
+      tipo: 'ecnpj_a1',
+      titular: 'Tech Solutions Ltda',
+      cnpj_cpf: '22.333.444/0001-55',
+      validade: addDiasStr(85),   // vence em 85 dias — alerta amarelo
+      status: 'vencendo',
+      criado_por: 'user-admin-001',
+      criado_em: '2025-03-01T10:00:00Z',
+    },
+    {
+      id: 'cert-004',
+      tenant_id: TENANT_ID,
+      cliente_id: 'client-003',
+      tipo: 'ecnpj_a3',
+      titular: 'ABC Comércio Ltda',
+      cnpj_cpf: '33.444.555/0001-66',
+      validade: addDiasStr(180),  // válido — não aparece no card dos 90 dias
+      status: 'valido',
+      criado_por: 'user-admin-001',
+      criado_em: '2025-06-01T10:00:00Z',
+    },
+  ]
+  localStorage.setItem('vb_certificados_digitais', JSON.stringify(certificados))
+
+  // --- Fase 3: Comissões, Assinaturas e Ledger ---
+
+  const commissionRules: CommissionRule[] = [
+    {
+      id: 'rule-cert-padrao',
+      app_id: 'app-cert-digital',
+      tipo: 'percentual',
+      valor: 20,    // 20% da receita vai para o escritório
+    },
+    {
+      id: 'rule-ondesc-padrao',
+      app_id: 'app-ondesc',
+      tipo: 'fixo',
+      valor: 50,    // R$50 por lead
+    },
+  ]
+  localStorage.setItem('vb_commission_rules', JSON.stringify(commissionRules))
+
+  // tenant-001 tem assinatura ativa no plano gratuito do certificado-digital
+  const subscriptions: Subscription[] = [
+    {
+      id: 'sub-cert-t001',
+      installation_id: 'inst-cert-t001',
+      plan_id: 'cert-gratuito',
+      escritorio_id: TENANT_ID,
+      app_id: 'app-cert-digital',
+      status: 'ativa',
+      inicio: '2026-01-15',
+      criado_em: '2026-01-15T10:00:00Z',
+    },
+  ]
+  localStorage.setItem('vb_app_subscriptions', JSON.stringify(subscriptions))
+
+  // Ledger: exemplo de uma cobrança por emissão já registrada
+  const ledgerEntries: LedgerEntry[] = [
+    {
+      id: 'led-001',
+      tipo: 'receita',
+      subscription_id: 'sub-cert-t001',
+      escritorio_id: TENANT_ID,
+      app_id: 'app-cert-digital',
+      valor: 150.00,
+      referencia: 'Emissão de certificado e-CNPJ A3 — Padaria São Bento Ltda',
+      criado_em: '2026-03-10T14:22:00Z',
+    },
+    {
+      id: 'led-002',
+      tipo: 'comissao_escritorio',
+      subscription_id: 'sub-cert-t001',
+      escritorio_id: TENANT_ID,
+      app_id: 'app-cert-digital',
+      valor: 30.00,
+      referencia: 'Comissão 20% — Emissão e-CNPJ A3',
+      criado_em: '2026-03-10T14:22:00Z',
+    },
+    {
+      id: 'led-003',
+      tipo: 'receita',
+      subscription_id: 'sub-cert-t001',
+      escritorio_id: TENANT_ID,
+      app_id: 'app-cert-digital',
+      valor: 120.00,
+      referencia: 'Emissão de certificado e-CPF A1 — Carlos Bento',
+      criado_em: '2026-04-02T09:15:00Z',
+    },
+    {
+      id: 'led-004',
+      tipo: 'comissao_escritorio',
+      subscription_id: 'sub-cert-t001',
+      escritorio_id: TENANT_ID,
+      app_id: 'app-cert-digital',
+      valor: 24.00,
+      referencia: 'Comissão 20% — Emissão e-CPF A1',
+      criado_em: '2026-04-02T09:15:00Z',
+    },
+  ]
+  localStorage.setItem('vb_ledger', JSON.stringify(ledgerEntries))
 
   // Marca seed como executado
   localStorage.setItem(SEED_KEY, new Date().toISOString())

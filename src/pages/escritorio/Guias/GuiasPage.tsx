@@ -102,7 +102,7 @@ export default function GuiasPage() {
 
   function nomeCliente(clienteId: string) {
     const c = clientes.find((cl) => cl.id === clienteId)
-    return c?.fantasia ?? c?.razao_social ?? 'â€“'
+    return c?.fantasia ?? c?.razao_social ?? '—'
   }
 
   function telefoneCliente(clienteId: string) {
