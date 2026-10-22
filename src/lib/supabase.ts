@@ -1,10 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-// isSupabaseEnabled = true quando as variáveis estiverem no .env.local
-// Quando false, os providers usam localStorage automaticamente
+// Em produção usa as credenciais do projeto como fallback (já são públicas no .env.production)
+const supabaseUrl = envUrl || (!import.meta.env.DEV ? 'https://snlbsgzrvxmnfosrwwyu.supabase.co' : undefined)
+const supabaseAnonKey = envKey || (!import.meta.env.DEV ? 'sb_publishable_5U3yHzCj_Y9AU65zsMDaIw_1N0JxDrb' : undefined)
+
+// isSupabaseEnabled = true quando as variáveis estiverem disponíveis
+// Em produção sempre true; em dev só se .env.local estiver configurado
 export const isSupabaseEnabled = !!(supabaseUrl && supabaseAnonKey)
 
 if (!isSupabaseEnabled) {
