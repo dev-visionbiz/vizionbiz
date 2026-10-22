@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { clienteCnaeRepo } from '@/data/repositories/localStorage'
+import { clienteCnaeRepo } from '@/data/repositories/clientesProvider'
 import type { ClienteCnae } from '@/domain/types'
 
 export function useClienteCnaes(tenantId: string, clienteId: string) {

@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalCarteiraRepository } from '@/data/repositories/localStorage'
+import { carteiraRepo as repo } from '@/data/repositories/clientesProvider'
 import type { Carteira } from '@/domain/types'
-
-const repo = new LocalCarteiraRepository()
 
 export function useCarteiras(tenantId: string) {
   return useQuery({

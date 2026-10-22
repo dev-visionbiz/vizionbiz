@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
-import { guiaRepo } from '@/data/repositories/localStorage/GuiaRepository'
+import { guiaRepo } from '@/data/repositories/guiasProvider'
 import type { GuiaRecolhimento, GuiaStatus, TipoGuia, SegundaViaStatus } from '@/domain/types'
 
 export interface FiltrosGuia {

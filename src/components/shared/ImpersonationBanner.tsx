@@ -9,8 +9,8 @@ export function ImpersonationBanner() {
 
   if (!isImpersonating) return null
 
-  function handleExit() {
-    exitImpersonation()
+  async function handleExit() {
+    await exitImpersonation()
     navigate('/admin/tenants', { replace: true })
   }
 

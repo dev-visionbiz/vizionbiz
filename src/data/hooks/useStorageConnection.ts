@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalStorageConnectionRepository } from '@/data/repositories/localStorage/StorageConnectionRepository'
+import { storageConnectionRepo as repo } from '@/data/repositories/documentosProvider'
 import type { StorageConnection } from '@/domain/types'
-
-const repo = new LocalStorageConnectionRepository()
 
 export function useStorageConnection(escritorioId: string) {
   return useQuery({

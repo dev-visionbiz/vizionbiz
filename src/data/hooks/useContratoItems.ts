@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalContratoItemRepository } from '@/data/repositories/localStorage'
+import { contratoItemRepo as repo } from '@/data/repositories/financeiroProvider'
 import type { ContratoItem } from '@/domain/types'
-
-const repo = new LocalContratoItemRepository()
 
 export function useContratoItems(tenantId: string, contratoId: string) {
   return useQuery({

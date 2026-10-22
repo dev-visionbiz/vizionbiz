@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalPlanoRepository } from '@/data/repositories/localStorage'
+import { planoRepo as repo } from '@/data/repositories/financeiroProvider'
 import type { Plano } from '@/domain/types'
-
-const repo = new LocalPlanoRepository()
 
 export function usePlanos(tenantId: string) {
   return useQuery({

@@ -16,7 +16,7 @@ import type {
 
 const TENANT_ID = 'tenant-001'
 const TENANT2_ID = 'tenant-002'
-const SEED_KEY = 'vb_seeded_v28'
+const SEED_KEY = 'vb_seeded_v29'
 
 // suppress unused import warning
 const _uuidv4 = uuidv4
@@ -1067,7 +1067,11 @@ export function runSeed(): void {
         icone: '🔐',
         categoria: 'Compliance',
         escopos: ['clientes:read', 'documentos:read', 'documentos:write', 'financeiro:write', 'tarefas:write', 'notificacoes:send'],
-        slots: ['cliente.aba', 'dashboard.card', 'tarefas.gerador'],
+        slots: ['escritorio.dashboard.widget', 'escritorio.cliente.aba', 'portal.inicio.servico', 'tarefas.gerador'],
+        gadgets: [
+          { slot: 'escritorio.dashboard.widget', scope: 'escritorio', tamanho: 'medio', component: 'CertificadosDashboardCard' },
+          { slot: 'portal.inicio.servico', scope: 'portal', tamanho: 'pequeno', component: 'CertificadosPortalCard' },
+        ],
         eventos_assinados: ['cliente.criado', 'cobranca.paga'],
         planos: [
           { id: 'cert-gratuito', nome: 'Controle de vencimentos', tipo_cobranca: 'gratuito', valor: 0 },
@@ -1090,7 +1094,21 @@ export function runSeed(): void {
         icone: '⚡',
         categoria: 'Benefícios',
         escopos: ['clientes:read', 'notificacoes:send'],
-        slots: ['dashboard.card', 'cliente.aba'],
+        slots: ['escritorio.dashboard.widget'],
+        gadgets: [
+          {
+            slot: 'escritorio.dashboard.widget',
+            scope: 'escritorio',
+            tamanho: 'pequeno',
+            dataEndpoint: {
+              url: 'https://api.ondesc.com.br/gadget/dashboard',
+              method: 'GET',
+              authHeader: 'x-visionbiz-key',
+              refreshInterval: 300,
+              mapping: { total_leads: 'Leads enviados', comissao_mes: 'Comissão do mês' },
+            },
+          },
+        ],
         eventos_assinados: ['cliente.criado'],
         planos: [
           { id: 'ondesc-gratuito', nome: 'Gratuito', tipo_cobranca: 'gratuito', valor: 0 },

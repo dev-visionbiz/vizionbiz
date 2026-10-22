@@ -1,10 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalHistoricoStatusClienteRepository, LocalClientRepository } from '@/data/repositories/localStorage'
+import { historicoStatusRepo as histRepo, clientRepo } from '@/data/repositories/clientesProvider'
 import type { ClientStatus, HistoricoStatusCliente } from '@/domain/types'
 import { v4 as uuidv4 } from 'uuid'
-
-const histRepo = new LocalHistoricoStatusClienteRepository()
-const clientRepo = new LocalClientRepository()
 
 export function useHistoricoStatusCliente(tenantId: string, clientId: string) {
   return useQuery({

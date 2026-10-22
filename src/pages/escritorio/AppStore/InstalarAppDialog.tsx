@@ -44,11 +44,11 @@ export function InstalarAppDialog({ app, version, open, onClose, escritorioId, u
       { escritorioId, appId: app.id, escopos, instaladoPor: usuarioId },
       {
         onSuccess: () => {
-          toast({ title: `${app.nome} instalado com sucesso.` })
+          toast({ title: `${app.nome} conectado com sucesso.` })
           onClose()
         },
         onError: () => {
-          toast({ title: 'Erro ao instalar o app.', variant: 'destructive' })
+          toast({ title: 'Erro ao conectar o serviço.', variant: 'destructive' })
         },
       }
     )
@@ -60,7 +60,7 @@ export function InstalarAppDialog({ app, version, open, onClose, escritorioId, u
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-2xl">{app.icone}</span>
-            Instalar {app.nome}
+            Conectar {app.nome}
           </DialogTitle>
         </DialogHeader>
 
@@ -100,7 +100,7 @@ export function InstalarAppDialog({ app, version, open, onClose, escritorioId, u
               onCheckedChange={(v) => setAceito(v === true)}
             />
             <Label htmlFor="aceito" className="text-sm leading-snug cursor-pointer">
-              Entendo as permissões acima e autorizo o acesso do app aos dados indicados.
+              Entendo as permissões acima e autorizo a conexão deste serviço aos dados indicados.
             </Label>
           </div>
         </div>
@@ -112,7 +112,7 @@ export function InstalarAppDialog({ app, version, open, onClose, escritorioId, u
             disabled={!aceito || instalar.isPending}
           >
             {instalar.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Instalar
+            Conectar
           </Button>
         </DialogFooter>
       </DialogContent>

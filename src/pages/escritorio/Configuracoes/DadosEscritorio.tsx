@@ -82,16 +82,16 @@ export default function DadosEscritorio() {
   }, [tenant, reset])
 
   const onSubmit = async (values: FormData) => {
-    if (!tenant) return
+    if (!tenantId) return
     try {
-      await updateTenant.mutateAsync({ id: tenant.id, data: values })
+      await updateTenant.mutateAsync({ id: tenantId, data: values })
       toast({ title: 'Dados salvos', description: 'Informações do escritório atualizadas.' })
     } catch {
       toast({ title: 'Erro', description: 'Não foi possível salvar.', variant: 'destructive' })
     }
   }
 
-  if (isLoading) return <PageLoader />
+  if (isLoading && !tenant) return <PageLoader />
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">

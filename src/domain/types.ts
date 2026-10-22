@@ -986,7 +986,7 @@ export interface FormularioResposta {
 
 // ==================== APP STORE ====================
 
-export type AppTipo = 'embarcado' | 'conectado'
+export type AppTipo = 'embarcado' | 'conectado' | 'embed'
 export type AppStatus = 'rascunho' | 'em_revisao' | 'publicado' | 'suspenso'
 export type AppInstallationStatus = 'ativa' | 'revogada' | 'suspensa'
 
@@ -1002,12 +1002,45 @@ export type AppEscopoSlug =
   | 'notificacoes:send'
 
 export type AppSlotSlug =
+  // escritório — dashboard
+  | 'escritorio.dashboard.widget'
+  | 'escritorio.dashboard.alerta'
+  // escritório — ficha do cliente
+  | 'escritorio.cliente.aba'
+  | 'escritorio.cliente.card'
+  // portal do cliente
+  | 'portal.inicio.servico'
+  | 'portal.inicio.alerta'
+  | 'portal.pagina'
+  // legado (manter compatibilidade)
   | 'dashboard.card'
   | 'cliente.aba'
   | 'driveHub.acao'
   | 'financeiro.acao'
   | 'tarefas.gerador'
   | 'menu.item'
+
+export type GadgetTamanho = 'pequeno' | 'medio' | 'grande'
+
+export interface GadgetDataEndpoint {
+  url: string
+  method: 'GET' | 'POST'
+  authHeader: string
+  refreshInterval: number
+  mapping: Record<string, string>
+}
+
+export interface GadgetSpec {
+  slot: AppSlotSlug
+  scope: 'escritorio' | 'portal' | 'ambos'
+  tamanho?: GadgetTamanho
+  // 'embarcado': nome do componente no registry
+  component?: string
+  // 'conectado': endpoint que VisionBiz consulta para montar o gadget
+  dataEndpoint?: GadgetDataEndpoint
+  // 'embed': URL do iframe autenticado por JWT
+  embedUrl?: string
+}
 
 export type AppEventoTipo =
   | 'cliente.criado'
@@ -1032,6 +1065,15 @@ export interface AppComissaoPadrao {
   valor?: number
 }
 
+export interface GadgetContext {
+  scope: 'escritorio' | 'portal'
+  tenant: { id: string; nome: string }
+  user: { id: string; papel: string }
+  cliente?: { id: string; nome: string; cnpj: string }
+  apiToken: string
+  theme: { mode: 'light' | 'dark'; primaryColor: string }
+}
+
 export interface AppManifesto {
   slug: string
   nome: string
@@ -1042,6 +1084,7 @@ export interface AppManifesto {
   categoria?: string
   escopos: AppEscopoSlug[]
   slots: AppSlotSlug[]
+  gadgets?: GadgetSpec[]
   eventos_assinados: AppEventoTipo[]
   planos: AppPlanDef[]
   comissao_padrao_sugerida?: AppComissaoPadrao

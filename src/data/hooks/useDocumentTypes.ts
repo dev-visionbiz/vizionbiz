@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalDocumentTypeRepository } from '@/data/repositories/localStorage'
+import { documentTypeRepo as repo } from '@/data/repositories/documentosProvider'
 import type { DocumentType } from '@/domain/types'
-
-const repo = new LocalDocumentTypeRepository()
 
 export function useDocumentTypes(tenantId: string) {
   return useQuery({

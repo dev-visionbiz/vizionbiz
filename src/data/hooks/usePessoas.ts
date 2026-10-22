@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalPessoaRepository, LocalEmpresaPessoaRepository } from '@/data/repositories/localStorage'
+import { pessoaRepo, empresaPessoaRepo as empPessoaRepo } from '@/data/repositories/clientesProvider'
 import type { Pessoa, EmpresaPessoa } from '@/domain/types'
-
-const pessoaRepo = new LocalPessoaRepository()
-const empPessoaRepo = new LocalEmpresaPessoaRepository()
 
 // --- Pessoas ---
 

@@ -24,7 +24,8 @@ import {
 
 import { useToast } from '@/components/ui/use-toast'
 import { TrendingUp, AlertCircle, Users, FileText, Upload, Download, Eye, Share2 } from 'lucide-react'
-import { CertificadosDashboardCard } from '@/apps/certificado-digital/CertificadosDashboardCard'
+import { SlotRenderer } from '@/components/shared/slots/SlotRenderer'
+import { embarcadoRegistry } from '@/apps/registry'
 import type { Invoice } from '@/domain/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { calcularEncargos } from '@/domain/financeiro/calcularEncargos'
@@ -364,7 +365,11 @@ export default function Dashboard() {
         }}
       />
 
-      <CertificadosDashboardCard />
+      <SlotRenderer
+        slot="escritorio.dashboard.widget"
+        escritorioId={tenantId}
+        registry={embarcadoRegistry}
+      />
     </div>
   )
 }

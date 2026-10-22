@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
-import { fluxoRepo } from '@/data/repositories/localStorage/FluxoRepository'
-import { fluxoTarefaRepo } from '@/data/repositories/localStorage/FluxoTarefaRepository'
+import { fluxoRepo, fluxoTarefaRepo } from '@/data/repositories/operacoesProvider'
 import type { Fluxo, FluxoTarefa } from '@/domain/types'
 
 export function useFluxos(tenantId: string) {

@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalDocumentEventRepository } from '@/data/repositories/localStorage'
+import { documentEventRepo as repo } from '@/data/repositories/documentosProvider'
 import type { DocumentEventRecord } from '@/domain/types'
-
-const repo = new LocalDocumentEventRepository()
 
 export function useClientDocumentEvents(tenantId: string, clientId: string) {
   return useQuery({

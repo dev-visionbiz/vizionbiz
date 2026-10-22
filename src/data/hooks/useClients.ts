@@ -1,17 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuidv4 } from 'uuid'
-import { LocalClientRepository } from '@/data/repositories/localStorage'
-import { LocalFolderRepository } from '@/data/repositories/localStorage'
+import { clientRepo } from '@/data/repositories/clientesProvider'
+import { folderRepo } from '@/data/repositories/documentosProvider'
 import type { Client, FolderType } from '@/domain/types'
 import { getPastasDefault } from '@/modulos/registry'
-
-const repo = new LocalClientRepository()
-const folderRepo = new LocalFolderRepository()
 
 export function useClients(tenantId: string) {
   return useQuery({
     queryKey: ['clients', tenantId],
-    queryFn: () => repo.findAll(tenantId),
+    queryFn: () => clientRepo.findAll(tenantId),
     enabled: !!tenantId,
   })
 }
@@ -19,7 +16,7 @@ export function useClients(tenantId: string) {
 export function useClient(id: string) {
   return useQuery({
     queryKey: ['clients', 'detail', id],
-    queryFn: () => repo.findById(id),
+    queryFn: () => clientRepo.findById(id),
     enabled: !!id,
   })
 }
@@ -28,7 +25,7 @@ export function useCreateClient() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ client, modulos }: { client: Client; modulos?: string[] }) => {
-      await repo.create(client)
+      await clientRepo.create(client)
       const pastas = getPastasDefault(modulos)
       await Promise.all(
         pastas.map((f) =>
@@ -54,7 +51,7 @@ export function useCreateClient() {
 export function useUpdateClient() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Client> }) => repo.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<Client> }) => clientRepo.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
   })
 }

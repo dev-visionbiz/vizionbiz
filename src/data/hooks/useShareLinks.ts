@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalShareLinkRepository } from '@/data/repositories/localStorage'
+import { shareLinkRepo as repo } from '@/data/repositories/documentosProvider'
 import type { ShareLink } from '@/domain/types'
-
-const repo = new LocalShareLinkRepository()
 
 export function useDocumentShareLinks(documentId: string) {
   return useQuery({

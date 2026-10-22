@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalInvoiceRepository } from '@/data/repositories/localStorage'
+import { invoiceRepo as repo } from '@/data/repositories/financeiroProvider'
 import type { Invoice } from '@/domain/types'
-
-const repo = new LocalInvoiceRepository()
 
 export function useInvoices(tenantId: string) {
   return useQuery({

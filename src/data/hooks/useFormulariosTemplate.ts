@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
-import {
-  formularioTemplateRepo,
-  formularioRespostaRepo,
-} from '@/data/repositories/localStorage/FormularioTemplateRepository'
+import { formularioTemplateRepo, formularioRespostaRepo } from '@/data/repositories/guiasProvider'
 import type { FormularioTemplate, FormularioResposta } from '@/domain/types'
 
 export function useFormulariosTemplate(tenantId: string) {

@@ -1,10 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalClientVinculoRepository } from '@/data/repositories/localStorage'
-import { LocalClientRepository } from '@/data/repositories/localStorage'
+import { clientVinculoRepo as vinculoRepo, clientRepo } from '@/data/repositories/clientesProvider'
 import type { Client, ClientVinculo } from '@/domain/types'
-
-const vinculoRepo = new LocalClientVinculoRepository()
-const clientRepo = new LocalClientRepository()
 
 export function useAllClientVinculos(tenantId: string) {
   return useQuery({

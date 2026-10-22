@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalBillingPolicyRepository } from '@/data/repositories/localStorage'
+import { billingPolicyRepo as repo } from '@/data/repositories/financeiroProvider'
 import type { BillingPolicy } from '@/domain/types'
-
-const repo = new LocalBillingPolicyRepository()
 
 export function useBillingPolicy(tenantId: string) {
   return useQuery({

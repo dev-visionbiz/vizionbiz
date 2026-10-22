@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { processoAberturaRepo } from '@/data/repositories/localStorage'
+import { processoAberturaRepo } from '@/data/repositories/guiasProvider'
 import type { ProcessoAbertura } from '@/domain/types'
 
 export function useProcessoAbertura(tenantId: string, clienteId: string) {

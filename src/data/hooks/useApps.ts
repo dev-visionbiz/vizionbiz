@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
-import { appRepo } from '@/data/repositories/localStorage/AppRepository'
-import { appVersionRepo } from '@/data/repositories/localStorage/AppVersionRepository'
-import { appPlanRepo } from '@/data/repositories/localStorage/AppPlanRepository'
-import { appInstallationRepo } from '@/data/repositories/localStorage/AppInstallationRepository'
-import { appGrantRepo } from '@/data/repositories/localStorage/AppGrantRepository'
-import { appVisibilityRepo } from '@/data/repositories/localStorage/AppVisibilityRepository'
+import {
+  appRepo,
+  appVersionRepo,
+  appPlanRepo,
+  appInstallationRepo,
+  appGrantRepo,
+  appVisibilityRepo,
+} from '@/data/repositories/appsProvider'
 import type {
   App, AppVersion, AppInstallation, AppGrant, AppVisibility,
   AppEscopoSlug, AppPlan,
@@ -147,6 +149,92 @@ export function useDesinstalarApp() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['app_installations', vars.escritorioId] })
+      qc.invalidateQueries({ queryKey: ['app_grants'] })
+    },
+  })
+}
+
+// --- Instalações no nível do cliente ---
+
+export function useAppInstallationsByCliente(escritorioId: string, clienteId: string) {
+  return useQuery({
+    queryKey: ['app_installations', escritorioId, 'cliente', clienteId],
+    queryFn: () => appInstallationRepo.findByCliente(escritorioId, clienteId),
+    enabled: !!escritorioId && !!clienteId,
+  })
+}
+
+export function useConectarAppCliente() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      escritorioId,
+      clienteId,
+      appId,
+      escopos,
+      conectadoPor,
+    }: {
+      escritorioId: string
+      clienteId: string
+      appId: string
+      escopos: AppEscopoSlug[]
+      conectadoPor: string
+    }) => {
+      const version = await appVersionRepo.findLatest(appId)
+      if (!version) throw new Error('Versão do serviço não encontrada')
+
+      const installationId = uuid()
+      const agora = new Date().toISOString()
+
+      const installation = await appInstallationRepo.create({
+        id: installationId,
+        app_id: appId,
+        app_version_id: version.id,
+        escritorio_id: escritorioId,
+        cliente_id: clienteId,
+        instalado_por: conectadoPor,
+        status: 'ativa',
+        instalado_em: agora,
+      })
+
+      await Promise.all(
+        escopos.map((escopo) =>
+          appGrantRepo.create({
+            id: uuid(),
+            installation_id: installationId,
+            escopo,
+            concedido_em: agora,
+          })
+        )
+      )
+
+      return installation
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['app_installations', vars.escritorioId, 'cliente', vars.clienteId] })
+      qc.invalidateQueries({ queryKey: ['app_grants'] })
+    },
+  })
+}
+
+export function useDesconectarAppCliente() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      installationId,
+      escritorioId,
+      clienteId,
+    }: {
+      installationId: string
+      escritorioId: string
+      clienteId: string
+    }) => {
+      const agora = new Date().toISOString()
+      await appGrantRepo.revokeAll(installationId, agora)
+      await appInstallationRepo.update(installationId, { status: 'revogada', revogado_em: agora })
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['app_installations', vars.escritorioId, 'cliente', vars.clienteId] })
       qc.invalidateQueries({ queryKey: ['app_grants'] })
     },
   })

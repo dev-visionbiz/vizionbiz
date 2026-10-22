@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { clienteEnderecoRepo } from '@/data/repositories/localStorage'
+import { clienteEnderecoRepo } from '@/data/repositories/clientesProvider'
 import type { ClienteEndereco } from '@/domain/types'
 
 export function useClienteEnderecos(tenantId: string, clienteId: string) {

@@ -1,10 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
-import { subscriptionRepo } from '@/data/repositories/localStorage/SubscriptionRepository'
-import { commissionRuleRepo } from '@/data/repositories/localStorage/CommissionRuleRepository'
-import { ledgerRepo } from '@/data/repositories/localStorage/LedgerRepository'
-import { appPlanRepo } from '@/data/repositories/localStorage/AppPlanRepository'
+import { subscriptionRepo, commissionRuleRepo, ledgerRepo, appPlanRepo } from '@/data/repositories/appsProvider'
 import type { Subscription, CommissionRule, LedgerEntry } from '@/domain/types'
 
 // --- Subscriptions ---

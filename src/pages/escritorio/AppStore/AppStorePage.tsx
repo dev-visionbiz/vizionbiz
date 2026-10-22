@@ -64,7 +64,7 @@ function AppCard({
           {isInstalado && (
             <Badge className="bg-green-100 text-green-800 border-transparent text-xs shrink-0">
               <CheckCircle2 className="w-3 h-3 mr-1" />
-              Instalado
+              Conectado
             </Badge>
           )}
         </div>
@@ -109,14 +109,14 @@ function AppCard({
                   onClick={() => onDesinstalar(instalada.id)}
                 >
                   <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Desinstalar
+                  Desconectar
                 </Button>
               </div>
             </>
           ) : (
             <Button size="sm" onClick={() => onInstalar(app)}>
               <PackageOpen className="w-3.5 h-3.5 mr-1" />
-              Instalar
+              Conectar
             </Button>
           )}
         </div>
@@ -164,8 +164,8 @@ export function AppStorePage() {
     desinstalar.mutate(
       { installationId, escritorioId },
       {
-        onSuccess: () => toast({ title: 'App desinstalado.' }),
-        onError: () => toast({ title: 'Erro ao desinstalar.', variant: 'destructive' }),
+        onSuccess: () => toast({ title: 'Serviço desconectado.' }),
+        onError: () => toast({ title: 'Erro ao desconectar.', variant: 'destructive' }),
       }
     )
   }
@@ -184,15 +184,15 @@ export function AppStorePage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Loja de Apps</h1>
+          <h1 className="text-2xl font-bold">Conexões</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Expanda a plataforma com apps prontos para o seu escritório e seus clientes.
+            Integre serviços especializados diretamente ao seu escritório e aos seus clientes.
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
           <Link to="/loja" target="_blank">
             <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-            Ver página da loja
+            Ver catálogo de conexões
           </Link>
         </Button>
       </div>
@@ -201,7 +201,7 @@ export function AppStorePage() {
         <TabsList>
           <TabsTrigger value="catalogo">Catálogo</TabsTrigger>
           <TabsTrigger value="instalados">
-            Instalados
+            Conectados
             {instaladosIds.size > 0 && (
               <Badge variant="secondary" className="ml-1.5 text-xs">{instaladosIds.size}</Badge>
             )}
@@ -239,7 +239,7 @@ export function AppStorePage() {
 
         <TabsContent value="instalados" className="mt-4">
           {instaladosIds.size === 0 ? (
-            <p className="text-muted-foreground text-sm">Nenhum app instalado ainda.</p>
+            <p className="text-muted-foreground text-sm">Nenhum serviço conectado ainda.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {publishedApps.filter((a) => instaladosIds.has(a.id)).map((app) => {

@@ -25,6 +25,8 @@ import {
   Info,
   Link,
   X,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -33,6 +35,14 @@ import {
   VARS_GUIA,
   VARS_DOCUMENTO,
 } from '@/lib/whatsapp/templates'
+
+function mascaraTelefone(phone: string): string {
+  if (phone.length <= 6) return `+${phone}`
+  const pais = phone.slice(0, 2)
+  const ultimos4 = phone.slice(-4)
+  const asteriscos = '*'.repeat(phone.length - 6)
+  return `+${pais} ${asteriscos}${ultimos4}`
+}
 
 const INSTRUCOES = [
   { icon: Smartphone,    texto: 'Abra o WhatsApp no celular do escritório' },
@@ -130,6 +140,7 @@ export default function WhatsAppPage() {
   const [loading, setLoading] = useState(false)
   const [modalAberto, setModalAberto] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [mostrarTelefone, setMostrarTelefone] = useState(false)
 
   const [tmplGuia, setTmplGuia] = useState(DEFAULT_TEMPLATE_GUIA)
   const [tmplDoc, setTmplDoc] = useState(DEFAULT_TEMPLATE_DOCUMENTO)
@@ -297,7 +308,23 @@ export default function WhatsAppPage() {
           {status === 'connected' && (
             <>
               <p className="font-medium text-sm">Conectado</p>
-              {phone && <p className="text-xs text-muted-foreground">+{phone}</p>}
+              {phone && (
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground font-mono">
+                    {mostrarTelefone ? `+${phone}` : mascaraTelefone(phone)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setMostrarTelefone(v => !v)}
+                    className="text-muted-foreground hover:text-foreground"
+                    title={mostrarTelefone ? 'Ocultar número' : 'Revelar número'}
+                  >
+                    {mostrarTelefone
+                      ? <EyeOff className="h-3 w-3" />
+                      : <Eye className="h-3 w-3" />}
+                  </button>
+                </div>
+              )}
             </>
           )}
           {status === 'connecting' && (
@@ -437,7 +464,23 @@ export default function WhatsAppPage() {
                 <CheckCircle2 className="h-8 w-8 text-green-600" />
               </div>
               <p className="font-semibold text-green-700 dark:text-green-400">WhatsApp conectado!</p>
-              {phone && <p className="text-sm text-muted-foreground">+{phone}</p>}
+              {phone && (
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm text-muted-foreground font-mono">
+                    {mostrarTelefone ? `+${phone}` : mascaraTelefone(phone)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setMostrarTelefone(v => !v)}
+                    className="text-muted-foreground hover:text-foreground"
+                    title={mostrarTelefone ? 'Ocultar número' : 'Revelar número'}
+                  >
+                    {mostrarTelefone
+                      ? <EyeOff className="h-3.5 w-3.5" />
+                      : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">
                 Fechando automaticamente em {countdown}s...
               </p>

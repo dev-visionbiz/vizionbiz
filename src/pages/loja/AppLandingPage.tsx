@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useApps, useAppPlans, useAppVersion, useAppInstallacaoByApp } from '@/data/hooks/useApps'
+import { useApps, useAppPlans, useAppVersion, useAppInstallacaoByApp, useAppInstallationsByCliente } from '@/data/hooks/useApps'
 import { useAuth } from '@/auth/AuthProvider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import {
   Users, Clock, Package,
 } from 'lucide-react'
 import { InstalarAppDialog } from '@/pages/escritorio/AppStore/InstalarAppDialog'
+import { ConectarServicoDialog } from '@/pages/cliente/ConectarServicoDialog'
 import { formatCurrency } from '@/lib/utils'
 import type { AppEscopoSlug, AppPlanTipoCobranca } from '@/domain/types'
 
@@ -62,19 +63,25 @@ export function AppLandingPage() {
   const { currentUser } = useAuth()
   const navigate = useNavigate()
   const tenantId = currentUser?.tenant_id ?? ''
+  const clienteId = currentUser?.client_id ?? ''
 
   const { data: apps = [] } = useApps()
   const app = apps.find((a) => a.slug === slug)
 
   const { data: version } = useAppVersion(app?.id ?? '')
   const { data: plans = [] } = useAppPlans(app?.id ?? '')
-  const { data: installation } = useAppInstallacaoByApp(tenantId, app?.id ?? '')
+  const { data: installationEscritorio } = useAppInstallacaoByApp(tenantId, app?.id ?? '')
+  const { data: instalacoesCliente = [] } = useAppInstallationsByCliente(tenantId, clienteId)
 
   const [installOpen, setInstallOpen] = useState(false)
+  const [conectarClienteOpen, setConectarClienteOpen] = useState(false)
   const [selectedScreenshot, setSelectedScreenshot] = useState<number | null>(null)
 
   const isAdmin = currentUser?.papel === 'escritorio_admin'
-  const isInstalled = !!installation
+  const isCliente = currentUser?.papel === 'cliente'
+  const isInstalledEscritorio = !!installationEscritorio
+  const isInstalledCliente = instalacoesCliente.some((i) => i.app_id === (app?.id ?? ''))
+  const isInstalled = isAdmin ? isInstalledEscritorio : isInstalledCliente
 
   const videoId = app?.video_url ? getYouTubeEmbedId(app.video_url) : null
   const screenshots = app?.screenshots ?? []
@@ -86,7 +93,7 @@ export function AppLandingPage() {
         <Package className="w-14 h-14 opacity-20" />
         <p className="text-lg font-medium">Aplicativo não encontrado</p>
         <Button variant="outline" asChild>
-          <Link to="/loja"><ChevronLeft className="w-4 h-4 mr-1" />Voltar à loja</Link>
+          <Link to="/loja"><ChevronLeft className="w-4 h-4 mr-1" />Voltar às conexões</Link>
         </Button>
       </div>
     )
@@ -94,14 +101,15 @@ export function AppLandingPage() {
 
   function InstallButton({ size = 'default' }: { size?: 'default' | 'lg' }) {
     if (isInstalled) {
+      const gerenciarHref = isCliente ? '/portal/apps' : '/escritorio/apps'
       return (
         <div className="flex items-center gap-2">
           <Badge className="bg-green-100 text-green-800 border-transparent px-3 py-1.5 text-sm font-medium">
             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-            Instalado
+            Conectado
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => navigate('/escritorio/apps')}>
-            Gerenciar
+          <Button variant="outline" size="sm" onClick={() => navigate(gerenciarHref)}>
+            {isCliente ? 'Meus serviços' : 'Gerenciar'}
           </Button>
         </div>
       )
@@ -112,8 +120,25 @@ export function AppLandingPage() {
         <Button size={size} asChild>
           <Link to="/login">
             <Download className="w-4 h-4 mr-2" />
-            Entrar para instalar
+            Entrar para conectar
           </Link>
+        </Button>
+      )
+    }
+
+    if (isCliente) {
+      if (!version) {
+        return (
+          <Button size={size} disabled>
+            <Download className="w-4 h-4 mr-2" />
+            Conectar
+          </Button>
+        )
+      }
+      return (
+        <Button size={size} onClick={() => setConectarClienteOpen(true)}>
+          <Download className="w-4 h-4 mr-2" />
+          Conectar
         </Button>
       )
     }
@@ -131,7 +156,7 @@ export function AppLandingPage() {
       return (
         <Button size={size} disabled>
           <Download className="w-4 h-4 mr-2" />
-          Instalar
+          Conectar
         </Button>
       )
     }
@@ -139,7 +164,7 @@ export function AppLandingPage() {
     return (
       <Button size={size} onClick={() => setInstallOpen(true)}>
         <Download className="w-4 h-4 mr-2" />
-        Instalar gratuitamente
+        Conectar gratuitamente
       </Button>
     )
   }
@@ -150,9 +175,9 @@ export function AppLandingPage() {
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/loja" className="text-muted-foreground">
+            <Link to={isCliente ? '/portal/apps' : '/loja'} className="text-muted-foreground">
               <ChevronLeft className="w-4 h-4 mr-1" />
-              Loja de Apps
+              Conexões
             </Link>
           </Button>
           <div className="hidden sm:flex items-center gap-2 min-w-0">
@@ -428,11 +453,13 @@ export function AppLandingPage() {
                         variant={isFeatured ? 'default' : 'outline'}
                         onClick={() => {
                           if (!currentUser) navigate('/login')
+                          else if (isCliente && !isInstalled && version) setConectarClienteOpen(true)
+                          else if (isCliente && isInstalled) navigate('/portal/apps')
                           else if (isAdmin && !isInstalled && version) setInstallOpen(true)
                           else if (isAdmin && isInstalled) navigate('/escritorio/apps')
                         }}
                       >
-                        {isInstalled ? 'Gerenciar plano' : isGratuito ? 'Instalar gratuitamente' : 'Instalar e assinar'}
+                        {isInstalled ? 'Gerenciar plano' : isGratuito ? 'Conectar gratuitamente' : 'Conectar e assinar'}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </CardContent>
@@ -448,7 +475,7 @@ export function AppLandingPage() {
           <section>
             <h2 className="text-2xl font-bold mb-2">Permissões solicitadas</h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Ao instalar este app, o seu escritório concede as seguintes permissões de acesso aos dados.
+              Ao conectar este serviço, o seu escritório concede as seguintes permissões de acesso aos dados.
             </p>
             <div className="space-y-2">
               {version.manifesto.escopos.map((escopo) => (
@@ -500,13 +527,13 @@ export function AppLandingPage() {
         <div className="rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-card border p-8 text-center">
           <p className="text-2xl font-bold mb-2">Pronto para começar?</p>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Instale o {app.nome} agora e transforme a gestão do seu escritório.
+            Conecte o {app.nome} agora e transforme a gestão do seu escritório.
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <InstallButton size="lg" />
             <Button variant="outline" size="lg" asChild>
               <Link to="/loja">
-                Ver outros apps
+                Ver outras conexões
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
@@ -521,16 +548,15 @@ export function AppLandingPage() {
             <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
               <Store className="w-3 h-3 text-primary" />
             </div>
-            <span>VisionBiz App Store</span>
+            <span>VisionBiz Conexões</span>
           </div>
           <Link to="/loja" className="hover:text-foreground flex items-center gap-1">
             <ChevronLeft className="w-3.5 h-3.5" />
-            Voltar à loja
+            Voltar às conexões
           </Link>
         </div>
       </footer>
 
-      {/* Install dialog */}
       {installOpen && version && (
         <InstalarAppDialog
           app={app}
@@ -539,6 +565,17 @@ export function AppLandingPage() {
           onClose={() => setInstallOpen(false)}
           escritorioId={tenantId}
           usuarioId={currentUser?.id ?? ''}
+        />
+      )}
+
+      {conectarClienteOpen && (
+        <ConectarServicoDialog
+          app={app}
+          escritorioId={tenantId}
+          clienteId={clienteId}
+          usuarioId={currentUser?.id ?? ''}
+          open={conectarClienteOpen}
+          onClose={() => setConectarClienteOpen(false)}
         />
       )}
     </div>

@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
-import { ocorrenciaRepo } from '@/data/repositories/localStorage/OcorrenciaRepository'
-import { tarefaRepo } from '@/data/repositories/localStorage/TarefaRepository'
+import { ocorrenciaRepo, tarefaRepo } from '@/data/repositories/operacoesProvider'
 import type { Ocorrencia, Tarefa, TarefaStatus, ChecklistItemProgresso, OcorrenciaStatus, FormularioColetaStatus } from '@/domain/types'
 
 function derivarStatusTarefa(t: Tarefa): Tarefa {

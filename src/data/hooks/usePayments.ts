@@ -1,8 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalPaymentRepository } from '@/data/repositories/localStorage'
+import { paymentRepo as repo } from '@/data/repositories/financeiroProvider'
 import type { Payment } from '@/domain/types'
-
-const repo = new LocalPaymentRepository()
 
 export function useCreatePayment() {
   const qc = useQueryClient()

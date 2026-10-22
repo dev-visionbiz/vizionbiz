@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
-import { loteRepo } from '@/data/repositories/localStorage/LoteImportacaoRepository'
+import { loteRepo } from '@/data/repositories/guiasProvider'
 import type { LoteImportacao } from '@/domain/types'
 
 export function useCreateLote() {

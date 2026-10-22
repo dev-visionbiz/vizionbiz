@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { servicoRealizadoRepo } from '@/data/repositories/localStorage'
+import { servicoRealizadoRepo } from '@/data/repositories/financeiroProvider'
 import type { ServicoRealizado } from '@/domain/types'
 
 const QK = 'servicos_realizados'

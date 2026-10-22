@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalRenegotiationRepository } from '@/data/repositories/localStorage'
+import { renegotiationRepo as repo } from '@/data/repositories/financeiroProvider'
 import type { Renegotiation } from '@/domain/types'
-
-const repo = new LocalRenegotiationRepository()
 
 export function useRenegotiations(tenantId: string) {
   return useQuery({

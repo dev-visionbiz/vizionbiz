@@ -1,12 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  LocalFichaBlocoRepository,
-  LocalFichaCampoRepository,
-} from '@/data/repositories/localStorage'
+import { fichaBlocoRepo as blocoRepo, fichaCampoRepo as campoRepo } from '@/data/repositories/operacoesProvider'
 import type { FichaBloco, FichaCampo } from '@/domain/types'
-
-const blocoRepo = new LocalFichaBlocoRepository()
-const campoRepo = new LocalFichaCampoRepository()
 
 // ---- Blocos ----
 

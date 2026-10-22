@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { clienteContatoRepo } from '@/data/repositories/localStorage'
+import { clienteContatoRepo } from '@/data/repositories/clientesProvider'
 import type { ClienteContato } from '@/domain/types'
 
 export function useClienteContatos(tenantId: string, clienteId: string) {

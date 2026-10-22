@@ -1,6 +1,6 @@
-import type { FolderType, Vocabulario, AppManifesto, AppSlotSlug, AppEscopoSlug, AppEventoTipo, AppPlanDef } from '@/domain/types'
+import type { FolderType, Vocabulario, AppManifesto, AppSlotSlug, AppEscopoSlug, AppEventoTipo, AppPlanDef, GadgetContext, GadgetSpec } from '@/domain/types'
 
-export type { AppManifesto, AppSlotSlug, AppEscopoSlug, AppEventoTipo, AppPlanDef }
+export type { AppManifesto, AppSlotSlug, AppEscopoSlug, AppEventoTipo, AppPlanDef, GadgetContext, GadgetSpec }
 
 export interface PastaTemplate {
   nome: string

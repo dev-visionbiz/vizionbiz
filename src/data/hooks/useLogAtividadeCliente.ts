@@ -1,9 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalLogAtividadeClienteRepository } from '@/data/repositories/localStorage'
+import { logAtividadeRepo as repo } from '@/data/repositories/clientesProvider'
 import type { LogAtividadeAcao, LogAtividadeCliente } from '@/domain/types'
 import { v4 as uuidv4 } from 'uuid'
-
-const repo = new LocalLogAtividadeClienteRepository()
 
 export function useLogAtividadeCliente(tenantId: string, clientId: string) {
   return useQuery({

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import type { Tenant, TenantStatus, TenantPlano, User, Client } from '@/domain/types'
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
 import { TenantFormDialog } from './TenantFormDialog'
+import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 
 const STATUS_LABEL: Record<TenantStatus, string> = {
   ativo: 'Ativo', trial: 'Trial', suspenso: 'Suspenso', inativo: 'Inativo',
@@ -46,22 +47,30 @@ export default function TenantDetail() {
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [tenant, setTenant] = useState<Tenant | null>(null)
   const [rev, setRev] = useState(0)
 
-  const tenant = useMemo(() => {
-    const tenants = readAll<Tenant>('vb_tenants')
-    return tenants.find(t => t.id === id) ?? null
-  }, [id, rev]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!id) return
+    if (!isSupabaseEnabled) {
+      const found = readAll<Tenant>('vb_tenants').find(t => t.id === id) ?? null
+      setTenant(found)
+      return
+    }
+    supabase.from('tenants').select('*').eq('id', id).maybeSingle().then(({ data }) => {
+      setTenant(data ?? null)
+    })
+  }, [id, rev])
 
   const metrics = useMemo(() => {
-    if (!id) return { clientes: 0, colaboradores: 0, portais: 0 }
+    if (!id || isSupabaseEnabled) return { clientes: null, colaboradores: null, portais: null }
     const users = readAll<User>('vb_users').filter(u => u.tenant_id === id)
     const clients = readAll<Client>('vb_clients').filter(c => c.tenant_id === id)
-    const colaboradores = users.filter(u =>
-      u.papel === 'escritorio_admin' || u.papel === 'escritorio_colaborador'
-    ).length
-    const portais = users.filter(u => u.papel === 'cliente').length
-    return { clientes: clients.length, colaboradores, portais }
+    return {
+      clientes: clients.length,
+      colaboradores: users.filter(u => u.papel === 'escritorio_admin' || u.papel === 'escritorio_colaborador').length,
+      portais: users.filter(u => u.papel === 'cliente').length,
+    }
   }, [id, rev]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!tenant) {
@@ -78,24 +87,34 @@ export default function TenantDetail() {
 
   const status = (tenant.status ?? 'ativo') as TenantStatus
 
-  function handleStatusChange(value: string) {
-    const all = readAll<Tenant>('vb_tenants')
-    const updated = all.map(t => t.id === tenant!.id ? { ...t, status: value as TenantStatus } : t)
-    localStorage.setItem('vb_tenants', JSON.stringify(updated))
+  async function handleStatusChange(value: string) {
+    if (isSupabaseEnabled) {
+      await supabase.from('tenants').update({ status: value }).eq('id', tenant!.id)
+    } else {
+      const all = readAll<Tenant>('vb_tenants').map(t =>
+        t.id === tenant!.id ? { ...t, status: value as TenantStatus } : t
+      )
+      localStorage.setItem('vb_tenants', JSON.stringify(all))
+    }
     setRev(r => r + 1)
     toast({ title: `Status atualizado para ${STATUS_LABEL[value as TenantStatus]}` })
   }
 
-  function handlePlanoChange(value: string) {
-    const all = readAll<Tenant>('vb_tenants')
-    const updated = all.map(t => t.id === tenant!.id ? { ...t, plano: value as TenantPlano } : t)
-    localStorage.setItem('vb_tenants', JSON.stringify(updated))
+  async function handlePlanoChange(value: string) {
+    if (isSupabaseEnabled) {
+      await supabase.from('tenants').update({ plano: value }).eq('id', tenant!.id)
+    } else {
+      const all = readAll<Tenant>('vb_tenants').map(t =>
+        t.id === tenant!.id ? { ...t, plano: value as TenantPlano } : t
+      )
+      localStorage.setItem('vb_tenants', JSON.stringify(all))
+    }
     setRev(r => r + 1)
     toast({ title: `Plano atualizado para ${PLANO_LABEL[value as TenantPlano]}` })
   }
 
-  function handleEnter() {
-    const ok = impersonateEscritorio(tenant!.id)
+  async function handleEnter() {
+    const ok = await impersonateEscritorio(tenant!.id)
     if (!ok) {
       toast({ title: 'Nenhum admin encontrado neste escritório', variant: 'destructive' })
       return
@@ -103,11 +122,14 @@ export default function TenantDetail() {
     navigate('/escritorio/dashboard', { replace: true })
   }
 
-  function confirmDelete() {
-    const tenants = readAll<Tenant>('vb_tenants').filter(t => t.id !== id)
-    localStorage.setItem('vb_tenants', JSON.stringify(tenants))
-    const users = readAll<User>('vb_users').filter(u => u.tenant_id !== id)
-    localStorage.setItem('vb_users', JSON.stringify(users))
+  async function confirmDelete() {
+    if (isSupabaseEnabled) {
+      await supabase.from('users').delete().eq('tenant_id', id)
+      await supabase.from('tenants').delete().eq('id', id)
+    } else {
+      localStorage.setItem('vb_tenants', JSON.stringify(readAll<Tenant>('vb_tenants').filter(t => t.id !== id)))
+      localStorage.setItem('vb_users', JSON.stringify(readAll<User>('vb_users').filter(u => u.tenant_id !== id)))
+    }
     toast({ title: `Escritório "${tenant!.nome}" excluído` })
     navigate('/admin/tenants', { replace: true })
   }
@@ -148,27 +170,19 @@ export default function TenantDetail() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-lg border bg-card p-4 flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
-            <Briefcase className="h-3.5 w-3.5" />
-            Clientes
+        {[
+          { icon: Briefcase, label: 'Clientes', value: metrics.clientes },
+          { icon: Users, label: 'Colaboradores', value: metrics.colaboradores },
+          { icon: Users, label: 'Usuários portal', value: metrics.portais },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="rounded-lg border bg-card p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </div>
+            <p className="text-3xl font-bold">{value ?? '—'}</p>
           </div>
-          <p className="text-3xl font-bold">{metrics.clientes}</p>
-        </div>
-        <div className="rounded-lg border bg-card p-4 flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
-            <Users className="h-3.5 w-3.5" />
-            Colaboradores
-          </div>
-          <p className="text-3xl font-bold">{metrics.colaboradores}</p>
-        </div>
-        <div className="rounded-lg border bg-card p-4 flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
-            <Users className="h-3.5 w-3.5" />
-            Usuários portal
-          </div>
-          <p className="text-3xl font-bold">{metrics.portais}</p>
-        </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -238,7 +252,6 @@ export default function TenantDetail() {
         </div>
       </div>
 
-      {/* Edit dialog */}
       <TenantFormDialog
         open={editOpen}
         onOpenChange={setEditOpen}
@@ -246,7 +259,6 @@ export default function TenantDetail() {
         onSaved={() => { setRev(r => r + 1); toast({ title: 'Escritório atualizado' }) }}
       />
 
-      {/* Delete confirmation */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

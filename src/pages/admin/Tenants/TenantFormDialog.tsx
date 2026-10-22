@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,6 +6,7 @@ import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
 import type { Tenant, User } from '@/domain/types'
 import { digitsOnly } from '@/lib/utils'
+import { supabase, isSupabaseEnabled, createSupabaseAuthUser } from '@/lib/supabase'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -83,6 +84,7 @@ interface Props {
 
 export function TenantFormDialog({ open, onOpenChange, tenant, onSaved }: Props) {
   const isEdit = !!tenant
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form = useForm<CreateValues>({
     resolver: zodResolver(isEdit ? (baseSchema as unknown as z.ZodType<CreateValues>) : createSchema),
@@ -98,6 +100,7 @@ export function TenantFormDialog({ open, onOpenChange, tenant, onSaved }: Props)
 
   useEffect(() => {
     if (open) {
+      setSubmitError(null)
       if (tenant) {
         reset({
           nome: tenant.nome ?? '',
@@ -123,58 +126,79 @@ export function TenantFormDialog({ open, onOpenChange, tenant, onSaved }: Props)
     }
   }, [open, tenant, reset])
 
-  function onSubmit(values: CreateValues) {
-    if (isEdit) {
-      // UPDATE
-      const tenants = readLS<Tenant>('vb_tenants')
-      const updated: Tenant = {
-        ...tenant!,
-        nome: values.nome,
-        razao_social: values.razao_social || undefined,
-        cnpj: values.cnpj,
-        email: values.email || undefined,
-        telefone: values.telefone || undefined,
-        responsavel: values.responsavel || undefined,
-        endereco_cidade: values.endereco_cidade || undefined,
-        endereco_estado: values.endereco_estado || undefined,
-        status: values.status,
-        plano: values.plano,
-      }
-      writeLS('vb_tenants', tenants.map(t => t.id === updated.id ? updated : t))
-    } else {
-      // CREATE
-      const tenantId = `tenant-${uuid()}`
-      const newTenant: Tenant = {
-        id: tenantId,
-        nome: values.nome,
-        razao_social: values.razao_social || undefined,
-        cnpj: values.cnpj,
-        cor_primaria: '221 83% 53%',
-        logo_url: null,
-        dominio: `${slugify(values.nome)}.visionbiz.app`,
-        email: values.email || undefined,
-        telefone: values.telefone || undefined,
-        responsavel: values.responsavel || undefined,
-        endereco_cidade: values.endereco_cidade || undefined,
-        endereco_estado: values.endereco_estado || undefined,
-        status: values.status,
-        plano: values.plano,
-        data_cadastro: format(new Date(), 'yyyy-MM-dd'),
-      }
-      const adminUser: User = {
-        id: `user-${uuid()}`,
-        tenant_id: tenantId,
-        nome: values.admin_nome,
-        email: values.admin_email,
-        papel: 'escritorio_admin',
-        ativo: true,
-        senha_hash: values.admin_senha,
-      }
-      const tenants = readLS<Tenant>('vb_tenants')
-      const users = readLS<User>('vb_users')
-      writeLS('vb_tenants', [...tenants, newTenant])
-      writeLS('vb_users', [...users, adminUser])
+  async function onSubmit(values: CreateValues) {
+    const tenantData = {
+      nome: values.nome,
+      razao_social: values.razao_social || undefined,
+      cnpj: values.cnpj,
+      email: values.email || undefined,
+      telefone: values.telefone || undefined,
+      responsavel: values.responsavel || undefined,
+      endereco_cidade: values.endereco_cidade || undefined,
+      endereco_estado: values.endereco_estado || undefined,
+      status: values.status,
+      plano: values.plano,
     }
+
+    if (isSupabaseEnabled) {
+      if (isEdit) {
+        const { error } = await supabase.from('tenants').update(tenantData).eq('id', tenant!.id)
+        if (error) { setSubmitError(error.message); return }
+      } else {
+        const tenantId = `tenant-${uuid()}`
+        const newTenant = {
+          id: tenantId,
+          ...tenantData,
+          cor_primaria: '221 83% 53%',
+          logo_url: null,
+          dominio: `${slugify(values.nome)}.visionbiz.app`,
+          data_cadastro: format(new Date(), 'yyyy-MM-dd'),
+        }
+        const adminUser = {
+          id: `user-${uuid()}`,
+          tenant_id: tenantId,
+          nome: values.admin_nome,
+          email: values.admin_email,
+          papel: 'escritorio_admin' as const,
+          ativo: true,
+          senha_hash: values.admin_senha,
+        }
+        const { error: authErr } = await createSupabaseAuthUser(values.admin_email, values.admin_senha)
+        if (authErr) { setSubmitError(`Erro ao criar usuário Auth: ${authErr}`); return }
+        const { error: te } = await supabase.from('tenants').insert(newTenant)
+        if (te) { setSubmitError(`Erro ao salvar escritório: ${te.message}`); return }
+        const { error: ue } = await supabase.from('users').insert(adminUser)
+        if (ue) { setSubmitError(`Erro ao salvar usuário: ${ue.message}`); return }
+      }
+    } else {
+      if (isEdit) {
+        const tenants = readLS<Tenant>('vb_tenants')
+        const updated: Tenant = { ...tenant!, ...tenantData }
+        writeLS('vb_tenants', tenants.map(t => t.id === updated.id ? updated : t))
+      } else {
+        const tenantId = `tenant-${uuid()}`
+        const newTenant: Tenant = {
+          id: tenantId,
+          ...tenantData,
+          cor_primaria: '221 83% 53%',
+          logo_url: null,
+          dominio: `${slugify(values.nome)}.visionbiz.app`,
+          data_cadastro: format(new Date(), 'yyyy-MM-dd'),
+        }
+        const adminUser: User = {
+          id: `user-${uuid()}`,
+          tenant_id: tenantId,
+          nome: values.admin_nome,
+          email: values.admin_email,
+          papel: 'escritorio_admin',
+          ativo: true,
+          senha_hash: values.admin_senha,
+        }
+        writeLS('vb_tenants', [...readLS<Tenant>('vb_tenants'), newTenant])
+        writeLS('vb_users', [...readLS<User>('vb_users'), adminUser])
+      }
+    }
+
     onSaved()
     onOpenChange(false)
   }
@@ -334,11 +358,14 @@ export function TenantFormDialog({ open, onOpenChange, tenant, onSaved }: Props)
         </form>
 
         <DialogFooter className="shrink-0 pt-3 border-t gap-2">
+          {submitError && (
+            <p className="text-xs text-destructive flex-1 text-left">{submitError}</p>
+          )}
           <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button type="submit" form="tenant-form" disabled={isSubmitting}>
-            {isEdit ? 'Salvar alterações' : 'Criar escritório'}
+            {isSubmitting ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar escritório'}
           </Button>
         </DialogFooter>
       </DialogContent>

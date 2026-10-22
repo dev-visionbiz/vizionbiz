@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalFolderRepository } from '@/data/repositories/localStorage'
+import { folderRepo as repo } from '@/data/repositories/documentosProvider'
 import type { Folder } from '@/domain/types'
-
-const repo = new LocalFolderRepository()
 
 export function useFolders(tenantId: string) {
   return useQuery({

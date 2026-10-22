@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalTenantRepository } from '@/data/repositories/localStorage'
+import { tenantRepo as repo } from '@/data/repositories/coreProvider'
 import type { Tenant } from '@/domain/types'
-
-const repo = new LocalTenantRepository()
 
 export function useTenant(tenantId: string) {
   return useQuery({

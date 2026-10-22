@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalUserRepository } from '@/data/repositories/localStorage'
+import { userRepo as repo } from '@/data/repositories/coreProvider'
 import type { User } from '@/domain/types'
-
-const repo = new LocalUserRepository()
 
 export function useUsers(tenantId: string, includeInactive = false) {
   return useQuery({

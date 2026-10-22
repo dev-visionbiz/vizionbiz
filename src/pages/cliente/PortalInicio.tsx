@@ -17,6 +17,8 @@ import {
   FileText, CreditCard, Calendar, AlertCircle, AlertTriangle,
   ClipboardEdit, ExternalLink, SendHorizonal,
 } from 'lucide-react'
+import { SlotRenderer } from '@/components/shared/slots/SlotRenderer'
+import { embarcadoRegistry } from '@/apps/registry'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { calcularEncargos } from '@/domain/financeiro/calcularEncargos'
 import type { TipoAlteracao } from '@/domain/types'
@@ -305,6 +307,14 @@ export default function PortalInicio() {
           </div>
         </div>
       )}
+
+      {/* Serviços conectados (slot portal.inicio.servico) */}
+      <SlotRenderer
+        slot="portal.inicio.servico"
+        escritorioId={tenantId}
+        context={{ scope: 'portal', tenant: { id: tenantId, nome: currentTenant?.nome ?? '' }, user: { id: currentUser?.id ?? '', papel: currentUser?.papel ?? '' } }}
+        registry={embarcadoRegistry}
+      />
 
     </div>
   )

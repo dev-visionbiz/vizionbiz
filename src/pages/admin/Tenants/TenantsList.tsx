@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import type { Tenant, TenantStatus, User, Client } from '@/domain/types'
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
 import { TenantFormDialog } from './TenantFormDialog'
+import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 
 const STATUS_LABEL: Record<TenantStatus, string> = {
   ativo: 'Ativo', trial: 'Trial', suspenso: 'Suspenso', inativo: 'Inativo',
@@ -28,6 +29,7 @@ function readAll<T>(key: string): T[] {
 
 function useTenantMetrics(tenantId: string) {
   return useMemo(() => {
+    if (isSupabaseEnabled) return { clientes: null, usuarios: null }
     const users = readAll<User>('vb_users').filter(u => u.tenant_id === tenantId)
     const clients = readAll<Client>('vb_clients').filter(c => c.tenant_id === tenantId)
     const colaboradores = users.filter(u =>
@@ -65,8 +67,12 @@ function TenantRow({
       <td className="px-4 py-3 text-sm text-muted-foreground">
         {tenant.plano ? (PLANO_LABEL[tenant.plano] ?? tenant.plano) : '—'}
       </td>
-      <td className="px-4 py-3 text-sm text-center">{metrics.clientes}</td>
-      <td className="px-4 py-3 text-sm text-center">{metrics.usuarios}</td>
+      <td className="px-4 py-3 text-sm text-center">
+        {metrics.clientes ?? '—'}
+      </td>
+      <td className="px-4 py-3 text-sm text-center">
+        {metrics.usuarios ?? '—'}
+      </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
         {tenant.data_cadastro
           ? format(new Date(tenant.data_cadastro), 'dd/MM/yyyy', { locale: ptBR })
@@ -146,24 +152,33 @@ export default function TenantsList() {
   const [statusFilter, setStatusFilter] = useState<TenantStatus | 'todos'>('todos')
   const [formOpen, setFormOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null)
-  // bump this to force re-read from localStorage after mutations
+  const [tenants, setTenants] = useState<Tenant[]>([])
   const [rev, setRev] = useState(0)
   const refresh = useCallback(() => setRev(r => r + 1), [])
 
-  const tenants = useMemo(() => readAll<Tenant>('vb_tenants'), [rev]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!isSupabaseEnabled) {
+      setTenants(readAll<Tenant>('vb_tenants'))
+      return
+    }
+    supabase.from('tenants').select('*').order('nome').then(({ data, error }) => {
+      if (error) console.error(error)
+      else setTenants(data ?? [])
+    })
+  }, [rev])
 
   const filtered = useMemo(() => {
     return tenants.filter(t => {
       const matchSearch = !search ||
         t.nome.toLowerCase().includes(search.toLowerCase()) ||
-        t.cnpj.includes(search)
+        (t.cnpj ?? '').includes(search)
       const matchStatus = statusFilter === 'todos' || (t.status ?? 'ativo') === statusFilter
       return matchSearch && matchStatus
     })
   }, [tenants, search, statusFilter])
 
-  function handleEnter(tenantId: string) {
-    const ok = impersonateEscritorio(tenantId)
+  async function handleEnter(tenantId: string) {
+    const ok = await impersonateEscritorio(tenantId)
     if (!ok) {
       toast({ title: 'Nenhum admin encontrado neste escritório', variant: 'destructive' })
       return
@@ -171,18 +186,17 @@ export default function TenantsList() {
     navigate('/escritorio/dashboard', { replace: true })
   }
 
-  function handleDelete(tenant: Tenant) {
-    setDeleteTarget(tenant)
-  }
-
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deleteTarget) return
-    // Remove tenant
-    const tenants = readAll<Tenant>('vb_tenants').filter(t => t.id !== deleteTarget.id)
-    localStorage.setItem('vb_tenants', JSON.stringify(tenants))
-    // Remove all users of this tenant
-    const users = readAll<User>('vb_users').filter(u => u.tenant_id !== deleteTarget.id)
-    localStorage.setItem('vb_users', JSON.stringify(users))
+    if (isSupabaseEnabled) {
+      await supabase.from('users').delete().eq('tenant_id', deleteTarget.id)
+      await supabase.from('tenants').delete().eq('id', deleteTarget.id)
+    } else {
+      const ts = readAll<Tenant>('vb_tenants').filter(t => t.id !== deleteTarget.id)
+      localStorage.setItem('vb_tenants', JSON.stringify(ts))
+      const us = readAll<User>('vb_users').filter(u => u.tenant_id !== deleteTarget.id)
+      localStorage.setItem('vb_users', JSON.stringify(us))
+    }
     toast({ title: `Escritório "${deleteTarget.nome}" excluído` })
     setDeleteTarget(null)
     refresh()
@@ -252,7 +266,7 @@ export default function TenantsList() {
               </tr>
             ) : (
               filtered.map(t => (
-                <TenantRow key={t.id} tenant={t} onEnter={handleEnter} onDelete={handleDelete} />
+                <TenantRow key={t.id} tenant={t} onEnter={handleEnter} onDelete={setDeleteTarget} />
               ))
             )}
           </tbody>

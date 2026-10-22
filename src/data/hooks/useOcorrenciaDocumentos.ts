@@ -1,17 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
 import { format } from 'date-fns'
-import { ocorrenciaDocumentoRepo } from '@/data/repositories/localStorage/OcorrenciaDocumentoRepository'
-import { LocalDocumentRepository } from '@/data/repositories/localStorage'
-import { LocalDocumentEventRepository } from '@/data/repositories/localStorage'
+import { ocorrenciaDocumentoRepo } from '@/data/repositories/operacoesProvider'
+import { documentRepo as docRepo, documentEventRepo as docEventRepo } from '@/data/repositories/documentosProvider'
 import { obterProvedorStorage } from '@/lib/storage'
 import { storageService } from '@/lib/storage'
 import { gerarThumbnailPdf } from '@/lib/pdf-thumbnail'
 import { gerarThumbnailArquivo } from '@/lib/file-icon-thumbnail'
 import type { OcorrenciaDocumento, OcorrenciaDocumentoTipo } from '@/domain/types'
-
-const docRepo = new LocalDocumentRepository()
-const docEventRepo = new LocalDocumentEventRepository()
 
 export function useOcorrenciaDocumentos(tenantId: string, ocorrenciaId: string) {
   return useQuery({

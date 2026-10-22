@@ -1,9 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { v4 as uuid } from 'uuid'
 import { format, differenceInDays, parseISO } from 'date-fns'
-import { certificadoRepo } from '@/data/repositories/localStorage/CertificadoRepository'
-import { ocorrenciaRepo } from '@/data/repositories/localStorage/OcorrenciaRepository'
-import { tarefaRepo } from '@/data/repositories/localStorage/TarefaRepository'
+import { certificadoRepo } from '@/data/repositories/guiasProvider'
+import { ocorrenciaRepo, tarefaRepo } from '@/data/repositories/operacoesProvider'
 import type { CertificadoDigital, CertificadoStatus } from '@/domain/types'
 
 export function derivarStatusCertificado(validade: string): CertificadoStatus {
@@ -66,6 +65,40 @@ export function useDeleteCertificado() {
   return useMutation({
     mutationFn: (id: string) => certificadoRepo.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['certificados'] }),
+  })
+}
+
+// Cria Ocorrência de solicitação de renovação feita pelo próprio cliente (RF-C07)
+export function useSolicitarRenovacaoCertificado() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (cert: CertificadoDigital) => {
+      if (cert.status === 'renovacao_solicitada') {
+        throw new Error('Já existe uma solicitação de renovação para este certificado.')
+      }
+
+      const ocorrenciaId = uuid()
+      await ocorrenciaRepo.create({
+        id: ocorrenciaId,
+        tenant_id: cert.tenant_id,
+        cliente_id: cert.cliente_id,
+        titulo: `Renovação de certificado digital — ${cert.titular}`,
+        descricao: `Solicitação de renovação enviada pelo cliente. Certificado ${cert.tipo.toUpperCase()} de ${cert.titular} vence em ${cert.validade}.`,
+        categoria: 'contabil',
+        status: 'pendente',
+        origem: 'cliente',
+        data_prevista: cert.validade,
+        criado_por: cert.cliente_id,
+        criado_em: new Date().toISOString(),
+      })
+
+      await certificadoRepo.update(cert.id, { status: 'renovacao_solicitada' })
+      return ocorrenciaId
+    },
+    onSuccess: (_r, vars) => {
+      qc.invalidateQueries({ queryKey: ['certificados', vars.tenant_id] })
+      qc.invalidateQueries({ queryKey: ['ocorrencias'] })
+    },
   })
 }
 

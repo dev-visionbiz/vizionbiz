@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalServicoRepository } from '@/data/repositories/localStorage'
+import { servicoRepo as repo } from '@/data/repositories/financeiroProvider'
 import type { Servico } from '@/domain/types'
-
-const repo = new LocalServicoRepository()
 
 export function useServicos(tenantId: string) {
   return useQuery({

@@ -180,7 +180,7 @@ export function AppStoreLoja() {
               <Store className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
             <span className="font-bold text-sm">VisionBiz</span>
-            <span className="text-muted-foreground text-sm hidden sm:inline">/ Loja de Apps</span>
+            <span className="text-muted-foreground text-sm hidden sm:inline">/ Conexões</span>
           </Link>
 
           <div className="relative flex-1 max-w-sm hidden sm:block">
@@ -200,7 +200,7 @@ export function AppStoreLoja() {
                 variant="outline"
                 onClick={() => navigate(isAdmin ? '/escritorio/apps' : '/portal/apps')}
               >
-                Meus apps
+                Minhas conexões
               </Button>
             ) : (
               <Button size="sm" asChild>
@@ -220,14 +220,14 @@ export function AppStoreLoja() {
         <div className="relative max-w-6xl mx-auto px-6 py-20 text-center">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-6 border border-primary/20">
             <Sparkles className="w-3.5 h-3.5" />
-            {publicados.length} aplicativos disponíveis
+            {publicados.length} serviços disponíveis
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-5 tracking-tight">
-            Loja de Aplicativos
+            Conexões VisionBiz
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            Estenda o poder do seu escritório com apps integrados ao VisionBiz —
-            instale em minutos, sem configurações complexas.
+            Integre serviços especializados diretamente ao seu escritório —
+            conexão direta, sem configuração manual, dados trocados em tempo real.
           </p>
           <div className="relative max-w-xl mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />

@@ -53,7 +53,7 @@ const escritorioNavBase: NavEntry[] = [
   { label: 'Documentos',    href: '/escritorio/documentos',    icon: FolderOpen, modulo: 'documentos' },
   { label: 'Financeiro',    href: '/escritorio/financeiro',    icon: DollarSign,    modulo: 'financeiro' },
   { label: 'Guias e Recolhimentos', href: '/escritorio/guias', icon: FileBarChart2, modulo: 'financeiro' },
-  { label: 'Loja de Apps', href: '/escritorio/apps', icon: Store },
+  { label: 'Conexões', href: '/escritorio/apps', icon: Store },
   { label: 'Configurações', href: '/escritorio/configuracoes', icon: Settings },
 ]
 
@@ -65,7 +65,7 @@ const clienteNavBase: { label: string; href: string; icon: React.ElementType; so
   { label: 'Documentos',          href: '/portal/documentos',     icon: FolderOpen },
   { label: 'Financeiro',          href: '/portal/financeiro',     icon: Receipt },
   { label: 'Guias e Recolhimentos', href: '/portal/guias',        icon: FileText },
-  { label: 'Aplicativos',         href: '/portal/apps',           icon: Store },
+  { label: 'Conexões',             href: '/portal/apps',           icon: Store },
   { label: 'Equipe',              href: '/portal/equipe',         icon: UserCog, somenteResponsavel: true },
 ]
 

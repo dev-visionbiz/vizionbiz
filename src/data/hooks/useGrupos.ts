@@ -1,9 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LocalGrupoRepository, LocalGrupoEmpresaRepository } from '@/data/repositories/localStorage'
+import { grupoRepo, grupoEmpresaRepo } from '@/data/repositories/clientesProvider'
 import type { Grupo, GrupoEmpresa } from '@/domain/types'
-
-const grupoRepo = new LocalGrupoRepository()
-const grupoEmpresaRepo = new LocalGrupoEmpresaRepository()
 
 // --- Grupos ---
 
