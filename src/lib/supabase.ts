@@ -16,8 +16,8 @@ if (!isSupabaseEnabled) {
 
 // Criamos o cliente sempre — em modo localStorage ele nunca será chamado
 export const supabase = createClient(
-  supabaseUrl ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'placeholder',
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder',
 )
 
 // Cria um usuário no Supabase Auth sem afetar a sessão atual.
