@@ -29,6 +29,7 @@ import { Plus, Users, AlertTriangle, Eye, EyeOff, Pencil, UserX, UserCheck, X, B
 import type { User, UserRole, ModuloEscritorio, PapelPortalCliente, PortalSecao, ClienteAcesso } from '@/domain/types'
 import { MODULOS_ESCRITORIO, moduloLabels } from '@/auth/roles'
 import { v4 as uuidv4 } from 'uuid'
+import { createSupabaseAuthUser, isSupabaseEnabled } from '@/lib/supabase'
 
 const papelLabels: Record<UserRole, string> = {
   escritorio_admin: 'Admin',
@@ -244,6 +245,12 @@ export default function Usuarios() {
         toast({ title: 'Usuário atualizado com sucesso' })
       } else {
         const senhaInicial = form.senha_hash.trim() || 'senha123'
+
+        if (isSupabaseEnabled) {
+          const { error: authErr } = await createSupabaseAuthUser(form.email.trim(), senhaInicial)
+          if (authErr) throw new Error(authErr)
+        }
+
         const novo: User = {
           id: uuidv4(),
           tenant_id: tenantId,
