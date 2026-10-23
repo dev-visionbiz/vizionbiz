@@ -37,13 +37,14 @@ create table if not exists public.apps (
 
 alter table public.apps enable row level security;
 
--- Leitura pública para apps publicados
+drop policy if exists "apps_read_published" on public.apps;
 create policy "apps_read_published"
   on public.apps for select
   using (status = 'publicado');
 
 -- Escrita apenas por visionbiz_admin (via service_role em Edge Function)
 -- TODO: substituir por: owner_id = auth.uid() OR auth.role() = 'service_role'
+drop policy if exists "apps_write_dev" on public.apps;
 create policy "apps_write_dev"
   on public.apps for all
   using (true)
@@ -51,7 +52,7 @@ create policy "apps_write_dev"
 
 
 -- ------------------------------------------------------------
--- app_versions  (imutável — sem UPDATE/DELETE)
+-- app_versions
 -- ------------------------------------------------------------
 create table if not exists public.app_versions (
   id            text        primary key,
@@ -65,12 +66,20 @@ create unique index if not exists app_versions_app_id_versao on public.app_versi
 
 alter table public.app_versions enable row level security;
 
+drop policy if exists "app_versions_read" on public.app_versions;
 create policy "app_versions_read"
   on public.app_versions for select
   using (true);
 
+drop policy if exists "app_versions_insert_dev" on public.app_versions;
 create policy "app_versions_insert_dev"
   on public.app_versions for insert
+  with check (true);
+
+drop policy if exists "app_versions_update_dev" on public.app_versions;
+create policy "app_versions_update_dev"
+  on public.app_versions for update
+  using (true)
   with check (true);
 
 
@@ -88,10 +97,12 @@ create table if not exists public.app_plans (
 
 alter table public.app_plans enable row level security;
 
+drop policy if exists "app_plans_read" on public.app_plans;
 create policy "app_plans_read"
   on public.app_plans for select
   using (true);
 
+drop policy if exists "app_plans_write_dev" on public.app_plans;
 create policy "app_plans_write_dev"
   on public.app_plans for all
   using (true)
@@ -119,6 +130,7 @@ create index if not exists app_installations_cliente on public.app_installations
 alter table public.app_installations enable row level security;
 
 -- DEV: acesso irrestrito. PROD: filtrar por escritorio_id = JWT claim
+drop policy if exists "app_installations_all_dev" on public.app_installations;
 create policy "app_installations_all_dev"
   on public.app_installations for all
   using (true)
@@ -146,6 +158,7 @@ create index if not exists app_grants_installation on public.app_grants(installa
 
 alter table public.app_grants enable row level security;
 
+drop policy if exists "app_grants_all_dev" on public.app_grants;
 create policy "app_grants_all_dev"
   on public.app_grants for all
   using (true)
@@ -168,6 +181,7 @@ create index if not exists app_visibility_escritorio on public.app_visibility(es
 
 alter table public.app_visibility enable row level security;
 
+drop policy if exists "app_visibility_all_dev" on public.app_visibility;
 create policy "app_visibility_all_dev"
   on public.app_visibility for all
   using (true)
@@ -193,6 +207,7 @@ create index if not exists subscriptions_escritorio on public.subscriptions(escr
 
 alter table public.subscriptions enable row level security;
 
+drop policy if exists "subscriptions_all_dev" on public.subscriptions;
 create policy "subscriptions_all_dev"
   on public.subscriptions for all
   using (true)
@@ -212,6 +227,7 @@ create table if not exists public.commission_rules (
 
 alter table public.commission_rules enable row level security;
 
+drop policy if exists "commission_rules_read_dev" on public.commission_rules;
 create policy "commission_rules_read_dev"
   on public.commission_rules for all
   using (true)
@@ -237,10 +253,12 @@ create index if not exists ledger_escritorio on public.ledger(escritorio_id);
 alter table public.ledger enable row level security;
 
 -- Apenas INSERT — nunca UPDATE/DELETE
+drop policy if exists "ledger_insert_dev" on public.ledger;
 create policy "ledger_insert_dev"
   on public.ledger for insert
   with check (true);
 
+drop policy if exists "ledger_select_dev" on public.ledger;
 create policy "ledger_select_dev"
   on public.ledger for select
   using (true);
@@ -264,6 +282,7 @@ create index if not exists app_events_escritorio on public.app_events(escritorio
 
 alter table public.app_events enable row level security;
 
+drop policy if exists "app_events_all_dev" on public.app_events;
 create policy "app_events_all_dev"
   on public.app_events for all
   using (true)
@@ -286,6 +305,7 @@ create table if not exists public.webhook_deliveries (
 
 alter table public.webhook_deliveries enable row level security;
 
+drop policy if exists "webhook_deliveries_all_dev" on public.webhook_deliveries;
 create policy "webhook_deliveries_all_dev"
   on public.webhook_deliveries for all
   using (true)

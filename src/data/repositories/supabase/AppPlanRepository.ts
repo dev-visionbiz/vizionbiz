@@ -42,4 +42,9 @@ export class SupabaseAppPlanRepository implements IAppPlanRepository {
     if (error) throw error
     return data
   }
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('app_plans').delete().eq('id', id)
+    if (error) throw error
+  }
 }

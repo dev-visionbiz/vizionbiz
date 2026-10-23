@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
-import { Building2, LayoutDashboard, LogOut, TrendingUp } from 'lucide-react'
+import { BookOpen, Building2, LayoutDashboard, LogOut, Puzzle, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/toaster'
 
@@ -46,6 +46,30 @@ export function AdminLayout() {
           >
             <TrendingUp className="h-4 w-4" />
             Comissões
+          </NavLink>
+          <NavLink
+            to="/admin/catalogo"
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors ${
+                isActive
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              }`
+            }
+          >
+            <Puzzle className="h-4 w-4" />
+            Extensores
+          </NavLink>
+          <NavLink
+            to="/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={() =>
+              `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors text-muted-foreground hover:bg-accent hover:text-foreground`
+            }
+          >
+            <BookOpen className="h-4 w-4" />
+            Documentação Dev
           </NavLink>
         </nav>
 

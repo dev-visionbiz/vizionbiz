@@ -40,6 +40,10 @@ class LocalAppPlanRepository implements IAppPlanRepository {
     this.writeAll(all)
     return Promise.resolve(all[idx])
   }
+
+  async delete(id: string): Promise<void> {
+    this.writeAll(this.readAll().filter((p) => p.id !== id))
+  }
 }
 
 export const appPlanRepo = new LocalAppPlanRepository()

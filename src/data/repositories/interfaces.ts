@@ -238,6 +238,7 @@ export interface AppVersionRepository {
   findLatest(appId: string): Promise<AppVersion | null>
   findById(id: string): Promise<AppVersion | null>
   create(item: AppVersion): Promise<AppVersion>
+  update(id: string, data: Partial<AppVersion>): Promise<AppVersion>
 }
 
 export interface AppPlanRepository {
@@ -245,6 +246,7 @@ export interface AppPlanRepository {
   findById(id: string): Promise<AppPlan | null>
   create(item: AppPlan): Promise<AppPlan>
   update(id: string, data: Partial<AppPlan>): Promise<AppPlan>
+  delete(id: string): Promise<void>
 }
 
 export interface AppInstallationRepository {

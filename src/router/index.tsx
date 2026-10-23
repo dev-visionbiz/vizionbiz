@@ -43,6 +43,12 @@ const AdminTenantDetail = React.lazy(() => import('@/pages/admin/Tenants/TenantD
 const AdminComissoes = React.lazy(() =>
   import('@/pages/admin/Comissoes/ComissoesPage').then((m) => ({ default: m.ComissoesPage }))
 )
+const AdminCatalogo = React.lazy(() =>
+  import('@/pages/admin/Catalogo/CatalogoPage').then((m) => ({ default: m.CatalogoPage }))
+)
+const AdminExtensor = React.lazy(() =>
+  import('@/pages/admin/Catalogo/ExtensorPage').then((m) => ({ default: m.ExtensorPage }))
+)
 const AppStorePage = React.lazy(() =>
   import('@/pages/escritorio/AppStore/AppStorePage').then((m) => ({ default: m.AppStorePage }))
 )
@@ -51,6 +57,9 @@ const AppStoreLoja = React.lazy(() =>
 )
 const AppLandingPage = React.lazy(() =>
   import('@/pages/loja/AppLandingPage').then((m) => ({ default: m.AppLandingPage }))
+)
+const DocsPage = React.lazy(() =>
+  import('@/pages/docs/DocsPage').then((m) => ({ default: m.DocsPage }))
 )
 
 function Lazy({ children }: { children: React.ReactNode }) {
@@ -65,6 +74,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Lazy><Login /></Lazy>,
+  },
+  {
+    path: '/docs',
+    element: <Lazy><DocsPage /></Lazy>,
   },
   {
     path: '/loja',
@@ -163,6 +176,9 @@ export const router = createBrowserRouter([
           { path: 'tenants', element: <Lazy><AdminTenantsList /></Lazy> },
           { path: 'tenants/:id', element: <Lazy><AdminTenantDetail /></Lazy> },
           { path: 'comissoes', element: <Lazy><AdminComissoes /></Lazy> },
+          { path: 'catalogo', element: <Lazy><AdminCatalogo /></Lazy> },
+          { path: 'catalogo/novo', element: <Lazy><AdminExtensor /></Lazy> },
+          { path: 'catalogo/:id', element: <Lazy><AdminExtensor /></Lazy> },
         ],
       },
     ],

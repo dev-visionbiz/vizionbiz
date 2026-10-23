@@ -38,6 +38,15 @@ class LocalAppVersionRepository implements IAppVersionRepository {
     this.writeAll(all)
     return Promise.resolve(item)
   }
+
+  async update(id: string, data: Partial<AppVersion>): Promise<AppVersion> {
+    const all = this.readAll()
+    const idx = all.findIndex((v) => v.id === id)
+    if (idx === -1) throw new Error(`AppVersion ${id} not found`)
+    all[idx] = { ...all[idx], ...data }
+    this.writeAll(all)
+    return Promise.resolve(all[idx])
+  }
 }
 
 export const appVersionRepo = new LocalAppVersionRepository()

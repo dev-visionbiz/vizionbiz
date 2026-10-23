@@ -47,4 +47,15 @@ export class SupabaseAppVersionRepository implements IAppVersionRepository {
     if (error) throw error
     return data
   }
+
+  async update(id: string, changes: Partial<AppVersion>): Promise<AppVersion> {
+    const { data, error } = await supabase
+      .from('app_versions')
+      .update(changes)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
 }

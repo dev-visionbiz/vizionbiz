@@ -240,6 +240,129 @@ export function useDesconectarAppCliente() {
   })
 }
 
+// --- Versões ---
+
+export function useAppVersions(appId: string) {
+  return useQuery({
+    queryKey: ['app_versions', appId],
+    queryFn: () => appVersionRepo.findByApp(appId),
+    enabled: !!appId,
+  })
+}
+
+export function useCriarAppVersion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      appId,
+      versao,
+      manifesto,
+    }: {
+      appId: string
+      versao: string
+      manifesto: import('@/domain/types').AppManifesto
+    }) => {
+      const item: import('@/domain/types').AppVersion = {
+        id: uuid(),
+        app_id: appId,
+        versao,
+        manifesto,
+        publicado_em: format(new Date(), 'yyyy-MM-dd'),
+      }
+      return appVersionRepo.create(item)
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['app_versions', vars.appId] })
+      qc.invalidateQueries({ queryKey: ['app_versions', vars.appId, 'latest'] })
+    },
+  })
+}
+
+export function useAtualizarAppVersion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      appId,
+      data,
+    }: {
+      id: string
+      appId: string
+      data: Partial<import('@/domain/types').AppVersion>
+    }) => appVersionRepo.update(id, data),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['app_versions', vars.appId] })
+      qc.invalidateQueries({ queryKey: ['app_versions', vars.appId, 'latest'] })
+    },
+  })
+}
+
+// --- Planos (admin CRUD) ---
+
+export function useCriarAppPlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (item: Omit<AppPlan, 'id'>) => {
+      const plan: AppPlan = { ...item, id: uuid() }
+      return appPlanRepo.create(plan)
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['app_plans', vars.app_id] })
+    },
+  })
+}
+
+export function useAtualizarAppPlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, appId, data }: { id: string; appId: string; data: Partial<AppPlan> }) =>
+      appPlanRepo.update(id, data),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['app_plans', vars.appId] })
+    },
+  })
+}
+
+export function useExcluirAppPlan() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id }: { id: string; appId: string }) => appPlanRepo.delete(id),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['app_plans', vars.appId] })
+    },
+  })
+}
+
+// --- Admin: criar / atualizar apps no catálogo ---
+
+export function useCriarApp() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: Omit<App, 'id' | 'criado_em'>) => {
+      const app: App = {
+        ...data,
+        id: uuid(),
+        criado_em: new Date().toISOString(),
+      }
+      return appRepo.create(app)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['apps'] })
+    },
+  })
+}
+
+export function useAtualizarApp() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<App> }) =>
+      appRepo.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['apps'] })
+    },
+  })
+}
+
 // --- Visibilidade: escritório controla quais apps aparecem para seus clientes ---
 
 export function useSetAppVisibility() {
