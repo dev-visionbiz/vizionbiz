@@ -3,7 +3,7 @@ export type TenantStatus = 'ativo' | 'inativo' | 'suspenso' | 'trial'
 export type TenantPlano = 'starter' | 'pro' | 'enterprise'
 export type ContrataNatureza = 'principal' | 'avulso' | 'gestao_provisoria' | 'emissao'
 export type PortalSecao = 'inicio' | 'cadastro' | 'documentos' | 'financeiro' | 'guias' | 'solicitacoes' | 'pesquisas' | 'apps' | 'certificados'
-export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'tarefas'
+export type ModuloEscritorio = 'clientes' | 'grupos' | 'documentos' | 'financeiro' | 'tarefas' | 'obrigacoes'
 export type SubModuloTarefas = 'ocorrencias' | 'rotinas'
 export type PapelPortalCliente = 'responsavel' | 'membro'
 export type InvoiceStatus = 'aberta' | 'vencida' | 'paga' | 'cancelada' | 'renegociada'
@@ -535,6 +535,8 @@ export type LogAtividadeAcao =
   | 'abertura_iniciada'
   | 'abertura_concluida'
   | 'abertura_cancelada'
+  | 'guia_notificada'
+  | 'guia_visualizacao_confirmada'
 
 export interface LogAtividadeCliente {
   id: string
@@ -545,6 +547,7 @@ export interface LogAtividadeCliente {
   usuario_id: string
   usuario_nome: string
   em: string
+  referencia_id?: string   // id da entidade relacionada (guia, fatura, etc.)
 }
 
 // --- Checklist ---
@@ -772,7 +775,7 @@ export type GuiaStatus =
   | 'cancelada'
   | 'em_retificacao'
 
-export type GuiaOrigem = 'manual' | 'rotina' | 'api'
+export type GuiaOrigem = 'manual' | 'rotina' | 'api' | 'simples_nacional'
 
 export type SegundaViaStatus = 'nao_solicitada' | 'solicitada' | 'disponivel' | 'enviada'
 
@@ -817,6 +820,13 @@ export interface GuiaRecolhimento {
   lote_id?: string
   lote_arquivo_sha256?: string
   lote_arquivo_original?: string
+  // Rastreamento de notificação ao cliente
+  notificado_em?: string           // ISO datetime da última notificação enviada
+  notificado_via?: 'whatsapp' | 'email' | 'manual'
+  cliente_visualizou_em?: string   // confirmação manual de que o cliente viu
+  // Retificação solicitada pelo cliente
+  retificacao_data_sugerida?: string   // YYYY-MM-DD data sugerida pelo cliente
+  retificacao_solicitada_em?: string   // ISO datetime da solicitação
   // Notas
   observacoes?: string
   // Auditoria
@@ -824,6 +834,46 @@ export interface GuiaRecolhimento {
   criado_por: string
   atualizado_em?: string
   deleted_at?: string
+}
+
+// ==================== OBRIGAÇÕES ====================
+
+export type ObrigacaoTipo = 'simples_nacional' | 'dctfweb' | 'defis'
+
+export type ObrigacaoStatus = 'pendente' | 'gerar' | 'aberto' | 'recalcular' | 'transmitido'
+
+export interface ObrigacaoConfig {
+  id: string
+  tenant_id: string
+  client_id: string
+  tipo: ObrigacaoTipo
+  data_inicio: string
+  data_fim?: string
+  parametros?: Record<string, unknown>
+  ativo: boolean
+  criado_em: string
+  criado_por?: string
+}
+
+export interface ObrigacaoLancamento {
+  id: string
+  tenant_id: string
+  client_id: string
+  tipo: ObrigacaoTipo
+  competencia: string
+  status: ObrigacaoStatus
+  faturamento?: number
+  das_valor?: number
+  das_vencimento?: string
+  data_declaracao?: string
+  codigo_barras?: string
+  protocolo?: string
+  guia_id?: string
+  pdf_storage_key?: string
+  observacoes?: string
+  criado_em: string
+  criado_por?: string
+  atualizado_em: string
 }
 
 // ==================== LOTES DE IMPORTAÇÃO ====================

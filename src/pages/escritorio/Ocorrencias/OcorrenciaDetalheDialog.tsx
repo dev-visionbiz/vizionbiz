@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import {
   CheckCircle2, Circle, AlertTriangle, X, Plus, Trash2,
   Pencil, DollarSign, List, PlayCircle, Clock, ClipboardList, Link, Copy, CheckCheck,
-  MessageCircle,
+  MessageCircle, Bookmark, BookmarkCheck,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -44,6 +44,8 @@ import { HistoricoPanel } from '@/components/shared/HistoricoPanel'
 import { TarefaDocumentosPanel } from './TarefaDocumentosPanel'
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop'
 import { formatDate, cn } from '@/lib/utils'
+import { useTarefaAtiva } from '@/context/TarefaAtivaContext'
+import { usePinnedClient } from '@/lib/clientePinado'
 import type {
   Ocorrencia, Tarefa, TarefaStatus, OcorrenciaStatus,
   ChecklistItemProgresso, ChecklistItemTemplate, CategoriaDemanda, FormularioTemplate,
@@ -845,6 +847,27 @@ export function OcorrenciaDetalheConteudo({ ocorrencia, onClose, onTarefaAbrir, 
   const { currentUser } = useAuth()
   const tenantId = currentUser?.tenant_id ?? ''
   const { toast } = useToast()
+  const { tarefaAtiva, ativar, desativar } = useTarefaAtiva()
+  const { clientePinado, pinClient } = usePinnedClient()
+
+  const estaAcompanhando = tarefaAtiva?.ocorrenciaId === ocorrencia.id
+
+  function toggleAcompanhar() {
+    if (estaAcompanhando) {
+      desativar()
+    } else {
+      const cliente = clientes.find(c => c.id === ocorrencia.cliente_id)
+      ativar({
+        ocorrenciaId: ocorrencia.id,
+        titulo: ocorrencia.titulo,
+        clienteNome: cliente?.razao_social,
+        clienteId: ocorrencia.cliente_id,
+      })
+      if (cliente && (!clientePinado || clientePinado.id !== cliente.id)) {
+        pinClient(cliente)
+      }
+    }
+  }
 
   const { data: tarefas = [] }   = useTarefasOcorrencia(tenantId, ocorrencia.id)
   const { data: clientes = [] }  = useClients(tenantId)
@@ -988,6 +1011,20 @@ export function OcorrenciaDetalheConteudo({ ocorrencia, onClose, onTarefaAbrir, 
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Badge variant="outline" className={dstConfig.className}>{dstConfig.label}</Badge>
+            <button
+              onClick={toggleAcompanhar}
+              title={estaAcompanhando ? 'Parar acompanhamento' : 'Acompanhar esta ocorrência'}
+              className={cn(
+                'p-1 rounded transition-colors',
+                estaAcompanhando
+                  ? 'text-primary hover:text-primary/70'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {estaAcompanhando
+                ? <BookmarkCheck className="h-4 w-4" />
+                : <Bookmark className="h-4 w-4" />}
+            </button>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="h-4 w-4" />
             </button>

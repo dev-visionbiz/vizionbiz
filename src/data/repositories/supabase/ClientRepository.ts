@@ -43,4 +43,15 @@ export class SupabaseClientRepository implements IClientRepository {
     const { error } = await supabase.from('clients').delete().eq('id', id)
     if (error) throw error
   }
+
+  async findByCNPJ(tenantId: string, cnpj: string): Promise<Client | null> {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('cnpj', cnpj)
+      .maybeSingle()
+    if (error) throw error
+    return data ?? null
+  }
 }

@@ -18,9 +18,11 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCreateGuia } from '@/data/hooks/useGuias'
 import { useCriarLoteComGuias } from '@/data/hooks/useLoteImportacao'
 import { guiaRepo } from '@/data/repositories/localStorage/GuiaRepository'
+import { obrigacaoConfigRepo, obrigacaoLancamentoRepo } from '@/data/repositories/obrigacoesProvider'
 import { extrairTextoPDF, extrairCamposGuia, extrairPixDoQRCode } from '@/lib/pdfExtractor'
 import { storageService } from '@/lib/storage'
 import { useToast } from '@/components/ui/use-toast'
@@ -160,6 +162,7 @@ export function ImportarGuiasDialog({ open, onClose, tenantId, userId, clientes 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const processingRef = useRef(false)
 
+  const queryClient = useQueryClient()
   const { mutateAsync: createGuia } = useCreateGuia()
   const { mutateAsync: criarLote } = useCriarLoteComGuias()
   const { toast } = useToast()
@@ -462,7 +465,7 @@ export function ImportarGuiasDialog({ open, onClose, tenantId, userId, clientes 
           criado_por: userId,
           criado_em: agora,
           segunda_via_status: 'nao_solicitada',
-          origem: 'manual',
+          origem: 'simples_nacional',
           status: arquivoKey ? 'emitida' : 'aguardando_emissao',
           lote_id: lote.id,
           lote_arquivo_sha256: item.sha256,
@@ -479,8 +482,58 @@ export function ImportarGuiasDialog({ open, onClose, tenantId, userId, clientes 
           pix_copia_cola: r.pix_copia_cola,
           observacoes: r.observacoes,
         }
-        await createGuia(guia)
+        const guiaCriada = await createGuia(guia)
+
+        // Sincroniza com Obrigações se for DAS do Simples Nacional
+        if (r.tipo === 'das') {
+          try {
+            const configs = await obrigacaoConfigRepo.findByCliente(tenantId, r.cliente_id)
+            const config = configs.find((c) => c.tipo === 'simples_nacional' && c.ativo)
+            if (config) {
+              const now = new Date().toISOString()
+              const existentes = await obrigacaoLancamentoRepo.findByClienteCompetencia(
+                tenantId, r.cliente_id, r.competencia,
+              )
+              const lancExistente = existentes.find((l) => l.tipo === 'simples_nacional')
+
+              if (lancExistente) {
+                await obrigacaoLancamentoRepo.update(lancExistente.id, {
+                  das_valor: r.valor ?? 0,
+                  das_vencimento: guia.vencimento,
+                  codigo_barras: r.codigo_barras,
+                  status: 'aberto',
+                  guia_id: guiaCriada.id,
+                  ...(arquivoKey ? { pdf_storage_key: arquivoKey } : {}),
+                  data_declaracao: now,
+                  atualizado_em: now,
+                })
+              } else {
+                await obrigacaoLancamentoRepo.create({
+                  id: uuid(),
+                  tenant_id: tenantId,
+                  client_id: r.cliente_id,
+                  tipo: 'simples_nacional',
+                  competencia: r.competencia,
+                  status: 'aberto',
+                  das_valor: r.valor ?? 0,
+                  das_vencimento: guia.vencimento,
+                  codigo_barras: r.codigo_barras,
+                  guia_id: guiaCriada.id,
+                  ...(arquivoKey ? { pdf_storage_key: arquivoKey } : {}),
+                  data_declaracao: now,
+                  criado_em: now,
+                  atualizado_em: now,
+                  criado_por: userId,
+                })
+              }
+            }
+          } catch {
+            // Sync failure não bloqueia a importação
+          }
+        }
       }
+
+      queryClient.invalidateQueries({ queryKey: ['obrigacao_lancamentos'] })
 
       toast({
         title: 'Importação concluída',

@@ -11,6 +11,14 @@ export function useLogAtividadeCliente(tenantId: string, clientId: string) {
   })
 }
 
+export function useLogAtividadeByReferencia(tenantId: string, referenciaId: string) {
+  return useQuery({
+    queryKey: ['log-atividade-referencia', tenantId, referenciaId],
+    queryFn: () => repo.findByReferencia(tenantId, referenciaId),
+    enabled: !!tenantId && !!referenciaId,
+  })
+}
+
 export function useRegistrarLogAtividade() {
   const qc = useQueryClient()
   return useMutation({
@@ -21,6 +29,7 @@ export function useRegistrarLogAtividade() {
       descricao: string
       usuarioId: string
       usuarioNome: string
+      referenciaId?: string
     }) => {
       const log: LogAtividadeCliente = {
         id: uuidv4(),
@@ -31,11 +40,15 @@ export function useRegistrarLogAtividade() {
         usuario_id: entry.usuarioId,
         usuario_nome: entry.usuarioNome,
         em: new Date().toISOString(),
+        referencia_id: entry.referenciaId,
       }
       return repo.create(log)
     },
     onSuccess: (log) => {
       qc.invalidateQueries({ queryKey: ['log-atividade-cliente', log.tenant_id, log.client_id] })
+      if (log.referencia_id) {
+        qc.invalidateQueries({ queryKey: ['log-atividade-referencia', log.tenant_id, log.referencia_id] })
+      }
     },
   })
 }

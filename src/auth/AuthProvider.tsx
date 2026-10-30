@@ -5,6 +5,7 @@ import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 const SESSION_KEY = 'vb_active_user_id'
 const EMPRESA_KEY = 'vb_active_client_id'
 const IMPERSONATION_KEY = 'vb_admin_impersonation'
+const USER_IMPERSONATION_KEY = 'vb_user_impersonation'
 
 interface AuthContextValue {
   currentUser: User | null
@@ -13,12 +14,15 @@ interface AuthContextValue {
   isLoading: boolean
   needsEmpresaSelection: boolean
   isImpersonating: boolean
+  isImpersonatingUser: boolean
   login: (email: string, senha: string) => Promise<{ ok: boolean; erro?: string; papel?: string }>
   logout: () => void
   switchUser: (userId: string) => void
   switchCliente: (clientId: string) => void
   impersonateEscritorio: (tenantId: string) => Promise<boolean>
   exitImpersonation: () => Promise<void>
+  impersonateUser: (userId: string) => Promise<boolean>
+  exitUserImpersonation: () => Promise<void>
   updateTenant: (updated: Tenant) => void
 }
 
@@ -149,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem(SESSION_KEY)
     sessionStorage.removeItem(EMPRESA_KEY)
     sessionStorage.removeItem(IMPERSONATION_KEY)
+    sessionStorage.removeItem(USER_IMPERSONATION_KEY)
     setBaseUser(null)
     setCurrentTenant(null)
     setActiveClientId(null)
@@ -236,6 +241,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveClientId(null)
   }
 
+  // ── impersonateUser (admin impersona usuário do mesmo escritório) ─────────────
+
+  async function impersonateUser(userId: string): Promise<boolean> {
+    if (!baseUser) return false
+
+    if (!isSupabaseEnabled) {
+      const users = readUsers()
+      const target = users.find(u => u.id === userId && u.ativo !== false)
+      if (!target) return false
+      sessionStorage.setItem(USER_IMPERSONATION_KEY, baseUser.id)
+      sessionStorage.removeItem(EMPRESA_KEY)
+      applyLocalUser(target)
+      return true
+    }
+
+    const { data: target } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
+    if (!target || target.ativo === false) return false
+
+    const { data: tenant } = target.tenant_id
+      ? await supabase.from('tenants').select('*').eq('id', target.tenant_id).maybeSingle()
+      : { data: null }
+
+    sessionStorage.setItem(USER_IMPERSONATION_KEY, baseUser.id)
+    sessionStorage.removeItem(EMPRESA_KEY)
+    setBaseUser(target as User)
+    setCurrentTenant(tenant ?? null)
+    setActiveClientId(resolveActiveClientId(target as User))
+    return true
+  }
+
+  async function exitUserImpersonation(): Promise<void> {
+    const originalId = sessionStorage.getItem(USER_IMPERSONATION_KEY)
+    sessionStorage.removeItem(USER_IMPERSONATION_KEY)
+    sessionStorage.removeItem(EMPRESA_KEY)
+    if (!originalId) return
+
+    if (!isSupabaseEnabled) {
+      const user = readUsers().find(u => u.id === originalId)
+      if (user) applyLocalUser(user)
+      return
+    }
+
+    const { data: user } = await supabase.from('users').select('*').eq('id', originalId).maybeSingle()
+    if (!user) return
+
+    const { data: tenant } = user.tenant_id
+      ? await supabase.from('tenants').select('*').eq('id', user.tenant_id).maybeSingle()
+      : { data: null }
+
+    setBaseUser(user as User)
+    setCurrentTenant(tenant ?? null)
+    setActiveClientId(null)
+  }
+
   // ── updateTenant (atualiza estado local após salvar) ──────────────────────────
 
   function updateTenant(updated: Tenant) {
@@ -249,6 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Estado derivado ───────────────────────────────────────────────────────────
 
   const isImpersonating = !!sessionStorage.getItem(IMPERSONATION_KEY)
+  const isImpersonatingUser = !!sessionStorage.getItem(USER_IMPERSONATION_KEY)
 
   const currentUser = useMemo<User | null>(() => {
     if (!baseUser) return null
@@ -266,9 +326,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{
       currentUser, currentTenant, allUsers, isLoading,
-      needsEmpresaSelection, isImpersonating,
+      needsEmpresaSelection, isImpersonating, isImpersonatingUser,
       login, logout, switchUser, switchCliente,
-      impersonateEscritorio, exitImpersonation, updateTenant,
+      impersonateEscritorio, exitImpersonation,
+      impersonateUser, exitUserImpersonation,
+      updateTenant,
     }}>
       {children}
     </AuthContext.Provider>

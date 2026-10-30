@@ -309,12 +309,23 @@ export default function ClientesLista() {
     try {
       if (dialogTipo === 'juridica') {
         if (!formPJ.razao_social.trim() || !formPJ.cnpj.trim()) return
+        const cnpjDigits = formPJ.cnpj.replace(/\D/g, '')
+        const { clientRepo } = await import('@/data/repositories/clientesProvider')
+        const existente = await clientRepo.findByCNPJ(tenantId, cnpjDigits)
+        if (existente) {
+          toast({
+            title: 'CNPJ já cadastrado',
+            description: `O CNPJ ${formatCNPJ(cnpjDigits)} já está vinculado ao cliente "${existente.razao_social}".`,
+            variant: 'destructive',
+          })
+          return
+        }
         const clientId = uuidv4()
         const novo: Client = {
           id: clientId, tenant_id: tenantId, tipo: 'juridica',
           razao_social: formPJ.razao_social.trim(),
           fantasia: formPJ.fantasia.trim() || undefined,
-          cnpj: formPJ.cnpj.replace(/\D/g, ''),
+          cnpj: cnpjDigits,
           regime: formPJ.regime, status: 'ativo',
           email: formPJ.email.trim() || undefined,
           telefone: formPJ.telefone.trim() || undefined,

@@ -22,6 +22,7 @@ import {
 } from '@/data/hooks/useClienteCnaes'
 import { useToast } from '@/components/ui/use-toast'
 import { PageLoader } from '@/components/shared/LoadingSpinner'
+import { useSetTabTitle } from '@/context/NavigationTabsContext'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,6 +65,7 @@ import { ContratoTab } from './ContratoTab'
 import { FichaRapidaTab } from './FichaRapidaTab'
 import { AberturaTab } from './AberturaTab'
 import { AlteracoesTab } from './AlteracoesTab'
+import { ObrigacoesClienteModal } from './ObrigacoesClienteModal'
 import { CertificadosTab } from '@/apps/certificado-digital/CertificadosTab'
 import { useAppInstallacaoByApp } from '@/data/hooks/useApps'
 import { formatCurrency, formatDate, formatCNPJ, formatCPF } from '@/lib/utils'
@@ -124,9 +126,11 @@ const logAcaoConfig: Record<LogAtividadeAcao, { icon: React.ElementType; cor: st
   demanda_criada:          { icon: FileText,     cor: 'text-violet-500', label: 'Demanda criada' },
   demanda_concluida:       { icon: CheckCircle2, cor: 'text-green-500',  label: 'Demanda concluída' },
   etapa_demanda_atualizada: { icon: Activity,    cor: 'text-orange-500', label: 'Etapa de demanda' },
-  abertura_iniciada:       { icon: FileText,     cor: 'text-amber-500',  label: 'Abertura iniciada' },
-  abertura_concluida:      { icon: CheckCircle2, cor: 'text-green-500',  label: 'Abertura concluída' },
-  abertura_cancelada:      { icon: XCircle,      cor: 'text-red-500',    label: 'Abertura cancelada' },
+  abertura_iniciada:            { icon: FileText,     cor: 'text-amber-500',  label: 'Abertura iniciada' },
+  abertura_concluida:           { icon: CheckCircle2, cor: 'text-green-500',  label: 'Abertura concluída' },
+  abertura_cancelada:           { icon: XCircle,      cor: 'text-red-500',    label: 'Abertura cancelada' },
+  guia_notificada:              { icon: Activity,     cor: 'text-emerald-500', label: 'Guia notificada' },
+  guia_visualizacao_confirmada: { icon: CheckCircle2, cor: 'text-blue-500',   label: 'Visualização confirmada' },
 }
 
 function LogEntrada({ entrada }: { entrada: LogAtividadeCliente }) {
@@ -157,6 +161,7 @@ export default function ClienteFicha() {
   const tenantId = currentUser?.tenant_id ?? ''
 
   const { data: client, isLoading: loadingClient } = useClient(clientId ?? '')
+  useSetTabTitle(client ? (client.fantasia ?? client.razao_social) : undefined)
   const { data: certApp } = useAppInstallacaoByApp(tenantId, 'app-cert-digital')
   const { data: portalUsers } = useUsers(tenantId, true)
   const clientUsers = portalUsers?.filter((u) => u.client_id === clientId && u.papel === 'cliente') ?? []
@@ -203,6 +208,8 @@ export default function ClienteFicha() {
   const isProspect = !contracts?.some(
     (c) => (!c.natureza || c.natureza === 'principal') && (c.status === 'ativo' || c.status === 'suspenso' || c.status === 'rascunho')
   )
+
+  const [obrigacoesModalOpen, setObrigacoesModalOpen] = useState(false)
 
   // Client edit form
   const [editData, setEditData] = useState<{
@@ -854,11 +861,9 @@ export default function ClienteFicha() {
                       Documentos
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to={`/escritorio/obrigacoes?tab=consulta&cliente=${clientId}`}>
-                      <ListChecks className="h-4 w-4 mr-1" />
-                      Obrigações
-                    </Link>
+                  <Button variant="ghost" size="sm" onClick={() => setObrigacoesModalOpen(true)}>
+                    <ListChecks className="h-4 w-4 mr-1" />
+                    Obrigações
                   </Button>
                   {!editData && <Button variant="outline" size="sm" onClick={startEdit}>Editar</Button>}
                 </div>
@@ -1944,6 +1949,13 @@ export default function ClienteFicha() {
           </DialogContent>
         </Dialog>
       )}
+
+      <ObrigacoesClienteModal
+        open={obrigacoesModalOpen}
+        onOpenChange={setObrigacoesModalOpen}
+        clienteId={clientId ?? ''}
+        tenantId={tenantId}
+      />
     </div>
   )
 }

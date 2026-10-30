@@ -177,6 +177,24 @@ export function useEnviarComprovanteGuia() {
   })
 }
 
+export function useSolicitarAtualizacaoGuia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, data_sugerida }: { id: string; data_sugerida: string }) => {
+      return guiaRepo.update(id, {
+        status: 'em_retificacao' as GuiaStatus,
+        retificacao_data_sugerida: data_sugerida,
+        retificacao_solicitada_em: new Date().toISOString(),
+        atualizado_em: format(new Date(), 'yyyy-MM-dd'),
+      })
+    },
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['guias'] })
+      qc.invalidateQueries({ queryKey: ['guia', id] })
+    },
+  })
+}
+
 export function useCancelarGuia() {
   const qc = useQueryClient()
   return useMutation({

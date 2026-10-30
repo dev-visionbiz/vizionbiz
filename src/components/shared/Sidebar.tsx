@@ -5,6 +5,7 @@ import {
   Home, FolderOpen, Receipt, ChevronLeft, ChevronRight, Pin, PinOff,
   UserCog, ClipboardList, CheckSquare, Layers, Workflow, ChevronDown, GitBranch,
   FileBarChart2, FileText, Building2, SendHorizonal, FlaskConical, ArrowLeftRight, Store,
+  PanelRightOpen, FileCheck2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/auth/AuthProvider'
@@ -12,6 +13,7 @@ import { useTenant } from '@/data/hooks/useTenant'
 import { useClient } from '@/data/hooks/useClients'
 import { usePortalAcesso } from '@/data/hooks/usePortalAcesso'
 import { podeAcessarModulo, podeAcessarSubModuloTarefas } from '@/auth/roles'
+import { usePinnedClient } from '@/lib/clientePinado'
 import type { ModuloEscritorio, SubModuloTarefas } from '@/domain/types'
 
 type NavLink = {
@@ -53,6 +55,7 @@ const escritorioNavBase: NavEntry[] = [
   { label: 'Documentos',    href: '/escritorio/documentos',    icon: FolderOpen, modulo: 'documentos' },
   { label: 'Financeiro',    href: '/escritorio/financeiro',    icon: DollarSign,    modulo: 'financeiro' },
   { label: 'Guias e Recolhimentos', href: '/escritorio/guias', icon: FileBarChart2, modulo: 'financeiro' },
+  { label: 'Obrigações', href: '/escritorio/obrigacoes', icon: FileCheck2, modulo: 'obrigacoes' },
   { label: 'Conexões', href: '/escritorio/apps', icon: Store },
   { label: 'Configurações', href: '/escritorio/configuracoes', icon: Settings },
 ]
@@ -76,13 +79,15 @@ interface SidebarProps {
   onToggleCollapse: () => void
   onTogglePin: () => void
   onCloseMobile: () => void
+  onOpenClienteDrawer: () => void
 }
 
-export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTogglePin, onCloseMobile }: SidebarProps) {
+export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTogglePin, onCloseMobile, onOpenClienteDrawer }: SidebarProps) {
   const location = useLocation()
   const { currentUser } = useAuth()
   const { data: tenant } = useTenant(currentUser?.tenant_id ?? '')
   const isCliente = currentUser?.papel === 'cliente'
+  const { clientePinado } = usePinnedClient()
   const { secoesPermitidas, papelPortal } = usePortalAcesso()
   const temMultiplasEmpresas = isCliente && (currentUser?.clientes?.length ?? 0) > 1
   const { data: empresaAtiva } = useClient(isCliente ? (currentUser?.client_id ?? '') : '')
@@ -292,6 +297,40 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
               </Link>
             </div>
           )}
+
+          {!isCliente && (
+            <div className="border-t p-2 shrink-0">
+              <button
+                onClick={onOpenClienteDrawer}
+                title={!showFull ? (clientePinado ? `Contexto: ${clientePinado.razao_social}` : 'Contexto do cliente') : undefined}
+                className={cn(
+                  'w-full flex items-center rounded-md text-sm font-medium transition-colors',
+                  showFull ? 'gap-3 px-3 py-2' : 'justify-center p-2',
+                  clientePinado
+                    ? 'text-primary hover:bg-primary/10'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                )}
+              >
+                <PanelRightOpen className="h-5 w-5 shrink-0" />
+                {showFull && (
+                  <div className="flex-1 min-w-0 text-left">
+                    {clientePinado ? (
+                      <>
+                        <p className="truncate text-xs leading-tight font-semibold">
+                          {clientePinado.fantasia ?? clientePinado.razao_social}
+                        </p>
+                        <p className="text-xs text-primary flex items-center gap-1 mt-0.5">
+                          <PanelRightOpen className="h-3 w-3" /> Ver contexto
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs">Contexto do cliente</p>
+                    )}
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
         </aside>
       </div>
 
@@ -333,6 +372,34 @@ export function Sidebar({ collapsed, pinned, mobileOpen, onToggleCollapse, onTog
                 </p>
               </div>
             </Link>
+          </div>
+        )}
+
+        {!isCliente && (
+          <div className="border-t p-3 shrink-0">
+            <button
+              onClick={() => { onCloseMobile(); onOpenClienteDrawer() }}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors min-h-[44px]',
+                clientePinado
+                  ? 'text-primary hover:bg-primary/10'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              <PanelRightOpen className="h-5 w-5 shrink-0" />
+              <div className="flex-1 min-w-0 text-left">
+                {clientePinado ? (
+                  <>
+                    <p className="truncate text-xs leading-tight font-semibold">
+                      {clientePinado.fantasia ?? clientePinado.razao_social}
+                    </p>
+                    <p className="text-xs text-primary mt-0.5">Ver contexto</p>
+                  </>
+                ) : (
+                  <p className="text-xs">Contexto do cliente</p>
+                )}
+              </div>
+            </button>
           </div>
         )}
       </aside>

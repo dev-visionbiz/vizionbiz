@@ -2,7 +2,7 @@
 import { format } from 'date-fns'
 import {
   Plus, Search, X, CreditCard, AlertTriangle, CheckCircle2, Clock, Upload,
-  MoreHorizontal, Eye, Pencil, CheckCheck, FileText, Download, Ban, MessageCircle,
+  MoreHorizontal, Eye, Pencil, CheckCheck, FileText, Download, Ban, MessageCircle, Bell,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,10 +15,13 @@ import {
 import { useAuth } from '@/auth/AuthProvider'
 import { usePinnedClient } from '@/lib/clientePinado'
 import { useClients } from '@/data/hooks/useClients'
-import { useGuias } from '@/data/hooks/useGuias'
+import { useGuias, useUpdateGuia } from '@/data/hooks/useGuias'
+import { useRegistrarLogAtividade } from '@/data/hooks/useLogAtividadeCliente'
 import { storageService } from '@/lib/storage'
 import { formatCurrency, formatDate, cn } from '@/lib/utils'
 import type { TipoGuia, GuiaStatus, GuiaRecolhimento } from '@/domain/types'
+
+type FiltroStatus = GuiaStatus | 'todos' | 'pendentes'
 import { TIPO_GUIA_CONFIG, STATUS_GUIA_CONFIG, TIPOS_GUIA_ORDENADOS } from './guiasConfig'
 import { NovaGuiaDialog } from './NovaGuiaDialog'
 import { EditarGuiaDialog } from './EditarGuiaDialog'
@@ -27,6 +30,7 @@ import { GuiaDetalheDialog } from './GuiaDetalheDialog'
 import { BaixaManualDialog } from './BaixaManualDialog'
 import { SegundaViaDialog } from './SegundaViaDialog'
 import { VisualizarGuiaPDFDialog } from './VisualizarGuiaPDFDialog'
+import { NotificacaoLogDialog } from './NotificacaoLogDialog'
 import { WhatsAppMessageDialog } from '@/components/whatsapp/WhatsAppMessageDialog'
 import type { ContatoDisponivel } from '@/components/whatsapp/WhatsAppMessageDialog'
 import { templateGuia } from '@/lib/whatsapp/templates'
@@ -41,7 +45,7 @@ export default function GuiasPage() {
   const { clientePinado } = usePinnedClient()
 
   const [filtroTipo, setFiltroTipo] = useState<TipoGuia | 'todos'>('todos')
-  const [filtroStatus, setFiltroStatus] = useState<GuiaStatus | 'todos'>('todos')
+  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('pendentes')
   const [filtroCliente, setFiltroCliente] = useState<string>(() => clientePinado?.id ?? 'todos')
 
   useEffect(() => {
@@ -57,33 +61,81 @@ export default function GuiasPage() {
   const [baixaGuia, setBaixaGuia] = useState<GuiaRecolhimento | null>(null)
   const [segundaViaGuia, setSegundaViaGuia] = useState<GuiaRecolhimento | null>(null)
   const [visualizarPDFGuia, setVisualizarPDFGuia] = useState<GuiaRecolhimento | null>(null)
+  const [logGuia, setLogGuia] = useState<GuiaRecolhimento | null>(null)
   const [whatsappGuia, setWhatsappGuia] = useState<GuiaRecolhimento | null>(null)
   const { data: contatosGuia } = useClienteContatos(tenantId, whatsappGuia?.cliente_id ?? '')
   const contatosDisponiveisGuia: ContatoDisponivel[] = (contatosGuia ?? [])
     .filter((c) => c.telefone)
     .map((c) => ({ id: c.id, nome: c.nome, telefone: c.telefone!, setor: c.setor, principal: c.principal }))
 
-  const { data: guias = [], isLoading } = useGuias(tenantId, {
+  const { mutateAsync: updateGuia } = useUpdateGuia()
+  const { mutateAsync: registrarLog } = useRegistrarLogAtividade()
+
+  async function registrarNotificacao(guia: GuiaRecolhimento) {
+    try {
+      const agora = new Date().toISOString()
+      await updateGuia({ id: guia.id, data: { notificado_em: agora, notificado_via: 'manual' } })
+      await registrarLog({
+        tenantId,
+        clientId: guia.cliente_id,
+        acao: 'guia_notificada',
+        descricao: `Notificação da guia "${guia.descricao}" registrada via Manual`,
+        usuarioId: currentUser?.id ?? '',
+        usuarioNome: currentUser?.nome ?? '',
+        referenciaId: guia.id,
+      })
+      toast({ title: 'Notificação registrada', description: 'Cliente marcado como notificado.' })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? 'Erro desconhecido'
+      toast({ title: 'Erro ao registrar notificação', description: msg, variant: 'destructive' })
+    }
+  }
+
+  async function confirmarVisualizacao(guia: GuiaRecolhimento) {
+    try {
+      const agora = new Date().toISOString()
+      await updateGuia({ id: guia.id, data: { cliente_visualizou_em: agora } })
+      await registrarLog({
+        tenantId,
+        clientId: guia.cliente_id,
+        acao: 'guia_visualizacao_confirmada',
+        descricao: `Visualização da guia "${guia.descricao}" confirmada`,
+        usuarioId: currentUser?.id ?? '',
+        usuarioNome: currentUser?.nome ?? '',
+        referenciaId: guia.id,
+      })
+      toast({ title: 'Visualização confirmada', description: 'Cliente marcado como visualizou a guia.' })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string })?.message ?? 'Erro desconhecido'
+      toast({ title: 'Erro ao confirmar visualização', description: msg, variant: 'destructive' })
+    }
+  }
+
+  const { data: rawGuias = [], isLoading } = useGuias(tenantId, {
     tipo: filtroTipo !== 'todos' ? filtroTipo : undefined,
-    status: filtroStatus !== 'todos' ? filtroStatus : undefined,
+    status: (filtroStatus !== 'todos' && filtroStatus !== 'pendentes') ? filtroStatus as GuiaStatus : undefined,
     clienteId: filtroCliente !== 'todos' ? filtroCliente : undefined,
     competencia: filtroCompetencia || undefined,
     busca: busca || undefined,
   })
+
+  const guias = filtroStatus === 'pendentes'
+    ? rawGuias.filter((g) => g.status !== 'paga' && g.status !== 'cancelada')
+    : rawGuias
 
   const hoje = format(new Date(), 'yyyy-MM-dd')
   const mesAtual = format(new Date(), 'yyyy-MM')
 
   const temFiltro =
     filtroTipo !== 'todos' ||
-    filtroStatus !== 'todos' ||
+    filtroStatus !== 'pendentes' ||
     filtroCliente !== 'todos' ||
     !!filtroCompetencia ||
     !!busca
 
   function limparFiltros() {
     setFiltroTipo('todos')
-    setFiltroStatus('todos')
+    setFiltroStatus('pendentes')
     setFiltroCliente('todos')
     setFiltroCompetencia('')
     setBusca('')
@@ -204,11 +256,12 @@ export default function GuiasPage() {
               </SelectContent>
             </Select>
 
-            <Select value={filtroStatus} onValueChange={(v) => setFiltroStatus(v as GuiaStatus | 'todos')}>
-              <SelectTrigger className="h-9 w-35">
+            <Select value={filtroStatus} onValueChange={(v) => setFiltroStatus(v as FiltroStatus)}>
+              <SelectTrigger className="h-9 w-38">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="pendentes">Não pagas</SelectItem>
                 <SelectItem value="todos">Todos os status</SelectItem>
                 {(Object.keys(STATUS_GUIA_CONFIG) as GuiaStatus[]).map((s) => (
                   <SelectItem key={s} value={s}>{STATUS_GUIA_CONFIG[s].label}</SelectItem>
@@ -277,6 +330,12 @@ export default function GuiasPage() {
                 const temArquivoGuia = !!guia.arquivo_key
                 const temArquivo = !!(guia.arquivo_key || guia.comprovante_storage_key || guia.segunda_via_arquivo_key)
 
+                const btnGuia =
+                  guia.status === 'paga'      ? { label: 'Detalhes',     cor: '#2e7d32', Icon: CheckCircle2,  acao: () => setDetalheGuia(guia)       } :
+                  guia.status === 'vencida'   ? { label: 'Atualizar',    cor: '#b91c1c', Icon: AlertTriangle, acao: () => setEditarGuia(guia)        } :
+                  guia.status === 'cancelada' ? { label: 'Ver Guia',     cor: '#616161', Icon: FileText,      acao: () => setVisualizarPDFGuia(guia) } :
+                                               { label: 'Mostrar Guia', cor: '#1351b4', Icon: FileText,      acao: () => setVisualizarPDFGuia(guia) }
+
                 return (
                   <div
                     key={guia.id}
@@ -311,7 +370,21 @@ export default function GuiasPage() {
                             </Badge>
                           </div>
 
-                          <div className="text-xs text-muted-foreground">{nomeCliente(guia.cliente_id)}</div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs text-muted-foreground">{nomeCliente(guia.cliente_id)}</span>
+                            {guia.notificado_em && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
+                                <CheckCheck className="h-2.5 w-2.5" />
+                                Notificado {formatDate(guia.notificado_em.slice(0, 10))}
+                              </span>
+                            )}
+                            {guia.cliente_visualizou_em && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5">
+                                <Eye className="h-2.5 w-2.5" />
+                                Cliente viu
+                              </span>
+                            )}
+                          </div>
 
                           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                             <span>
@@ -352,15 +425,15 @@ export default function GuiasPage() {
 
                           {/* Ações inline + dropdown */}
                           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                            {podeBaixar && (
+                            {temArquivoGuia && (
                               <Button
-                                variant="outline"
                                 size="sm"
-                                className="h-7 px-2 text-xs gap-1"
-                                onClick={() => setBaixaGuia(guia)}
+                                className="h-7 px-3 text-xs gap-1.5 font-semibold text-white border-0"
+                                style={{ backgroundColor: btnGuia.cor }}
+                                onClick={btnGuia.acao}
                               >
-                                <CheckCheck className="h-3 w-3" />
-                                Baixar
+                                <btnGuia.Icon className="h-3.5 w-3.5" />
+                                {btnGuia.label}
                               </Button>
                             )}
 
@@ -377,7 +450,7 @@ export default function GuiasPage() {
                               <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => setDetalheGuia(guia)}>
                                   <Eye className="h-3.5 w-3.5 mr-2" />
-                                  Visualizar
+                                  Detalhes
                                 </DropdownMenuItem>
 
                                 {temArquivoGuia && (
@@ -409,6 +482,25 @@ export default function GuiasPage() {
                                 <DropdownMenuItem onClick={() => setWhatsappGuia(guia)}>
                                   <MessageCircle className="h-3.5 w-3.5 mr-2 text-green-600" />
                                   Enviar via WhatsApp
+                                </DropdownMenuItem>
+
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => registrarNotificacao(guia)}>
+                                  <CheckCheck className={cn('h-3.5 w-3.5 mr-2', guia.notificado_em && 'text-emerald-600')} />
+                                  {guia.notificado_em ? 'Renotificar cliente' : 'Registrar notificação'}
+                                </DropdownMenuItem>
+                                {guia.notificado_em && (
+                                  <DropdownMenuItem
+                                    onClick={() => confirmarVisualizacao(guia)}
+                                    disabled={!!guia.cliente_visualizou_em}
+                                  >
+                                    <Eye className={cn('h-3.5 w-3.5 mr-2', guia.cliente_visualizou_em && 'text-blue-600')} />
+                                    {guia.cliente_visualizou_em ? 'Cliente confirmou visualização' : 'Confirmar visualização do cliente'}
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => setLogGuia(guia)}>
+                                  <Bell className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                                  Histórico de notificações
                                 </DropdownMenuItem>
 
                                 {temArquivo && (
@@ -538,6 +630,16 @@ export default function GuiasPage() {
           guia={visualizarPDFGuia}
           arquivoKey={visualizarPDFGuia.arquivo_key}
           titulo={visualizarPDFGuia.descricao}
+        />
+      )}
+
+      {logGuia && (
+        <NotificacaoLogDialog
+          open={!!logGuia}
+          onClose={() => setLogGuia(null)}
+          tenantId={tenantId}
+          guiaId={logGuia.id}
+          guiaTitulo={logGuia.descricao}
         />
       )}
 

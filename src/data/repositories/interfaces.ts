@@ -39,6 +39,7 @@ export interface UserRepository {
 export interface ClientRepository extends Repository<Client> {
   findActive(tenantId: string): Promise<Client[]>
   findByStatus(tenantId: string, status: ClientStatus): Promise<Client[]>
+  findByCNPJ(tenantId: string, cnpj: string): Promise<Client | null>
 }
 
 export interface FolderRepository extends Repository<Folder> {
@@ -142,6 +143,7 @@ export interface FichaCampoRepository extends Repository<FichaCampo> {
 
 export interface LogAtividadeClienteRepository {
   findByClient(tenantId: string, clientId: string): Promise<LogAtividadeCliente[]>
+  findByReferencia(tenantId: string, referenciaId: string): Promise<LogAtividadeCliente[]>
   create(item: LogAtividadeCliente): Promise<LogAtividadeCliente>
 }
 

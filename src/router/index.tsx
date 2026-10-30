@@ -61,6 +61,8 @@ const AppLandingPage = React.lazy(() =>
 const DocsPage = React.lazy(() =>
   import('@/pages/docs/DocsPage').then((m) => ({ default: m.DocsPage }))
 )
+const ObrigacoesPage = React.lazy(() => import('@/pages/escritorio/Obrigacoes/ObrigacoesPage'))
+const ObrigacoesConfigPage = React.lazy(() => import('@/pages/escritorio/Obrigacoes/ObrigacoesConfigPage'))
 
 function Lazy({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -156,7 +158,14 @@ export const router = createBrowserRouter([
             path: 'guias',
             element: <EscritorioRoute modulo="financeiro"><Lazy><GuiasPage /></Lazy></EscritorioRoute>,
           },
-          { path: 'obrigacoes', element: <Navigate to="/escritorio/rotinas" replace /> },
+          {
+            path: 'obrigacoes',
+            element: <EscritorioRoute modulo="obrigacoes"><Lazy><ObrigacoesPage /></Lazy></EscritorioRoute>,
+          },
+          {
+            path: 'obrigacoes/configuracoes',
+            element: <EscritorioRoute modulo="obrigacoes"><Lazy><ObrigacoesConfigPage /></Lazy></EscritorioRoute>,
+          },
           { path: 'demandas', element: <Navigate to="/escritorio/ocorrencias" replace /> },
           { path: 'apps', element: <Lazy><AppStorePage /></Lazy> },
           { path: 'configuracoes', element: <Lazy><Configuracoes /></Lazy> },

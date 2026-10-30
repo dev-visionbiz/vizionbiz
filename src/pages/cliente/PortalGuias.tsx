@@ -1,4 +1,5 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { format } from 'date-fns'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import { usePortalAcesso } from '@/data/hooks/usePortalAcesso'
@@ -6,6 +7,7 @@ import {
   useGuiasByCliente,
   useEnviarComprovanteGuia,
   useSolicitarSegundaVia,
+  useSolicitarAtualizacaoGuia,
   derivarStatusGuia,
 } from '@/data/hooks/useGuias'
 import { useToast } from '@/components/ui/use-toast'
@@ -13,18 +15,22 @@ import { PageLoader } from '@/components/shared/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose,
 } from '@/components/ui/dialog'
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   FileBarChart2, Upload, CheckCircle2, AlertCircle, Clock, X,
-  Download, FileText, Loader2, Info, Copy, FileX,
+  Download, FileText, Loader2, Info, Copy, FileX, ChevronDown, RefreshCw,
 } from 'lucide-react'
 import { formatCurrency, formatDate, cn } from '@/lib/utils'
 import { storageService } from '@/lib/storage'
 import { contarPaginasPDF } from '@/lib/pdfExtractor'
 import type { GuiaRecolhimento, GuiaStatus } from '@/domain/types'
-import { TIPO_GUIA_CONFIG, SEGUNDA_VIA_CONFIG } from '../escritorio/Guias/guiasConfig'
+import { TIPO_GUIA_CONFIG } from '../escritorio/Guias/guiasConfig'
 
 type FiltroTab = 'todas' | 'pendentes' | 'pagas'
 
@@ -37,7 +43,16 @@ const STATUS_CONFIG: Record<GuiaStatus, { label: string; className: string; icon
   em_retificacao:     { label: 'Em Retificação', className: 'bg-orange-100 text-orange-700', icon: Clock },
 }
 
-// â"€â"€â"€ PDF Viewer com ações integradas â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+function ultimoDiaUtilMesCorrente(): Date {
+  const hoje = new Date()
+  const ultimo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)
+  while (ultimo.getDay() === 0 || ultimo.getDay() === 6) {
+    ultimo.setDate(ultimo.getDate() - 1)
+  }
+  return ultimo
+}
+
+// ─── PDF Viewer com ações integradas ─────────────────────────────────────────
 
 function GuiaPDFDialog({
   guia,
@@ -87,7 +102,6 @@ function GuiaPDFDialog({
       .then(async (url) => {
         const res = await fetch(url)
         const blob = await res.blob()
-        // Conta páginas antes de criar URL para definir parâmetros do viewer
         const n = await contarPaginasPDF(blob)
         setNumPaginas(n)
         objectUrl = URL.createObjectURL(blob)
@@ -140,10 +154,8 @@ function GuiaPDFDialog({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      {/* [&>button.absolute]:hidden oculta o DialogClose padrão do shadcn/ui */}
       <DialogContent className="max-w-4xl w-full h-[95dvh] flex flex-col gap-0 p-0 overflow-hidden [&>button.absolute]:hidden">
 
-        {/* Header — todos os botões alinhados, sem sobreposição */}
         <DialogHeader className="flex-row items-center shrink-0 px-3 py-2 border-b gap-1.5">
           <div className={cn('h-7 w-7 rounded shrink-0 flex items-center justify-center', cfg.cor)}>
             <cfg.icon className={cn('h-3.5 w-3.5', cfg.corTexto)} />
@@ -174,7 +186,6 @@ function GuiaPDFDialog({
           </DialogClose>
         </DialogHeader>
 
-        {/* PDF — sidebar oculta para 1 página, zoom para largura */}
         <div className="flex-1 min-h-0 bg-zinc-100 dark:bg-zinc-900">
           {carregando && (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -197,10 +208,8 @@ function GuiaPDFDialog({
           )}
         </div>
 
-        {/* Bottom action bar */}
         <div className="shrink-0 border-t bg-background">
 
-          {/* Detalhes (expansível) */}
           {detalhesAbertos && (
             <div className="px-4 pt-3 pb-0 space-y-2.5 border-b">
               <div className="flex items-center justify-between -mt-0.5 mb-1">
@@ -238,14 +247,12 @@ function GuiaPDFDialog({
                 </div>
               )}
 
-              {/* Códigos de pagamento — o que o cliente precisa para pagar */}
               {(guia.pix_copia_cola || guia.linha_digitavel || guia.codigo_barras) && (
                 <div className="border-t pt-2 space-y-3 pb-1">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Formas de pagamento
                   </p>
 
-                  {/* PIX */}
                   {guia.pix_copia_cola && (
                     <div className="space-y-1.5">
                       <span className="inline-flex items-center text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded uppercase tracking-wide">
@@ -260,7 +267,6 @@ function GuiaPDFDialog({
                     </div>
                   )}
 
-                  {/* Boleto */}
                   {(guia.linha_digitavel || guia.codigo_barras) && (
                     <div className="space-y-1.5">
                       <span className="inline-flex items-center text-[10px] font-bold bg-muted text-muted-foreground px-1.5 py-0.5 rounded uppercase tracking-wide">
@@ -316,7 +322,6 @@ function GuiaPDFDialog({
             </div>
           )}
 
-          {/* Botões de ação */}
           <div className="flex flex-wrap gap-2 px-4 py-3">
             {podeEnviarComprovante && (
               <>
@@ -389,7 +394,7 @@ function GuiaPDFDialog({
   )
 }
 
-// â"€â"€â"€ Componente de código copiável â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ─── Componente de código copiável ────────────────────────────────────────────
 
 function CodigoPagamento({
   label, valor, onCopiar, mono, destaque,
@@ -429,7 +434,7 @@ function CodigoPagamento({
   )
 }
 
-// â"€â"€â"€ Dialog de detalhe (sem PDF) â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ─── Dialog de detalhe (sem PDF) ──────────────────────────────────────────────
 
 function GuiaInfoDialog({
   guia,
@@ -608,25 +613,118 @@ function GuiaInfoDialog({
   )
 }
 
-// â"€â"€â"€ Card da guia â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ─── Dialog de solicitação de atualização ────────────────────────────────────
+
+function SolicitarAtualizacaoDialog({
+  guia,
+  onClose,
+}: {
+  guia: GuiaRecolhimento
+  onClose: () => void
+}) {
+  const { toast } = useToast()
+  const solicitarAtualizacao = useSolicitarAtualizacaoGuia()
+  const [dataSugerida, setDataSugerida] = useState('')
+
+  const maxDate = ultimoDiaUtilMesCorrente()
+  const maxDateStr = format(maxDate, 'yyyy-MM-dd')
+  const minDateStr = format(new Date(), 'yyyy-MM-dd')
+
+  async function handleSubmit() {
+    if (!dataSugerida) return
+    try {
+      await solicitarAtualizacao.mutateAsync({ id: guia.id, data_sugerida: dataSugerida })
+      toast({
+        title: 'Atualização solicitada!',
+        description: 'O escritório foi notificado e irá atualizar a guia em breve.',
+      })
+      onClose()
+    } catch {
+      toast({ title: 'Erro ao solicitar atualização', variant: 'destructive' })
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Solicitar atualização da guia</DialogTitle>
+        </DialogHeader>
+
+        <div className="rounded-lg border bg-muted/20 px-3 py-2.5 text-sm">
+          <p className="font-medium truncate">{guia.descricao}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Vencimento atual:{' '}
+            <span className="text-red-600 font-medium">{formatDate(guia.vencimento)}</span>
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium">Nova data de vencimento desejada</p>
+          <Input
+            type="date"
+            value={dataSugerida}
+            min={minDateStr}
+            max={maxDateStr}
+            onChange={(e) => setDataSugerida(e.target.value)}
+            className="h-9"
+          />
+          <p className="text-xs text-muted-foreground">
+            Prazo máximo:{' '}
+            <span className="font-medium">{formatDate(maxDateStr)}</span>
+            {' '}(último dia útil do mês)
+          </p>
+        </div>
+
+        <div className="flex gap-2 justify-end pt-1">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSubmit}
+            disabled={!dataSugerida || solicitarAtualizacao.isPending}
+          >
+            {solicitarAtualizacao.isPending && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+            )}
+            Solicitar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ─── Card da guia ─────────────────────────────────────────────────────────────
 
 function GuiaCard({
   guia,
   onClick,
+  onSolicitarAtualizacao,
 }: {
   guia: GuiaRecolhimento
   onClick: () => void
+  onSolicitarAtualizacao?: () => void
 }) {
   const cfg = TIPO_GUIA_CONFIG[guia.tipo]
   const statusCfg = STATUS_CONFIG[guia.status]
   const StatusIcon = statusCfg.icon
   const temPDF = !!guia.arquivo_key
+  const isVencida = guia.status === 'vencida'
+  const isEmitida = guia.status === 'emitida'
+  const encargos = (guia.valor_multa ?? 0) + (guia.valor_juros ?? 0)
 
   return (
     <div
       onClick={onClick}
-      className="rounded-lg border bg-card overflow-hidden cursor-pointer hover:shadow-sm transition-all active:scale-[0.99]"
+      className={cn(
+        'rounded-lg border bg-card overflow-hidden cursor-pointer hover:shadow-sm transition-all active:scale-[0.99]',
+        isVencida && 'border-red-200 dark:border-red-900/60',
+      )}
     >
+      {isVencida && <div className="h-0.5 bg-red-500" />}
+
       <div className="px-4 py-3 flex items-start gap-3">
         <div className={cn('h-8 w-8 rounded-md flex items-center justify-center shrink-0 mt-0.5', cfg.cor)}>
           <cfg.icon className={cn('h-4 w-4', cfg.corTexto)} />
@@ -645,12 +743,19 @@ function GuiaCard({
           <p className="text-sm font-medium truncate">{guia.descricao}</p>
           <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
             <span>{guia.competencia}</span>
-            <span>Venc. {formatDate(guia.vencimento)}</span>
+            <span className={cn(isVencida && 'text-red-600 font-medium')}>
+              Venc. {formatDate(guia.vencimento)}
+            </span>
           </div>
         </div>
 
         <div className="shrink-0 text-right mt-0.5">
           <p className="font-semibold text-sm">{formatCurrency(guia.valor)}</p>
+          {isVencida && encargos > 0 && (
+            <p className="text-xs text-red-600 mt-0.5">
+              +{formatCurrency(encargos)} enc.
+            </p>
+          )}
           {guia.pago_em && (
             <p className="text-xs text-green-600 mt-0.5">Pago {formatDate(guia.pago_em)}</p>
           )}
@@ -658,16 +763,64 @@ function GuiaCard({
       </div>
 
       {/* CTA principal */}
-      {(temPDF || (guia.status !== 'cancelada' && guia.status !== 'paga')) && (
-        <div className="px-4 pb-3 flex justify-end">
-          {temPDF ? (
-            <div className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-5 py-2 text-sm font-semibold transition-colors select-none">
+      {guia.status !== 'cancelada' && guia.status !== 'paga' && (
+        <div className="px-4 pb-3 flex justify-end" onClick={(e) => e.stopPropagation()}>
+
+          {isEmitida && temPDF && (
+            <Button
+              size="sm"
+              className="bg-green-500 hover:bg-green-600 text-white h-8 px-5 font-semibold border-0"
+              onClick={onClick}
+            >
               Emitir
-            </div>
-          ) : (
-            <div className="bg-muted text-muted-foreground rounded-lg px-4 py-1.5 text-xs select-none">
+            </Button>
+          )}
+
+          {isEmitida && !temPDF && (
+            <span className="inline-flex items-center bg-muted text-muted-foreground rounded-lg px-4 py-1.5 text-xs">
               Aguardando emissão
-            </div>
+            </span>
+          )}
+
+          {isVencida && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-3 text-xs font-semibold text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 gap-1.5"
+                >
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Vencida
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onSolicitarAtualizacao?.()}>
+                  <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                  Solicitar atualização
+                </DropdownMenuItem>
+                {temPDF && (
+                  <DropdownMenuItem onClick={onClick}>
+                    <FileText className="h-3.5 w-3.5 mr-2" />
+                    Ver guia
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {guia.status === 'aguardando_emissao' && (
+            <span className="inline-flex items-center bg-muted text-muted-foreground rounded-lg px-4 py-1.5 text-xs">
+              Aguardando emissão
+            </span>
+          )}
+
+          {guia.status === 'em_retificacao' && (
+            <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg px-4 py-1.5 text-xs font-medium dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-400">
+              <Clock className="h-3.5 w-3.5" />
+              Atualização solicitada
+            </span>
           )}
         </div>
       )}
@@ -675,7 +828,7 @@ function GuiaCard({
   )
 }
 
-// â"€â"€â"€ Página â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 export default function PortalGuias() {
   const { currentUser } = useAuth()
@@ -689,6 +842,7 @@ export default function PortalGuias() {
 
   const [filtro, setFiltro] = useState<FiltroTab>('todas')
   const [guiaSelecionada, setGuiaSelecionada] = useState<GuiaRecolhimento | null>(null)
+  const [guiaSolicitandoAtualizacao, setGuiaSolicitandoAtualizacao] = useState<GuiaRecolhimento | null>(null)
 
   if (!secoesPermitidas.includes('guias')) {
     return <Navigate to="/portal/inicio" replace />
@@ -764,7 +918,12 @@ export default function PortalGuias() {
       ) : (
         <div className="flex flex-col gap-3">
           {guiasFiltradas.map((g) => (
-            <GuiaCard key={g.id} guia={g} onClick={() => setGuiaSelecionada(g)} />
+            <GuiaCard
+              key={g.id}
+              guia={g}
+              onClick={() => setGuiaSelecionada(g)}
+              onSolicitarAtualizacao={() => setGuiaSolicitandoAtualizacao(g)}
+            />
           ))}
         </div>
       )}
@@ -786,6 +945,13 @@ export default function PortalGuias() {
             onClose={() => setGuiaSelecionada(null)}
           />
         )
+      )}
+
+      {guiaSolicitandoAtualizacao && (
+        <SolicitarAtualizacaoDialog
+          guia={guiaSolicitandoAtualizacao}
+          onClose={() => setGuiaSolicitandoAtualizacao(null)}
+        />
       )}
 
       <div className="h-16 rounded-xl border border-dashed border-border/40 bg-muted/20" />

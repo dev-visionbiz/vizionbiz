@@ -17,4 +17,12 @@ export class LocalLogAtividadeClienteRepository
         .sort((a, b) => b.em.localeCompare(a.em))
     )
   }
+
+  async findByReferencia(tenantId: string, referenciaId: string): Promise<LogAtividadeCliente[]> {
+    return Promise.resolve(
+      this.readAll()
+        .filter((e) => e.tenant_id === tenantId && e.referencia_id === referenciaId)
+        .sort((a, b) => b.em.localeCompare(a.em))
+    )
+  }
 }

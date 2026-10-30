@@ -51,3 +51,4 @@ export { LocalCertificadoRepository, certificadoRepo } from './CertificadoReposi
 export { subscriptionRepo } from './SubscriptionRepository'
 export { commissionRuleRepo } from './CommissionRuleRepository'
 export { ledgerRepo } from './LedgerRepository'
+export { LocalObrigacaoConfigRepository, obrigacaoConfigRepo, LocalObrigacaoLancamentoRepository, obrigacaoLancamentoRepo } from './ObrigacaoRepository'

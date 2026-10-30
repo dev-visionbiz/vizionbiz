@@ -14,7 +14,7 @@ export const can = {
 }
 
 export const MODULOS_ESCRITORIO: ModuloEscritorio[] = [
-  'clientes', 'grupos', 'documentos', 'financeiro', 'tarefas',
+  'clientes', 'grupos', 'documentos', 'financeiro', 'tarefas', 'obrigacoes',
 ]
 
 export const moduloLabels: Record<ModuloEscritorio, string> = {
@@ -23,6 +23,7 @@ export const moduloLabels: Record<ModuloEscritorio, string> = {
   documentos: 'Documentos',
   financeiro: 'Financeiro',
   tarefas: 'Tarefas',
+  obrigacoes: 'Obrigações',
 }
 
 export function podeAcessarSubModuloTarefas(tenant: Tenant | null | undefined, sub: SubModuloTarefas): boolean {

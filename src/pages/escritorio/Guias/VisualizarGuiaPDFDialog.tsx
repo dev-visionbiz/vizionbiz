@@ -29,6 +29,13 @@ export function VisualizarGuiaPDFDialog({ guia, arquivoKey, titulo, open, onClos
   const valorTotal = guia.valor + (guia.valor_multa ?? 0) + (guia.valor_juros ?? 0)
   const temPagamento = !!(guia.pix_copia_cola || guia.linha_digitavel || guia.codigo_barras)
 
+  const TARJA: Partial<Record<string, { texto: string; cor: string; corBorda: string }>> = {
+    paga:      { texto: 'PAGO',      cor: 'rgba(22,163,74,0.42)',   corBorda: 'rgba(22,163,74,0.5)'   },
+    vencida:   { texto: 'VENCIDA',   cor: 'rgba(220,38,38,0.42)',   corBorda: 'rgba(220,38,38,0.5)'   },
+    cancelada: { texto: 'CANCELADA', cor: 'rgba(113,113,122,0.42)', corBorda: 'rgba(113,113,122,0.5)' },
+  }
+  const tarja = TARJA[guia.status]
+
   useEffect(() => {
     if (!open || !arquivoKey) return
 
@@ -107,7 +114,7 @@ export function VisualizarGuiaPDFDialog({ guia, arquivoKey, titulo, open, onClos
         </DialogHeader>
 
         {/* PDF */}
-        <div className="flex-1 min-h-0 bg-zinc-100 dark:bg-zinc-900">
+        <div className="flex-1 min-h-0 bg-zinc-100 dark:bg-zinc-900 relative">
           {carregando && (
             <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -127,6 +134,31 @@ export function VisualizarGuiaPDFDialog({ guia, arquivoKey, titulo, open, onClos
               className="w-full h-full border-0"
               title={titulo}
             />
+          )}
+
+          {/* Tarja de status sobre o PDF */}
+          {blobUrl && !carregando && tarja && (
+            <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden flex items-center justify-center">
+              <span
+                className="select-none"
+                style={{
+                  transform: 'rotate(-35deg)',
+                  color: tarja.cor,
+                  border: `6px solid ${tarja.corBorda}`,
+                  fontSize: '3.75rem',
+                  fontWeight: 900,
+                  letterSpacing: '0.35em',
+                  paddingInline: '32px',
+                  paddingBlock: '10px',
+                  borderRadius: '6px',
+                  whiteSpace: 'nowrap',
+                  fontFamily: 'Georgia, serif',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {tarja.texto}
+              </span>
+            </div>
           )}
         </div>
 

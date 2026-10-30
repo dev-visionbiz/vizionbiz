@@ -9,6 +9,12 @@ export class SupabaseLogAtividadeClienteRepository implements ILogAtividadeClien
     return data ?? []
   }
 
+  async findByReferencia(tenantId: string, referenciaId: string): Promise<LogAtividadeCliente[]> {
+    const { data, error } = await supabase.from('log_atividades_clientes').select('*').eq('tenant_id', tenantId).eq('referencia_id', referenciaId)
+    if (error) throw error
+    return data ?? []
+  }
+
   async create(item: LogAtividadeCliente): Promise<LogAtividadeCliente> {
     const { data, error } = await supabase.from('log_atividades_clientes').insert(item).select().single()
     if (error) throw error

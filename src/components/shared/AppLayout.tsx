@@ -3,42 +3,23 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { BottomNav } from './BottomNav'
+import { TabBar } from './TabBar'
 import { Toaster } from '@/components/ui/toaster'
 import { PomodoroProvider } from '@/context/PomodoroContext'
+import { TarefaAtivaProvider } from '@/context/TarefaAtivaContext'
+import { NavigationTabsProvider } from '@/context/NavigationTabsContext'
+import { TarefaAtivaFloat } from './TarefaAtivaFloat'
+import { ClienteContextDrawer } from './ClienteContextDrawer'
 import { ImpersonationBanner } from './ImpersonationBanner'
+import { getPageTitle } from '@/lib/pageTitle'
 
 const WIDE_CONTENT_ROUTES = ['/escritorio/documentos', '/portal/documentos']
-
-const PAGE_TITLES: { test: (p: string) => boolean; title: string }[] = [
-  { test: (p) => /^\/escritorio\/clientes\/.+/.test(p), title: 'Ficha do Cliente' },
-  { test: (p) => p.startsWith('/escritorio/clientes'), title: 'Clientes' },
-  { test: (p) => p.startsWith('/escritorio/dashboard'), title: 'Dashboard' },
-  { test: (p) => p.startsWith('/escritorio/documentos'), title: 'Documentos' },
-  { test: (p) => p.startsWith('/escritorio/financeiro'), title: 'Financeiro' },
-  { test: (p) => /^\/escritorio\/grupos\/.+/.test(p), title: 'Ficha do Grupo' },
-  { test: (p) => p.startsWith('/escritorio/grupos'), title: 'Grupos' },
-  { test: (p) => p.startsWith('/escritorio/obrigacoes'), title: 'Obrigações' },
-  { test: (p) => p.startsWith('/escritorio/tarefas'), title: 'Tarefas' },
-  { test: (p) => p.startsWith('/escritorio/demandas'), title: 'Demandas' },
-  { test: (p) => p.startsWith('/escritorio/apps'), title: 'Conexões' },
-  { test: (p) => p.startsWith('/escritorio/configuracoes'), title: 'Configurações' },
-  { test: (p) => p.startsWith('/portal/inicio'), title: 'Início' },
-  { test: (p) => p.startsWith('/portal/cadastro'), title: 'Dados Cadastrais' },
-  { test: (p) => p.startsWith('/portal/documentos'), title: 'Documentos' },
-  { test: (p) => p.startsWith('/portal/financeiro'), title: 'Financeiro' },
-  { test: (p) => p.startsWith('/portal/equipe'), title: 'Equipe' },
-  { test: (p) => p.startsWith('/portal/apps'), title: 'Conexões' },
-  { test: (p) => p.startsWith('/portal/certificados'), title: 'Certificados Digitais' },
-]
-
-function getPageTitle(pathname: string): string {
-  return PAGE_TITLES.find(({ test }) => test(pathname))?.title ?? ''
-}
 
 export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarPinned, setSidebarPinned] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [clienteDrawerOpen, setClienteDrawerOpen] = useState(false)
   const location = useLocation()
   const swipeStartX = useRef<number | null>(null)
 
@@ -71,9 +52,7 @@ export function AppLayout() {
     if (swipeStartX.current === null) return
     const deltaX = e.clientX - swipeStartX.current
     swipeStartX.current = null
-    if (deltaX < -50) {
-      setMobileSidebarOpen(false)
-    } else if (Math.abs(deltaX) < 10) {
+    if (deltaX < -50 || Math.abs(deltaX) < 10) {
       setMobileSidebarOpen(false)
     }
   }
@@ -81,38 +60,49 @@ export function AppLayout() {
   const pageTitle = getPageTitle(location.pathname)
 
   return (
+    <NavigationTabsProvider>
+    <TarefaAtivaProvider>
     <PomodoroProvider>
       <div className="flex flex-col h-screen">
-      <ImpersonationBanner />
-      <div className="flex flex-1 overflow-hidden">
-        {mobileSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-            onPointerDown={handleBackdropPointerDown}
-            onPointerUp={handleBackdropPointerUp}
+        <ImpersonationBanner />
+        <div className="flex flex-1 overflow-hidden">
+          {mobileSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+              onPointerDown={handleBackdropPointerDown}
+              onPointerUp={handleBackdropPointerUp}
+            />
+          )}
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            pinned={sidebarPinned}
+            mobileOpen={mobileSidebarOpen}
+            onToggleCollapse={handleToggleCollapse}
+            onTogglePin={handleTogglePin}
+            onCloseMobile={() => setMobileSidebarOpen(false)}
+            onOpenClienteDrawer={() => setClienteDrawerOpen(true)}
           />
-        )}
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          pinned={sidebarPinned}
-          mobileOpen={mobileSidebarOpen}
-          onToggleCollapse={handleToggleCollapse}
-          onTogglePin={handleTogglePin}
-          onCloseMobile={() => setMobileSidebarOpen(false)}
-        />
-        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
-          <Header
-            onMenuToggle={() => setMobileSidebarOpen((o) => !o)}
-            pageTitle={pageTitle}
+          <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+            <Header
+              onMenuToggle={() => setMobileSidebarOpen(o => !o)}
+              pageTitle={pageTitle}
+            />
+            <TabBar />
+            <main className="flex-1 overflow-auto p-4 md:p-6 min-h-0 pb-20 lg:pb-6">
+              <Outlet />
+            </main>
+          </div>
+          <BottomNav onOpenMenu={() => setMobileSidebarOpen(true)} />
+          <Toaster />
+          <TarefaAtivaFloat />
+          <ClienteContextDrawer
+            open={clienteDrawerOpen}
+            onClose={() => setClienteDrawerOpen(false)}
           />
-          <main className="flex-1 overflow-auto p-4 md:p-6 min-h-0 pb-20 lg:pb-6">
-            <Outlet />
-          </main>
         </div>
-        <BottomNav onOpenMenu={() => setMobileSidebarOpen(true)} />
-        <Toaster />
-      </div>
       </div>
     </PomodoroProvider>
+    </TarefaAtivaProvider>
+    </NavigationTabsProvider>
   )
 }

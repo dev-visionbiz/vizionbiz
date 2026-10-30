@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import { PermissionGuard } from '@/auth/PermissionGuard'
 import { useUsers, useCreateUser, useUpdateUser, useDeactivateUser, useActivateUser } from '@/data/hooks/useUsers'
@@ -25,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Users, AlertTriangle, Eye, EyeOff, Pencil, UserX, UserCheck, X, Building2 } from 'lucide-react'
+import { Plus, Users, AlertTriangle, Eye, EyeOff, Pencil, UserX, UserCheck, X, Building2, LogIn } from 'lucide-react'
 import type { User, UserRole, ModuloEscritorio, PapelPortalCliente, PortalSecao, ClienteAcesso } from '@/domain/types'
 import { MODULOS_ESCRITORIO, moduloLabels } from '@/auth/roles'
 import { v4 as uuidv4 } from 'uuid'
@@ -109,8 +110,16 @@ function ModulosBadges({ modulos }: { modulos?: ModuloEscritorio[] }) {
   )
 }
 
+const HOME_BY_PAPEL: Record<string, string> = {
+  escritorio_admin: '/escritorio/dashboard',
+  escritorio_colaborador: '/escritorio/dashboard',
+  cliente: '/portal/inicio',
+  visionbiz_admin: '/admin/tenants',
+}
+
 export default function Usuarios() {
-  const { currentUser } = useAuth()
+  const { currentUser, impersonateUser } = useAuth()
+  const navigate = useNavigate()
   const tenantId = currentUser?.tenant_id ?? ''
   const { data: users, isLoading } = useUsers(tenantId, true)
   const { data: clients } = useClients(tenantId)
@@ -270,6 +279,15 @@ export default function Usuarios() {
     }
   }
 
+  const handleImpersonate = async (u: User) => {
+    const ok = await impersonateUser(u.id)
+    if (!ok) {
+      toast({ title: 'Erro', description: 'Não foi possível abrir o perfil.', variant: 'destructive' })
+      return
+    }
+    navigate(HOME_BY_PAPEL[u.papel] ?? '/escritorio/dashboard', { replace: true })
+  }
+
   const handleToggleAtivo = async (u: User) => {
     if (u.id === currentUser?.id) {
       toast({ title: 'Ação bloqueada', description: 'Você não pode desativar sua própria conta.', variant: 'destructive' })
@@ -375,6 +393,17 @@ export default function Usuarios() {
 
               <PermissionGuard permission="manageUsers">
                 <div className="flex items-center gap-1 shrink-0 self-start">
+                  {u.ativo && u.id !== currentUser?.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleImpersonate(u)}
+                      title="Abrir como este usuário"
+                    >
+                      <LogIn className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(u)} title="Editar">
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>

@@ -21,4 +21,10 @@ export class LocalClientRepository
       this.readAll().filter((c) => c.tenant_id === tenantId && c.status === status)
     )
   }
+
+  async findByCNPJ(tenantId: string, cnpj: string): Promise<Client | null> {
+    return Promise.resolve(
+      this.readAll().find((c) => c.tenant_id === tenantId && c.cnpj === cnpj) ?? null
+    )
+  }
 }
